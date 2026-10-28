@@ -1,0 +1,111 @@
+/* NASA Space Apps Cairo – Tech Ops shared theme (dark space aesthetic) */
+:root {
+  --bg: #04060f;
+  --panel: #0c1226;
+  --panel-2: #121a36;
+  --line: #1f2a4d;
+  --text: #e8ecf8;
+  --muted: #8a96b8;
+  --nasa-blue: #0b3d91;
+  --nasa-red: #fc3d21;
+  --cyan: #38bdf8;
+
+  --unchecked: #64748b;
+  --ready: #22c55e;
+  --warning: #facc15;
+  --sos: #ef4444;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--text);
+  font-family: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+  background:
+    radial-gradient(1px 1px at 12% 18%, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 78% 12%, #cfe3ff 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 42% 64%, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 90% 70%, #ffd9d2 50%, transparent 51%),
+    radial-gradient(1px 1px at 22% 85%, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 60% 35%, #cfe3ff 50%, transparent 51%),
+    radial-gradient(900px 500px at 85% -10%, rgba(11, 61, 145, .45), transparent 60%),
+    radial-gradient(700px 400px at -10% 110%, rgba(252, 61, 33, .15), transparent 60%),
+    var(--bg);
+  background-attachment: fixed;
+}
+
+h1, h2, h3 { margin: 0; }
+
+.btn {
+  appearance: none;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  padding: .65rem 1rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: transform .08s ease, filter .15s ease, background .15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn:hover { filter: brightness(1.2); }
+.btn:active { transform: scale(.97); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn.primary { background: var(--nasa-blue); border-color: #2457b8; }
+.btn.danger  { background: #7f1d1d; border-color: #b91c1c; }
+.btn.good    { background: #14532d; border-color: #16a34a; }
+.btn.warn    { background: #713f12; border-color: #ca8a04; }
+.btn.block   { width: 100%; }
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .25rem .7rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, .04);
+  font-size: .8rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.pill .dot { width: .6rem; height: .6rem; border-radius: 50%; background: var(--unchecked); }
+.pill.online .dot  { background: var(--ready); box-shadow: 0 0 8px var(--ready); }
+.pill.offline .dot { background: var(--sos); }
+
+.banner {
+  margin: 0 auto 1rem;
+  max-width: 900px;
+  padding: .9rem 1.1rem;
+  border-radius: 12px;
+  background: rgba(239, 68, 68, .12);
+  border: 1px solid rgba(239, 68, 68, .5);
+  color: #fecaca;
+  line-height: 1.45;
+}
+.banner code { background: rgba(0, 0, 0, .35); padding: .1rem .35rem; border-radius: 5px; }
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 1.4rem;
+  transform: translateX(-50%) translateY(20px);
+  background: #101935;
+  color: var(--text);
+  border: 1px solid var(--cyan);
+  padding: .7rem 1.1rem;
+  border-radius: 12px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s, transform .25s;
+  z-index: 100;
+  max-width: 92vw;
+  text-align: center;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+[hidden] { display: none !important; }

@@ -1,0 +1,19 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "rooms": {
+      ".read": true,
+      "$room": {
+        ".write": true,
+        "status": {
+          ".validate": "newData.isString() && (newData.val() == 'UNCHECKED' || newData.val() == 'READY' || newData.val() == 'WARNING' || newData.val() == 'SOS')"
+        }
+      }
+    },
+    "sos_log": {
+      ".read": true,
+      ".write": true
+    }
+  }
+}

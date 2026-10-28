@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#04060f">
+  <title>Tech Ops Mission Control · NASA Space Apps Cairo</title>
+  <link rel="stylesheet" href="theme.css">
+  <style>
+    .wrap { max-width: 1500px; margin: 0 auto; padding: 1rem; }
+
+    header.top {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+      gap: .6rem 1rem; margin-bottom: 1rem;
+    }
+    .brand h1 { font-size: clamp(1.1rem, 2.6vw, 1.7rem); letter-spacing: .04em; }
+    .brand h1 span { color: var(--nasa-red); }
+    .brand small { color: var(--muted); letter-spacing: .12em; text-transform: uppercase; font-size: .7rem; }
+    .header-right { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+    #clock { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--cyan); }
+
+    /* ---- status bar ---- */
+    .statusbar {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .7rem;
+      margin-bottom: .8rem;
+    }
+    .stat {
+      background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+      padding: .8rem 1rem; display: flex; align-items: center; justify-content: space-between; gap: .6rem;
+    }
+    .stat .label { color: var(--muted); font-size: .85rem; }
+    .stat .num { font-size: 2rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .stat.ready .num { color: var(--ready); }
+    .stat.unchecked .num { color: #cbd5e1; }
+    .stat.warning .num { color: var(--warning); }
+    .stat.sos .num { color: var(--sos); }
+    .stat.sos.active { animation: statflash 1s infinite; border-color: var(--sos); }
+    @keyframes statflash { 50% { background: rgba(239, 68, 68, .35); } }
+
+    .controls {
+      display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; margin-bottom: 1.1rem;
+      background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: .7rem;
+    }
+    .controls .name-box { display: flex; gap: .4rem; flex: 1 1 280px; }
+    .controls input[type=text] {
+      flex: 1; min-width: 0; background: #070b1a; color: var(--text); border: 1px solid var(--line);
+      border-radius: 10px; padding: .65rem .8rem; font: inherit;
+    }
+    .controls input:focus, dialog textarea:focus { outline: 2px solid var(--cyan); }
+    #audioBtn.on { background: #14532d; border-color: #16a34a; }
+
+    /* ---- room grid ---- */
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: .9rem; }
+
+    .card {
+      --c: var(--unchecked);
+      background: linear-gradient(180deg, var(--panel-2), var(--panel));
+      border: 1px solid var(--line); border-top: 5px solid var(--c);
+      border-radius: 14px; padding: .9rem; display: flex; flex-direction: column; gap: .6rem;
+    }
+    .card.READY   { --c: var(--ready); }
+    .card.WARNING { --c: var(--warning); }
+    .card.SOS     { --c: var(--sos); animation: sosflash 1s infinite; }
+    @keyframes sosflash {
+      0%, 100% { background: linear-gradient(180deg, #3b0d0d, #1c0707); box-shadow: 0 0 0 0 rgba(239, 68, 68, .7); }
+      50%      { background: linear-gradient(180deg, #7f1d1d, #450a0a); box-shadow: 0 0 26px 4px rgba(239, 68, 68, .75); }
+    }
+
+    .card-head { display: flex; justify-content: space-between; align-items: center; gap: .5rem; }
+    .card-head h2 { font-size: 1.25rem; }
+    .card-head h2 small { color: var(--muted); font-weight: 500; font-size: .8rem; }
+    .badge {
+      font-size: .72rem; font-weight: 800; letter-spacing: .08em; padding: .25rem .6rem; border-radius: 999px;
+      color: #04060f; background: var(--c);
+    }
+    .card.SOS .badge { color: #fff; }
+
+    .metrics { display: grid; grid-template-columns: 1fr auto; gap: .25rem .8rem; font-size: .88rem; }
+    .metrics dt { color: var(--muted); }
+    .metrics dd { margin: 0; text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .ok { color: var(--ready); } .bad { color: var(--sos); } .mid { color: var(--warning); }
+    .note { font-size: .82rem; color: #cbd5e1; background: rgba(255, 255, 255, .05); border-radius: 8px; padding: .4rem .6rem; }
+
+    .sos-box { background: rgba(0, 0, 0, .35); border: 1px solid rgba(239, 68, 68, .6); border-radius: 12px; padding: .7rem; display: flex; flex-direction: column; gap: .5rem; }
+    .sos-issue { font-weight: 800; font-size: 1.05rem; white-space: pre-line; }
+    .sos-meta { font-size: .78rem; color: #fca5a5; }
+    .claimed { font-weight: 700; color: #fde68a; background: rgba(250, 204, 21, .12); border-radius: 8px; padding: .5rem .6rem; }
+    .row { display: flex; gap: .5rem; flex-wrap: wrap; }
+    .row .btn { flex: 1 1 auto; }
+    .btn.sm { padding: .45rem .7rem; font-size: .85rem; }
+
+    /* ---- manual check dialog ---- */
+    dialog { background: var(--panel); color: var(--text); border: 1px solid var(--cyan); border-radius: 16px; padding: 1.1rem; width: min(92vw, 420px); }
+    dialog::backdrop { background: rgba(0, 0, 0, .7); }
+    dialog h3 { margin-bottom: .8rem; }
+    dialog textarea { width: 100%; min-height: 70px; margin: .8rem 0; background: #070b1a; color: var(--text); border: 1px solid var(--line); border-radius: 10px; padding: .6rem; font: inherit; resize: vertical; }
+    .choice { display: grid; grid-template-columns: repeat(3, 1fr); gap: .5rem; }
+    .choice .btn.sel { outline: 3px solid var(--cyan); }
+    .foot { text-align: center; color: var(--muted); font-size: .75rem; margin-top: 1.4rem; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div id="configBanner" class="banner" hidden></div>
+
+  <header class="top">
+    <div class="brand">
+      <small>NASA Space Apps Cairo · Bootcamp</small>
+      <h1>🛰️ TECH OPS <span>MISSION CONTROL</span></h1>
+    </div>
+    <div class="header-right">
+      <a href="check.html" class="btn sm primary" style="text-decoration:none;">📱 Mobile Checker</a>
+      <a href="qr.html" class="btn sm" style="text-decoration:none;">🖨️ QR Codes</a>
+      <span id="conn" class="pill offline"><span class="dot"></span><span id="connText">Connecting…</span></span>
+      <span class="pill">🕒 <span id="clock">--:--:--</span></span>
+    </div>
+  </header>
+
+  <section class="statusbar" aria-label="Status summary">
+    <div class="stat ready"><span class="label">🟢 Ready Rooms</span><span class="num" id="cReady">0</span></div>
+    <div class="stat unchecked"><span class="label">⚪ Unchecked Rooms</span><span class="num" id="cUnchecked">12</span></div>
+    <div class="stat warning"><span class="label">🟡 Warnings</span><span class="num" id="cWarning">0</span></div>
+    <div class="stat sos" id="sosStat"><span class="label">🚨 Active SOS Alerts</span><span class="num" id="cSos">0</span></div>
+  </section>
+
+  <section class="controls">
+    <div class="name-box">
+      <input id="nameInput" type="text" maxlength="30" placeholder="Your name (Tech Ops member)" autocomplete="off">
+      <button id="saveName" class="btn primary">Save</button>
+    </div>
+    <button id="audioBtn" class="btn">🔊 Enable Audio &amp; Vibration Alerts</button>
+  </section>
+
+  <main id="grid" class="grid" aria-live="polite"></main>
+
+  <p class="foot">Live data · Firebase Realtime Database · Rooms checked via <code>check_room.py</code>, SOS via QR codes</p>
+</div>
+
+<!-- Manual check dialog -->
+<dialog id="manualDlg">
+  <h3 id="manualTitle">Manual check</h3>
+  <div class="choice" id="manualChoice">
+    <button class="btn good" data-status="READY">🟢 Ready</button>
+    <button class="btn warn" data-status="WARNING">🟡 Warning</button>
+    <button class="btn" data-status="UNCHECKED">⚪ Reset</button>
+  </div>
+  <textarea id="manualNote" maxlength="200" placeholder="Optional note (e.g. weak Wi-Fi at the back)"></textarea>
+  <div class="row">
+    <button class="btn" id="manualCancel">Cancel</button>
+    <button class="btn primary" id="manualSave" disabled>Save check</button>
+  </div>
+</dialog>
+
+<div id="toast" class="toast" role="status"></div>
+
+<script type="module">
+import {
+  db, CONFIG_OK, ROOM_COUNT, ROOM_NAMES, roomKey, ref, onValue, update, push,
+  runTransaction, serverTimestamp, esc, pad2, MISSING_CONFIG_MESSAGE,
+} from "./firebase-config.js";
+
+const $ = (id) => document.getElementById(id);
+const STATUS_LABEL = { UNCHECKED: "UNCHECKED", READY: "READY", WARNING: "WARNING", SOS: "SOS" };
+
+let rooms = {};
+let firstSnapshot = true;
+let knownSos = new Set();
+let audioOn = false;
+let audioCtx = null;
+let wakeLock = null;
+
+/* ------------------------------------------------------------------ helpers */
+function toast(msg) {
+  const t = $("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => t.classList.remove("show"), 3200);
+}
+
+const getName = () => ($("nameInput").value || "").trim();
+function requireName() {
+  const n = getName();
+  if (!n) {
+    toast("✋ Enter your name at the top first, then tap Save.");
+    $("nameInput").focus();
+    $("nameInput").scrollIntoView({ behavior: "smooth", block: "center" });
+    return null;
+  }
+  localStorage.setItem("techops_name", n);
+  return n;
+}
+
+function stateOf(r) {
+  if (r && (r.sos || r.status === "SOS")) return "SOS";
+  return r && STATUS_LABEL[r.status] ? r.status : "UNCHECKED";
+}
+const sosOf = (r) => r.sos || { issue: "🚨 SOS (no details)" };
+
+function fmtTime(ms) {
+  if (!ms) return "—";
+  const d = new Date(ms);
+  const clock = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const mins = Math.max(0, Math.round((Date.now() - ms) / 60000));
+  const rel = mins < 1 ? "just now" : mins < 60 ? `${mins}m ago` : `${Math.floor(mins / 60)}h ${mins % 60}m ago`;
+  return `${clock} · ${rel}`;
+}
+
+/* ------------------------------------------------------------------- render */
+function metric(label, valueHtml) { return `<dt>${label}</dt><dd>${valueHtml}</dd>`; }
+
+function cardHTML(n) {
+  const key = roomKey(n);
+  const r = rooms[key] || {};
+  const st = stateOf(r);
+
+  const ping = typeof r.ping_ms === "number"
+    ? `<span class="${r.ping_ms <= 80 ? "ok" : r.ping_ms <= 150 ? "mid" : "bad"}">${r.ping_ms} ms</span>` : "—";
+  const dl = typeof r.download_mbps === "number"
+    ? `<span class="${r.download_mbps >= 10 ? "ok" : r.download_mbps >= 5 ? "mid" : "bad"}">${r.download_mbps} Mbps</span>` : "—";
+  const ds = r.datashow
+    ? `<span class="${r.datashow === "OK" ? "ok" : "bad"}">${r.datashow === "OK" ? "✔ OK" : "✖ Issue"}</span>` : "—";
+  const wifi = typeof r.wifi_signal === "number"
+    ? `<span class="${r.wifi_signal >= 60 ? "ok" : r.wifi_signal >= 40 ? "mid" : "bad"}">${r.wifi_signal}%</span>` : "—";
+
+  const name = ROOM_NAMES[n] ? ` <small>· ${esc(ROOM_NAMES[n])}</small>` : "";
+  let body = `
+    <dl class="metrics">
+      ${metric("Ping", ping)}
+      ${metric("Download", dl)}
+      ${metric("Data Show", ds)}
+      ${metric("Wi-Fi signal", wifi)}
+      ${metric("Checked by", esc(r.checked_by || "—") + (r.source === "manual" ? " ✍️" : ""))}
+      ${metric("Last updated", esc(fmtTime(r.updated_at)))}
+    </dl>
+    ${r.note ? `<div class="note">📝 ${esc(r.note)}</div>` : ""}`;
+
+  if (st === "SOS") {
+    const s = sosOf(r);
+    const claimed = s.claimed_by
+      ? `<div class="claimed">⚙️ ${esc(s.claimed_by)} is heading to Room ${n}</div>
+         <div class="row">
+           <button class="btn good" data-act="resolve" data-room="${n}">✅ Mark Resolved</button>
+           <button class="btn sm" data-act="release" data-room="${n}">↩ Release</button>
+         </div>`
+      : `<div class="row">
+           <button class="btn primary" data-act="claim" data-room="${n}">🏃‍♂️ Claim Task</button>
+           <button class="btn good" data-act="resolve" data-room="${n}">✅ Mark Resolved</button>
+         </div>`;
+    body = `
+      <div class="sos-box">
+        <div class="sos-issue">${esc(s.issue)}</div>
+        ${s.note ? `<div class="note">💬 “${esc(s.note)}”</div>` : ""}
+        <div class="sos-meta">Reported ${esc(fmtTime(s.created_at))}</div>
+        ${claimed}
+      </div>` + body;
+  }
+
+  return `
+    <article class="card ${st}" id="room-${n}">
+      <div class="card-head">
+        <h2>Room ${pad2(n)}${name}</h2>
+        <span class="badge">${STATUS_LABEL[st]}</span>
+      </div>
+      ${body}
+      ${st === "SOS" ? "" : `<button class="btn sm" data-act="manual" data-room="${n}">✍️ Quick Manual Check</button>`}
+    </article>`;
+}
+
+function render() {
+  let ready = 0, unchecked = 0, warning = 0, sos = 0, html = "";
+  for (let n = 1; n <= ROOM_COUNT; n++) {
+    const st = stateOf(rooms[roomKey(n)]);
+    if (st === "READY") ready++; else if (st === "WARNING") warning++;
+    else if (st === "SOS") sos++; else unchecked++;
+    html += cardHTML(n);
+  }
+  $("grid").innerHTML = html;
+  $("cReady").textContent = ready;
+  $("cUnchecked").textContent = unchecked;
+  $("cWarning").textContent = warning;
+  $("cSos").textContent = sos;
+  $("sosStat").classList.toggle("active", sos > 0);
+  document.title = sos > 0 ? `🚨 (${sos}) SOS · Tech Ops` : "Tech Ops Mission Control · NASA Space Apps Cairo";
+}
+
+/* ------------------------------------------------------------------- alerts */
+function beepSiren() {
+  if (!audioOn || !audioCtx) return;
+  const t0 = audioCtx.currentTime;
+  for (let i = 0; i < 6; i++) {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = "square";
+    osc.frequency.value = i % 2 ? 660 : 990;
+    const s = t0 + i * 0.2;
+    gain.gain.setValueAtTime(0.0001, s);
+    gain.gain.exponentialRampToValueAtTime(0.6, s + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, s + 0.18);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(s);
+    osc.stop(s + 0.2);
+  }
+  if (navigator.vibrate) navigator.vibrate([400, 150, 400, 150, 400]);
+}
+
+const unclaimedSosCount = () => Object.values(rooms)
+  .filter((r) => stateOf(r) === "SOS" && !(r.sos && r.sos.claimed_by)).length;
+
+// Keep nagging every 4 s until every SOS has been claimed.
+setInterval(() => { if (audioOn && unclaimedSosCount() > 0) beepSiren(); }, 4000);
+
+async function requestWakeLock() {
+  try { if ("wakeLock" in navigator) wakeLock = await navigator.wakeLock.request("screen"); } catch { /* ignore */ }
+}
+document.addEventListener("visibilitychange", () => { if (audioOn && document.visibilityState === "visible") requestWakeLock(); });
+
+$("audioBtn").addEventListener("click", () => {
+  if (!audioOn) {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    audioCtx.resume();
+    audioOn = true;
+    requestWakeLock();
+    $("audioBtn").textContent = "🔔 Alerts ON — tap to mute";
+    $("audioBtn").classList.add("on");
+    if (navigator.vibrate) navigator.vibrate(120);
+    beepSiren();
+    toast("🔊 Alerts enabled (screen will stay awake).");
+  } else {
+    audioOn = false;
+    $("audioBtn").textContent = "🔊 Enable Audio & Vibration Alerts";
+    $("audioBtn").classList.remove("on");
+    if (wakeLock) { wakeLock.release().catch(() => {}); wakeLock = null; }
+    toast("🔇 Alerts muted.");
+  }
+});
+
+/* ----------------------------------------------------------------- firebase */
+if (!CONFIG_OK) {
+  $("configBanner").innerHTML = MISSING_CONFIG_MESSAGE;
+  $("configBanner").hidden = false;
+  render();
+} else {
+  onValue(ref(db, ".info/connected"), (snap) => {
+    const on = snap.val() === true;
+    $("conn").className = "pill " + (on ? "online" : "offline");
+    $("connText").textContent = on ? "Live" : "Reconnecting…";
+  });
+
+  onValue(ref(db, "rooms"), (snap) => {
+    rooms = snap.val() || {};
+    const nowSos = new Set();
+    for (let n = 1; n <= ROOM_COUNT; n++) if (stateOf(rooms[roomKey(n)]) === "SOS") nowSos.add(n);
+
+    if (!firstSnapshot) {
+      const fresh = [...nowSos].filter((n) => !knownSos.has(n));
+      if (fresh.length) {
+        toast(`🚨 SOS from Room ${fresh.join(", ")}!`);
+        beepSiren();
+      }
+    }
+    knownSos = nowSos;
+    firstSnapshot = false;
+    render();
+  }, (err) => toast("Database error: " + err.message));
+}
+
+// Refresh "x min ago" labels.
+setInterval(render, 30000);
+setInterval(() => { $("clock").textContent = new Date().toLocaleTimeString([], { hour12: false }); }, 1000);
+
+/* ------------------------------------------------------------------ actions */
+async function claim(n) {
+  const name = requireName();
+  if (!name) return;
+  const key = roomKey(n);
+  try {
+    const res = await runTransaction(ref(db, `rooms/${key}/sos`), (cur) => {
+      if (!cur || cur.claimed_by) return; // abort: nothing to claim / already taken
+      return { ...cur, claimed_by: name, claimed_at: Date.now() };
+    });
+    if (res.committed) toast(`🏃‍♂️ You claimed Room ${n}. Go go go!`);
+    else {
+      const who = rooms[key]?.sos?.claimed_by;
+      toast(who ? `Already claimed by ${who}` : "Nothing to claim (already resolved?)");
+    }
+  } catch (e) { toast("Claim failed: " + e.message); }
+}
+
+async function release(n) {
+  try {
+    await update(ref(db, `rooms/${roomKey(n)}/sos`), { claimed_by: null, claimed_at: null });
+    toast(`Released Room ${n}.`);
+  } catch (e) { toast("Release failed: " + e.message); }
+}
+
+async function resolve(n) {
+  const name = requireName();
+  if (!name) return;
+  const key = roomKey(n);
+  const s = rooms[key]?.sos || {};
+  try {
+    await update(ref(db), {
+      [`rooms/${key}/sos`]: null,
+      [`rooms/${key}/status`]: "READY",
+      [`rooms/${key}/checked_by`]: name,
+      [`rooms/${key}/updated_at`]: serverTimestamp(),
+      [`rooms/${key}/source`]: "sos-resolved",
+    });
+    // Audit trail for the post-event report.
+    push(ref(db, "sos_log"), {
+      room: n, issue: s.issue || null, note: s.note || null,
+      reported_at: s.created_at || null, claimed_by: s.claimed_by || null,
+      resolved_by: name, resolved_at: serverTimestamp(),
+    });
+    toast(`✅ Room ${n} resolved.`);
+  } catch (e) { toast("Resolve failed: " + e.message); }
+}
+
+/* manual check dialog */
+let manualRoom = null, manualStatus = null;
+function openManual(n) {
+  manualRoom = n; manualStatus = null;
+  $("manualTitle").textContent = `Manual check — Room ${pad2(n)}`;
+  $("manualNote").value = "";
+  $("manualSave").disabled = true;
+  document.querySelectorAll("#manualChoice .btn").forEach((b) => b.classList.remove("sel"));
+  $("manualDlg").showModal();
+}
+$("manualChoice").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-status]");
+  if (!b) return;
+  manualStatus = b.dataset.status;
+  document.querySelectorAll("#manualChoice .btn").forEach((x) => x.classList.toggle("sel", x === b));
+  $("manualSave").disabled = false;
+});
+$("manualCancel").addEventListener("click", () => $("manualDlg").close());
+$("manualSave").addEventListener("click", async () => {
+  const name = requireName();
+  if (!name) return;
+  const reset = manualStatus === "UNCHECKED";
+  try {
+    await update(ref(db, `rooms/${roomKey(manualRoom)}`), {
+      status: manualStatus,
+      checked_by: reset ? null : name,
+      updated_at: reset ? null : serverTimestamp(),
+      source: reset ? null : "manual",
+      note: reset ? null : ($("manualNote").value.trim() || null),
+      ...(reset ? { ping_ms: null, download_mbps: null, datashow: null, wifi_signal: null } : {}),
+    });
+    $("manualDlg").close();
+    toast(`Room ${manualRoom} marked ${manualStatus}.`);
+  } catch (e) { toast("Save failed: " + e.message); }
+});
+
+$("grid").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-act]");
+  if (!b) return;
+  const n = Number(b.dataset.room);
+  ({ claim, release, resolve, manual: openManual }[b.dataset.act])(n);
+});
+
+/* name persistence */
+$("nameInput").value = localStorage.getItem("techops_name") || "";
+function saveName() {
+  const n = getName();
+  localStorage.setItem("techops_name", n);
+  toast(n ? `Saved: ${n}` : "Name cleared");
+}
+$("saveName").addEventListener("click", saveName);
+$("nameInput").addEventListener("keydown", (e) => { if (e.key === "Enter") { saveName(); e.target.blur(); } });
+$("nameInput").addEventListener("change", () => localStorage.setItem("techops_name", getName()));
+
+render();
+</script>
+</body>
+</html>

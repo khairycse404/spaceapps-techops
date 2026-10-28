@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Printable Room QR Codes · Tech Ops</title>
+  <link rel="stylesheet" href="theme.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    .wrap { max-width: 1000px; margin: 0 auto; padding: 1rem; }
+    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 1rem; margin-bottom: 1rem; }
+    .panel h1 { font-size: 1.3rem; margin-bottom: .3rem; }
+    .panel p { color: var(--muted); margin: .2rem 0 .8rem; }
+    .row { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
+    .row input[type=text] { flex: 1 1 340px; background: #070b1a; color: var(--text); border: 1px solid var(--line); border-radius: 10px; padding: .65rem .8rem; font: inherit; }
+    .row select { background: #070b1a; color: var(--text); border: 1px solid var(--line); border-radius: 10px; padding: .65rem; font: inherit; }
+    .warn { color: #fde68a; font-size: .9rem; margin-top: .6rem; }
+
+    /* ---- card sheet ---- */
+    .sheet { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; background: #fff; border: 1px solid #ccc; }
+    .sheet.six { grid-template-columns: repeat(2, 1fr); }
+    .qcard {
+      background: #fff; color: #0b1020; border: 1px dashed #888; padding: 4mm 3mm;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.5mm;
+      text-align: center; break-inside: avoid; page-break-inside: avoid; min-height: 70mm;
+    }
+    .sheet.six .qcard { min-height: 92mm; }
+    .qcard .org { font-size: 8pt; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #0b3d91; }
+    .qcard .room { font-size: 26pt; font-weight: 900; line-height: 1; color: #fc3d21; }
+    .sheet.six .qcard .room { font-size: 34pt; }
+    .qcard .qr { padding: 2mm; background: #fff; }
+    .qcard .qr img, .qcard .qr canvas { display: block; }
+    .qcard .cta { font-size: 9pt; font-weight: 700; }
+    .sheet.six .qcard .cta { font-size: 11pt; }
+    .qcard .url { font-size: 5.5pt; color: #555; word-break: break-all; max-width: 95%; }
+
+    @page { size: A4 portrait; margin: 8mm; }
+    @media print {
+      html, body { background: #fff !important; }
+      .noprint { display: none !important; }
+      .wrap { max-width: none; padding: 0; }
+      .sheet { border: none; }
+      .sheet:not(.six) { grid-auto-rows: 70mm; }
+      .sheet.six { grid-auto-rows: 92mm; }
+      .qcard { min-height: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .sheet.six .qcard:nth-child(6n) { break-after: page; }
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="panel noprint">
+    <h1>🖨️ Printable Room QR Codes</h1>
+    <p>Each card opens <code>sos.html?room=N</code> on the mentor’s phone. Print on A4 (<b>Ctrl+P</b> → margins “Default”, Scale 100%), cut along the dashed lines, tape one on every podium.</p>
+    <div class="row">
+      <input id="base" type="text" spellcheck="false" placeholder="https://username.github.io/spaceapps-techops/">
+      <button id="gen" class="btn primary">Generate</button>
+      <select id="layout" title="Layout">
+        <option value="twelve">12 per page (1 × A4)</option>
+        <option value="six">6 per page (2 × A4, larger)</option>
+      </select>
+      <button id="print" class="btn good">🖨️ Print</button>
+    </div>
+    <div id="warn" class="warn" hidden></div>
+  </div>
+
+  <div id="sheet" class="sheet"></div>
+</div>
+
+<script>
+const ROOM_COUNT = 12;
+const baseInput = document.getElementById("base");
+const sheet = document.getElementById("sheet");
+const warn = document.getElementById("warn");
+
+function detectBase() {
+  const saved = localStorage.getItem("techops_base_url");
+  if (saved) return saved;
+  // current page URL minus "qr.html" and any query/hash
+  return location.href.split("#")[0].split("?")[0].replace(/[^/]*$/, "");
+}
+
+function normaliseBase(v) {
+  v = (v || "").trim();
+  if (!v) return "";
+  v = v.replace(/sos\.html.*$/, "").replace(/qr\.html.*$/, "").replace(/index\.html.*$/, "");
+  if (!v.endsWith("/")) v += "/";
+  return v;
+}
+
+function generate() {
+  const base = normaliseBase(baseInput.value);
+  if (!base) { warn.textContent = "Enter your GitHub Pages URL first."; warn.hidden = false; return; }
+  baseInput.value = base;
+  localStorage.setItem("techops_base_url", base);
+
+  const local = /^(file:|http:\/\/(localhost|127\.|192\.168\.|10\.))/.test(base);
+  warn.hidden = !local;
+  if (local) warn.textContent = "⚠️ This looks like a local address — phones won’t reach it. Use your https://<user>.github.io/<repo>/ URL before printing.";
+
+  sheet.innerHTML = "";
+  sheet.className = "sheet" + (document.getElementById("layout").value === "six" ? " six" : "");
+  const size = document.getElementById("layout").value === "six" ? 190 : 150;
+
+  for (let n = 1; n <= ROOM_COUNT; n++) {
+    const url = `${base}sos.html?room=${n}`;
+    const card = document.createElement("div");
+    card.className = "qcard";
+    card.innerHTML = `
+      <div class="org">NASA Space Apps Cairo · Tech Ops</div>
+      <div class="room">ROOM ${String(n).padStart(2, "0")}</div>
+      <div class="qr"></div>
+      <div class="cta">📱 Scan for instant Tech Ops help<br>(Data Show · Wi-Fi · Audio · Cables)</div>
+      <div class="url"></div>`;
+    card.querySelector(".url").textContent = url;
+    sheet.appendChild(card);
+    new QRCode(card.querySelector(".qr"), {
+      text: url, width: size, height: size,
+      colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M,
+    });
+  }
+}
+
+baseInput.value = detectBase();
+document.getElementById("gen").addEventListener("click", generate);
+document.getElementById("layout").addEventListener("change", generate);
+baseInput.addEventListener("keydown", (e) => { if (e.key === "Enter") generate(); });
+document.getElementById("print").addEventListener("click", () => { generate(); setTimeout(() => window.print(), 250); });
+generate();
+</script>
+</body>
+</html>

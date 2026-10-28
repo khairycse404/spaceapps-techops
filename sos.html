@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#04060f">
+  <title>Tech Ops Support · NASA Space Apps Cairo</title>
+  <link rel="stylesheet" href="theme.css">
+  <style>
+    .wrap { max-width: 560px; margin: 0 auto; padding: 1.2rem 1rem 3rem; }
+    .brand { text-align: center; margin-bottom: 1rem; }
+    .brand small { color: var(--muted); letter-spacing: .14em; text-transform: uppercase; font-size: .7rem; }
+    h1 { font-size: clamp(1.35rem, 6vw, 1.9rem); line-height: 1.25; margin-top: .3rem; }
+    h1 .room { color: var(--nasa-red); }
+    .sub { color: var(--muted); text-align: center; margin: .4rem 0 1.2rem; }
+
+    .opts { display: grid; gap: .8rem; }
+    .opt {
+      display: flex; align-items: center; gap: 1rem; text-align: left; width: 100%;
+      min-height: 84px; padding: 1rem 1.2rem; font-size: 1.2rem; font-weight: 700;
+      color: var(--text); background: linear-gradient(180deg, var(--panel-2), var(--panel));
+      border: 2px solid var(--line); border-radius: 18px; cursor: pointer; font-family: inherit;
+      -webkit-tap-highlight-color: transparent; transition: transform .08s, border-color .15s;
+    }
+    .opt:active { transform: scale(.98); border-color: var(--nasa-red); }
+    .opt:disabled { opacity: .5; }
+    .opt .ico { font-size: 2.2rem; }
+    .opt small { display: block; font-weight: 400; color: var(--muted); font-size: .85rem; }
+
+    label.note { display: block; margin: 1.1rem 0 .4rem; color: var(--muted); font-size: .9rem; }
+    textarea {
+      width: 100%; min-height: 76px; background: #070b1a; color: var(--text);
+      border: 1px solid var(--line); border-radius: 12px; padding: .7rem; font: inherit; resize: vertical;
+    }
+    textarea:focus { outline: 2px solid var(--cyan); }
+
+    .state {
+      text-align: center; padding: 2rem 1.2rem; border-radius: 20px; border: 2px solid var(--line);
+      background: var(--panel);
+    }
+    .state .big { font-size: 4rem; line-height: 1; margin-bottom: .6rem; }
+    .state h2 { font-size: 1.5rem; line-height: 1.3; }
+    .state p { color: var(--muted); }
+    .state.wait { border-color: var(--sos); animation: pulse 1.6s infinite; }
+    .state.claimed { border-color: var(--ready); background: rgba(34, 197, 94, .1); }
+    .state.done { border-color: var(--cyan); }
+    @keyframes pulse { 50% { box-shadow: 0 0 28px rgba(239, 68, 68, .5); } }
+    .reported { margin: 1rem 0; padding: .7rem; border-radius: 12px; background: rgba(0, 0, 0, .3); white-space: pre-line; font-weight: 600; }
+    .warnline { color: #fde68a; margin-top: .8rem; }
+
+    .picker { display: grid; grid-template-columns: repeat(3, 1fr); gap: .6rem; margin-top: 1rem; }
+    .conn { text-align: center; margin-top: 1.2rem; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div id="configBanner" class="banner" hidden></div>
+
+  <div class="brand">
+    <small>🛰️ Tech Ops</small>
+    <h1 id="title">NASA Space Apps Cairo Tech Ops<br>— <span class="room">Support</span></h1>
+  </div>
+
+  <!-- Room picker (if URL has no valid ?room=) -->
+  <section id="viewPicker" hidden>
+    <p class="sub">Which room are you in?</p>
+    <div class="picker" id="pickerGrid"></div>
+  </section>
+
+  <!-- Report form -->
+  <section id="viewForm" hidden>
+    <p class="sub">We’re here to help — tap what’s wrong. No typing needed.</p>
+    <div class="opts">
+      <button class="opt" data-issue="datashow"><span class="ico">🔴</span><span>Data Show / Projector Issue<small>No image, wrong colours, flicker…</small></span></button>
+      <button class="opt" data-issue="wifi"><span class="ico">📶</span><span>Wi-Fi / Internet Down<small>Can’t connect or very slow</small></span></button>
+      <button class="opt" data-issue="audio"><span class="ico">🔊</span><span>Audio / Sound Issue<small>No sound, mic or speakers</small></span></button>
+      <button class="opt" data-issue="cable"><span class="ico">🔌</span><span>Need HDMI Cable / Type-C Adapter<small>We’ll bring one to you</small></span></button>
+    </div>
+    <label class="note" for="note">Optional note for the team</label>
+    <textarea id="note" maxlength="200" placeholder="e.g. Laptop is a MacBook, needs USB-C"></textarea>
+    <p class="sub" id="backRow" hidden><button class="btn" id="backBtn">← Back</button></p>
+  </section>
+
+  <!-- Waiting / claimed / resolved -->
+  <section id="viewWait" hidden>
+    <div class="state wait">
+      <div class="big" id="waitIcon">🚨</div>
+      <h2 id="waitTitle">Alert received! Notifying Tech Ops team…</h2>
+      <div class="reported" id="reported"></div>
+      <p id="waitSub">Please stay in the room. This screen updates by itself.</p>
+      <p class="warnline" id="slowWarn" hidden>⚠️ Connection looks weak. If nothing changes in a minute, please call the Tech Ops desk.</p>
+    </div>
+    <p class="sub"><button class="btn" id="moreBtn">➕ Report another issue</button></p>
+  </section>
+
+  <section id="viewClaimed" hidden>
+    <div class="state claimed">
+      <div class="big">🏃‍♂️</div>
+      <h2 id="claimedTitle"></h2>
+      <div class="reported" id="reported2"></div>
+      <p>Hang tight — help is almost there.</p>
+    </div>
+    <p class="sub"><button class="btn" id="moreBtn2">➕ Report another issue</button></p>
+  </section>
+
+  <section id="viewDone" hidden>
+    <div class="state done">
+      <div class="big">✅</div>
+      <h2>All fixed! Thanks for your patience.</h2>
+      <p>If the problem comes back, just tap again.</p>
+      <button class="btn primary block" id="againBtn">Need more help?</button>
+    </div>
+  </section>
+
+  <div class="conn"><span id="conn" class="pill offline"><span class="dot"></span><span id="connText">Connecting…</span></span></div>
+</div>
+
+<script type="module">
+import {
+  db, CONFIG_OK, ROOM_COUNT, roomKey, ref, onValue, update, serverTimestamp, esc, pad2, MISSING_CONFIG_MESSAGE,
+} from "./firebase-config.js";
+
+const $ = (id) => document.getElementById(id);
+const ISSUES = {
+  datashow: "🔴 Data Show / HDMI Issue",
+  wifi: "📶 Wi-Fi / Internet Down",
+  audio: "🔊 Audio / Sound Issue",
+  cable: "🔌 Need HDMI Cable / Type-C Adapter",
+};
+const VIEWS = ["viewPicker", "viewForm", "viewWait", "viewClaimed", "viewDone"];
+function show(id) { VIEWS.forEach((v) => { $(v).hidden = v !== id; }); }
+
+const room = parseInt(new URLSearchParams(location.search).get("room"), 10);
+const validRoom = Number.isInteger(room) && room >= 1 && room <= ROOM_COUNT;
+
+if (!CONFIG_OK) {
+  $("configBanner").innerHTML = MISSING_CONFIG_MESSAGE;
+  $("configBanner").hidden = false;
+}
+
+if (!validRoom) {
+  $("title").innerHTML = `NASA Space Apps Cairo Tech Ops<br>— <span class="room">Support</span>`;
+  let h = "";
+  for (let n = 1; n <= ROOM_COUNT; n++) h += `<a class="btn" style="text-align:center;text-decoration:none" href="?room=${n}">Room ${pad2(n)}</a>`;
+  $("pickerGrid").innerHTML = h;
+  show("viewPicker");
+} else {
+  $("title").innerHTML = `NASA Space Apps Cairo Tech Ops<br>— <span class="room">Room ${room}</span> Support`;
+  document.title = `Room ${room} Support · Tech Ops`;
+  const key = roomKey(room);
+  const roomRef = ref(db, `rooms/${key}`);
+
+  let latest = {};          // latest room node
+  let sentLocally = false;  // this phone sent a request (so we can say "resolved" later)
+  let addingMore = false;   // mentor chose "report another issue"
+  let pendingAck = false;   // write not yet acknowledged by server
+  let slowTimer = null;
+  let lastClaimedBy = null;
+
+  const activeSos = () => latest.sos || (latest.status === "SOS" ? {} : null);
+
+  function render() {
+    const sos = activeSos();
+    if (addingMore) { show("viewForm"); $("backRow").hidden = false; return; }
+    if (sos) {
+      sentLocally = true;
+      const issues = sos.issue ? `You reported:\n${sos.issue}` : "";
+      if (sos.claimed_by && !pendingAck) {
+        $("claimedTitle").textContent = `🏃‍♂️ ${sos.claimed_by} is on the way to Room ${room} right now!`;
+        $("reported2").textContent = issues;
+        $("reported2").hidden = !issues;
+        if (lastClaimedBy !== sos.claimed_by && navigator.vibrate) navigator.vibrate([200, 100, 200]);
+        lastClaimedBy = sos.claimed_by;
+        show("viewClaimed");
+      } else {
+        lastClaimedBy = null;
+        const sending = pendingAck;
+        $("waitIcon").textContent = sending ? "📡" : "🚨";
+        $("waitTitle").textContent = sending ? "Sending your alert…" : "🚨 Alert received! Notifying Tech Ops team...";
+        $("reported").textContent = issues;
+        $("reported").hidden = !issues;
+        show("viewWait");
+      }
+    } else if (sentLocally) {
+      lastClaimedBy = null;
+      show("viewDone");
+    } else {
+      $("backRow").hidden = true;
+      show("viewForm");
+    }
+  }
+
+  onValue(ref(db, ".info/connected"), (snap) => {
+    const on = snap.val() === true;
+    $("conn").className = "pill " + (on ? "online" : "offline");
+    $("connText").textContent = on ? "Connected to Tech Ops" : "Reconnecting…";
+  });
+
+  onValue(roomRef, (snap) => { latest = snap.val() || {}; render(); });
+
+  async function send(code) {
+    if (!CONFIG_OK) { alert("Tech Ops system is not configured yet."); return; }
+    const label = ISSUES[code];
+    const note = $("note").value.trim();
+    const cur = activeSos();
+
+    const issue = cur && cur.issue
+      ? (cur.issue.includes(label) ? cur.issue : `${cur.issue}\n${label}`)
+      : label;
+    const mergedNote = cur && cur.note
+      ? (note && !cur.note.includes(note) ? `${cur.note} | ${note}` : cur.note)
+      : (note || null);
+
+    const upd = { status: "SOS", "sos/issue": issue, "sos/note": mergedNote };
+    if (!cur || !cur.created_at) upd["sos/created_at"] = serverTimestamp();
+    // Reset any stale resolution fields
+    upd.updated_at = serverTimestamp();
+
+    addingMore = false;
+    sentLocally = true;
+    pendingAck = true;
+    $("note").value = "";
+    clearTimeout(slowTimer);
+    slowTimer = setTimeout(() => { if (pendingAck) $("slowWarn").hidden = false; }, 8000);
+    $("slowWarn").hidden = true;
+    render();
+
+    try {
+      await update(roomRef, upd);
+      pendingAck = false;
+      clearTimeout(slowTimer);
+      $("slowWarn").hidden = true;
+      render();
+    } catch (e) {
+      pendingAck = false;
+      clearTimeout(slowTimer);
+      sentLocally = false;
+      alert("Couldn't send the alert: " + e.message + "\nPlease go to the Tech Ops desk.");
+      render();
+    }
+  }
+
+  document.querySelectorAll(".opt").forEach((b) => b.addEventListener("click", () => {
+    if (pendingAck) return;
+    if (navigator.vibrate) navigator.vibrate(60);
+    send(b.dataset.issue);
+  }));
+  const more = () => { addingMore = true; render(); };
+  $("moreBtn").addEventListener("click", more);
+  $("moreBtn2").addEventListener("click", more);
+  $("backBtn").addEventListener("click", () => { addingMore = false; render(); });
+  $("againBtn").addEventListener("click", () => { sentLocally = false; addingMore = false; render(); });
+
+  render();
+}
+</script>
+</body>
+</html>

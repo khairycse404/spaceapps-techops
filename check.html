@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#04060f">
+  <title>Mobile Room Inspector · NASA Space Apps Cairo</title>
+  <link rel="stylesheet" href="theme.css">
+  <style>
+    .wrap { max-width: 600px; margin: 0 auto; padding: 1rem 1rem 3rem; }
+    
+    .nav-top {
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;
+    }
+    .nav-link {
+      color: var(--cyan); text-decoration: none; font-size: 0.85rem; font-weight: 600;
+      display: inline-flex; align-items: center; gap: 0.3rem;
+    }
+
+    .brand { text-align: center; margin-bottom: 1.2rem; }
+    .brand small { color: var(--muted); letter-spacing: .12em; text-transform: uppercase; font-size: .75rem; }
+    .brand h1 { font-size: 1.6rem; margin-top: .2rem; }
+    .brand h1 span { color: var(--cyan); }
+
+    .card-panel {
+      background: var(--panel); border: 1px solid var(--line); border-radius: 16px;
+      padding: 1.1rem; margin-bottom: 1rem;
+    }
+    .section-title { font-size: 0.95rem; font-weight: 700; color: var(--muted); margin-bottom: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em; }
+
+    /* Name input */
+    .field-row { display: flex; gap: 0.5rem; align-items: center; }
+    input[type=text], select, textarea {
+      width: 100%; background: #070b1a; color: var(--text); border: 1px solid var(--line);
+      border-radius: 10px; padding: 0.65rem 0.8rem; font: inherit; font-size: 1rem;
+    }
+    input:focus, select:focus, textarea:focus { outline: 2px solid var(--cyan); }
+
+    /* Room selector buttons */
+    .room-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-top: 0.4rem;
+    }
+    .room-btn {
+      appearance: none; border: 1px solid var(--line); background: #0a0f24; color: var(--text);
+      font-weight: 800; font-size: 1.05rem; padding: 0.75rem 0.2rem; border-radius: 12px;
+      cursor: pointer; text-align: center; transition: all 0.15s ease;
+    }
+    .room-btn:active { transform: scale(0.95); }
+    .room-btn.active {
+      background: var(--nasa-blue); border-color: var(--cyan); color: #fff;
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+    }
+    .room-btn.READY { border-bottom: 4px solid var(--ready); }
+    .room-btn.WARNING { border-bottom: 4px solid var(--warning); }
+    .room-btn.SOS { border-bottom: 4px solid var(--sos); animation: sosbtn 1s infinite; }
+    @keyframes sosbtn { 50% { background: rgba(239, 68, 68, 0.3); } }
+
+    /* Projector status toggle */
+    .toggle-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+    .toggle-btn {
+      appearance: none; border: 2px solid var(--line); background: #080d20; color: var(--text);
+      border-radius: 12px; padding: 0.8rem 0.5rem; font-weight: 700; font-size: 0.95rem;
+      cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 0.3rem;
+      transition: all 0.15s ease;
+    }
+    .toggle-btn .icon { font-size: 1.5rem; }
+    .toggle-btn.sel-ok {
+      background: rgba(34, 197, 94, 0.15); border-color: var(--ready); color: #86efac;
+    }
+    .toggle-btn.sel-bad {
+      background: rgba(239, 68, 68, 0.15); border-color: var(--sos); color: #fca5a5;
+    }
+
+    /* Network Speed box */
+    .net-box {
+      background: #070b1a; border: 1px solid var(--line); border-radius: 12px;
+      padding: 0.9rem; text-align: center;
+    }
+    .net-stats {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin: 0.8rem 0 0.4rem;
+    }
+    .stat-metric { background: rgba(255, 255, 255, 0.03); padding: 0.6rem; border-radius: 10px; }
+    .stat-metric .val { font-size: 1.4rem; font-weight: 800; color: var(--cyan); font-variant-numeric: tabular-nums; }
+    .stat-metric .lbl { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; margin-top: 0.2rem; }
+
+    .progress-bar {
+      width: 100%; height: 6px; background: #1a223f; border-radius: 999px; overflow: hidden; margin: 0.6rem 0;
+    }
+    .progress-bar-fill {
+      width: 0%; height: 100%; background: linear-gradient(90deg, var(--nasa-blue), var(--cyan));
+      transition: width 0.2s ease;
+    }
+
+    /* Submit button */
+    .btn-submit {
+      width: 100%; padding: 1rem; font-size: 1.15rem; font-weight: 800; border-radius: 14px;
+      background: linear-gradient(135deg, #16a34a, #15803d); border: 1px solid #4ade80;
+      color: #fff; cursor: pointer; box-shadow: 0 4px 16px rgba(34, 197, 94, 0.3);
+      transition: all 0.15s ease;
+    }
+    .btn-submit:active { transform: scale(0.98); }
+    .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
+
+    .history-card {
+      background: rgba(255,255,255,0.02); border-radius: 8px; padding: 0.5rem 0.8rem;
+      font-size: 0.85rem; color: var(--muted); margin-top: 0.6rem; display: flex; justify-content: space-between;
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div id="configBanner" class="banner" hidden></div>
+
+  <div class="nav-top">
+    <a href="index.html" class="nav-link">← Mission Control</a>
+    <span id="conn" class="pill offline"><span class="dot"></span><span id="connText">Connecting…</span></span>
+  </div>
+
+  <div class="brand">
+    <small>Room Strike Team · Rapid Deployment</small>
+    <h1>📱 Mobile <span>Room Inspector</span></h1>
+  </div>
+
+  <!-- Inspector Profile -->
+  <div class="card-panel">
+    <div class="section-title">Inspector Name</div>
+    <div class="field-row">
+      <input type="text" id="inspectorName" placeholder="Your name (e.g. Mohamed)" maxlength="30">
+    </div>
+  </div>
+
+  <!-- Step 1: Room Selector -->
+  <div class="card-panel">
+    <div class="section-title">Select Room (1 to 12)</div>
+    <div class="room-grid" id="roomGrid"></div>
+    <div id="roomHistory" class="history-card" style="display:none;"></div>
+  </div>
+
+  <!-- Step 2: Data Show / HDMI Test -->
+  <div class="card-panel">
+    <div class="section-title">1. Data Show / Projector Verification</div>
+    <div class="toggle-row">
+      <button class="toggle-btn" id="dsOkBtn" type="button">
+        <span class="icon">🟢</span>
+        <span>Data Show OK</span>
+      </button>
+      <button class="toggle-btn" id="dsBadBtn" type="button">
+        <span class="icon">🔴</span>
+        <span>Issue / Broken</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Step 3: Wi-Fi Speed Test -->
+  <div class="card-panel">
+    <div class="section-title">2. In-Room Wi-Fi &amp; Internet Test</div>
+    <div class="net-box">
+      <button id="runSpeedBtn" class="btn primary block">⚡ Run Speed &amp; Ping Test</button>
+      
+      <div class="progress-bar" id="pBarWrap" style="display:none;">
+        <div class="progress-bar-fill" id="pBar"></div>
+      </div>
+      <div id="netStatus" style="font-size:0.8rem; color:var(--muted); margin-top:0.4rem;">Tap button to measure room Wi-Fi</div>
+
+      <div class="net-stats">
+        <div class="stat-metric">
+          <div class="val" id="valPing">—</div>
+          <div class="lbl">Ping (ms)</div>
+        </div>
+        <div class="stat-metric">
+          <div class="val" id="valSpeed">—</div>
+          <div class="lbl">Download (Mbps)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 4: Notes & Submit -->
+  <div class="card-panel">
+    <div class="section-title">3. Optional Notes</div>
+    <textarea id="notes" rows="2" maxlength="200" placeholder="e.g. Needs Type-C dongle, HDMI port slightly loose"></textarea>
+    <div style="margin-top: 1rem;">
+      <button id="submitBtn" class="btn-submit" disabled>💾 Save &amp; Mark Room Ready</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script type="module">
+import {
+  db, CONFIG_OK, ROOM_COUNT, roomKey, ref, onValue, update, serverTimestamp, MISSING_CONFIG_MESSAGE
+} from "./firebase-config.js";
+
+const $ = (id) => document.getElementById(id);
+
+let selectedRoom = 1;
+let datashowStatus = null; // "OK" or "Issue"
+let pingMs = null;
+let downloadMbps = null;
+let roomsData = {};
+
+function toast(msg) {
+  const t = $("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => t.classList.remove("show"), 3000);
+}
+
+// Load Inspector Name
+const savedName = localStorage.getItem("techops_name") || "";
+$("inspectorName").value = savedName;
+$("inspectorName").addEventListener("input", (e) => {
+  localStorage.setItem("techops_name", e.target.value.trim());
+  validateForm();
+});
+
+// Render 12 room buttons
+function renderRooms() {
+  let html = "";
+  for (let n = 1; n <= ROOM_COUNT; n++) {
+    const key = roomKey(n);
+    const r = roomsData[key] || {};
+    const st = r.sos ? "SOS" : (r.status || "UNCHECKED");
+    const active = n === selectedRoom ? "active" : "";
+    html += `<button class="room-btn ${active} ${st}" data-room="${n}">R${n < 10 ? '0' + n : n}</button>`;
+  }
+  $("roomGrid").innerHTML = html;
+  updateRoomHistory();
+}
+
+function updateRoomHistory() {
+  const key = roomKey(selectedRoom);
+  const r = roomsData[key];
+  const box = $("roomHistory");
+  if (r && r.status) {
+    box.style.display = "flex";
+    box.innerHTML = `<span>Current: <strong>${r.status}</strong></span><span>Checked by: <strong>${r.checked_by || 'Unknown'}</strong></span>`;
+  } else {
+    box.style.display = "flex";
+    box.innerHTML = `<span>Current: <strong>UNCHECKED</strong></span><span>No tests recorded</span>`;
+  }
+}
+
+$("roomGrid").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-room]");
+  if (!b) return;
+  selectedRoom = Number(b.dataset.room);
+  renderRooms();
+  validateForm();
+});
+
+// Projector toggle
+$("dsOkBtn").addEventListener("click", () => {
+  datashowStatus = "OK";
+  $("dsOkBtn").classList.add("sel-ok");
+  $("dsBadBtn").classList.remove("sel-bad");
+  validateForm();
+});
+
+$("dsBadBtn").addEventListener("click", () => {
+  datashowStatus = "Issue";
+  $("dsBadBtn").classList.add("sel-bad");
+  $("dsOkBtn").classList.remove("sel-ok");
+  validateForm();
+});
+
+// Browser Speed & Ping test
+$("runSpeedBtn").addEventListener("click", async () => {
+  const btn = $("runSpeedBtn");
+  btn.disabled = true;
+  $("pBarWrap").style.display = "block";
+  $("pBar").style.width = "10%";
+  $("netStatus").textContent = "Pinging Google DNS / Gateway...";
+
+  try {
+    // 1. Measure Ping (via 3 lightweight HEAD/fetch requests to prevent cache)
+    const pingSamples = [];
+    for (let i = 0; i < 3; i++) {
+      const t0 = performance.now();
+      await fetch(`https://speed.cloudflare.com/__down?bytes=0&_t=${Date.now()}_${i}`, { cache: "no-store", mode: "no-cors" });
+      pingSamples.push(performance.now() - t0);
+    }
+    pingMs = Math.round(pingSamples.reduce((a, b) => a + b) / pingSamples.length);
+    $("valPing").textContent = `${pingMs}`;
+    $("pBar").style.width = "40%";
+    $("netStatus").textContent = "Measuring download throughput (2.5MB payload)...";
+
+    // 2. Measure Download Speed
+    const tStart = performance.now();
+    const speedUrl = `https://speed.cloudflare.com/__down?bytes=2500000&_t=${Date.now()}`;
+    const resp = await fetch(speedUrl, { cache: "no-store" });
+    const blob = await resp.blob();
+    const tEnd = performance.now();
+    
+    $("pBar").style.width = "100%";
+    const durationSeconds = (tEnd - tStart) / 1000;
+    const bitsLoaded = blob.size * 8;
+    downloadMbps = parseFloat(((bitsLoaded / durationSeconds) / 1000000).toFixed(1));
+    $("valSpeed").textContent = `${downloadMbps}`;
+    $("netStatus").textContent = `✔ Test complete: ${downloadMbps} Mbps (${pingMs} ms)`;
+  } catch (err) {
+    $("netStatus").textContent = "⚠️ Speed test warning (check connection)";
+    if (pingMs === null) pingMs = 50; // fallback default
+    if (downloadMbps === null) downloadMbps = 10;
+  } finally {
+    btn.disabled = false;
+    validateForm();
+  }
+});
+
+function validateForm() {
+  const name = $("inspectorName").value.trim();
+  const valid = name.length > 0 && datashowStatus !== null;
+  $("submitBtn").disabled = !valid;
+  if (valid) {
+    $("submitBtn").textContent = `💾 Save Room ${selectedRoom < 10 ? '0' + selectedRoom : selectedRoom} -> ${datashowStatus === 'OK' ? 'READY 🟢' : 'WARNING 🟡'}`;
+  } else {
+    $("submitBtn").textContent = `💾 Select Projector Status (Step 1)`;
+  }
+}
+
+// Submit Check to Firebase
+$("submitBtn").addEventListener("click", async () => {
+  const name = $("inspectorName").value.trim();
+  if (!name) { toast("Please enter your name"); return; }
+  if (!datashowStatus) { toast("Please verify Data Show (OK / Issue)"); return; }
+
+  const btn = $("submitBtn");
+  btn.disabled = true;
+  btn.textContent = "Uploading to Cloud...";
+
+  const key = roomKey(selectedRoom);
+  const issues = [];
+  if (datashowStatus === "Issue") issues.append ? issues.append("Data Show Issue") : issues.push("Data Show Issue");
+  if (pingMs !== null && pingMs > 150) issues.push(`High Ping (${pingMs}ms)`);
+  if (downloadMbps !== null && downloadMbps < 5.0) issues.push(`Slow Speed (${downloadMbps}Mbps)`);
+
+  const manualNotes = $("notes").value.trim();
+  if (manualNotes) issues.push(manualNotes);
+
+  const status = issues.length > 0 && datashowStatus === "Issue" ? "WARNING" : (issues.length > 0 ? "WARNING" : "READY");
+
+  const payload = {
+    status: status,
+    datashow: datashowStatus,
+    ping_ms: pingMs !== null ? pingMs : null,
+    download_mbps: downloadMbps !== null ? downloadMbps : null,
+    checked_by: `${name} 📱`,
+    updated_at: serverTimestamp(),
+    source: "mobile-check",
+    note: issues.join(" | ") || null
+  };
+
+  try {
+    await update(ref(db, `rooms/${key}`), payload);
+    toast(`🎉 Room ${selectedRoom} successfully updated to ${status}!`);
+    // auto-advance to next room!
+    if (selectedRoom < ROOM_COUNT) {
+      selectedRoom++;
+    }
+    // reset form fields
+    datashowStatus = null;
+    $("dsOkBtn").classList.remove("sel-ok");
+    $("dsBadBtn").classList.remove("sel-bad");
+    $("notes").value = "";
+    renderRooms();
+    validateForm();
+  } catch (e) {
+    alert("Error updating room: " + e.message);
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+// Firebase listeners
+if (!CONFIG_OK) {
+  $("configBanner").innerHTML = MISSING_CONFIG_MESSAGE;
+  $("configBanner").hidden = false;
+} else {
+  onValue(ref(db, ".info/connected"), (snap) => {
+    const on = snap.val() === true;
+    $("conn").className = "pill " + (on ? "online" : "offline");
+    $("connText").textContent = on ? "Live Cloud" : "Offline";
+  });
+
+  onValue(ref(db, "rooms"), (snap) => {
+    roomsData = snap.val() || {};
+    renderRooms();
+  });
+}
+
+renderRooms();
+validateForm();
+</script>
+</body>
+</html>
