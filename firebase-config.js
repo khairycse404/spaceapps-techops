@@ -62,6 +62,112 @@ export const DEFAULT_HOLDERS = {
 // Database key for a room — MUST match what check_room.py writes (rooms/room_<id>).
 export const roomKey = (n) => `room_${n}`;
 
+// ============================================================================
+//  ADMIN-EDITABLE CONFIG  (everything below can be changed from admin.html)
+//  The arrays/objects exported above are mutated IN PLACE, so every page that
+//  imported them automatically sees the new team, materials, names and text.
+// ============================================================================
+export const THRESHOLDS = { min_mbps: 5, max_ping_ms: 150, min_wifi_percent: 40 };
+export const SITE = {
+  title_main: "TECH OPS",
+  title_accent: "MISSION CONTROL",
+  subtitle: "NASA Space Apps Cairo · Bootcamp",
+};
+export const EQUIPMENT_TYPES = ["mac", "strip", "other"];
+export const DEFAULT_ICON_BY_TYPE = { mac: "💻🔌", strip: "⚡🔌", other: "🧰" };
+
+// Factory defaults (snapshot taken before any remote config is applied)
+export const FACTORY = {
+  team: ROOMS_TEAM.map((m) => ({ id: m.id, name: m.name })),
+  equipment: EQUIPMENT_ITEMS.map((i) => ({ ...i })),
+  room_count: ROOM_COUNT,
+  site: { ...SITE },
+  thresholds: { ...THRESHOLDS },
+};
+
+const slug = (s) => String(s ?? "").toLowerCase().replace(/[^a-z0-9_]/g, "");
+const clean = (s, max = 60) => String(s ?? "").trim().slice(0, max);
+const cleanIcon = (s) => String(s ?? "").replace(/[<>&"'`]/g, "").trim().slice(0, 12);
+
+// Firebase may return a list as an array OR as an object — normalise both.
+export function toList(v) {
+  if (!v) return [];
+  if (Array.isArray(v)) return v.filter(Boolean);
+  if (typeof v === "object") return Object.values(v).filter(Boolean);
+  return [];
+}
+
+export function rebuildHolders() {
+  EQUIPMENT_HOLDERS.splice(
+    0, EQUIPMENT_HOLDERS.length,
+    { id: "materials_room", name: "Materials Room", icon: "📦", isPerson: false },
+    ...ROOMS_TEAM.map((m) => ({ id: m.id, name: m.name, icon: "👤", isPerson: true })),
+  );
+}
+
+let _lastCfgJson = "";
+export function applyRemoteConfig(cfg) {
+  cfg = cfg && typeof cfg === "object" ? cfg : {};
+
+  // Team members
+  const seenT = new Set();
+  let team = toList(cfg.team)
+    .map((m) => ({ id: slug(m.id), name: clean(m.name, 30) }))
+    .filter((m) => m.id && m.name && m.id !== "materials_room" && !seenT.has(m.id) && seenT.add(m.id));
+  if (!team.length) team = FACTORY.team;
+  ROOMS_TEAM.splice(0, ROOMS_TEAM.length,
+    ...team.map((m) => ({ id: m.id, name: m.name, short: m.name, en: m.name })));
+  rebuildHolders();
+
+  // Materials / equipment
+  const seenE = new Set();
+  let eq = toList(cfg.equipment)
+    .map((i) => {
+      const type = EQUIPMENT_TYPES.includes(i.type) ? i.type : "other";
+      return {
+        id: slug(i.id), type,
+        icon: cleanIcon(i.icon) || DEFAULT_ICON_BY_TYPE[type],
+        title: clean(i.title, 40), sub: clean(i.sub, 60),
+      };
+    })
+    .filter((i) => i.id && i.title && !seenE.has(i.id) && seenE.add(i.id));
+  // An admin may deliberately delete every item, so only fall back to the
+  // factory list when the admin has never customised the materials.
+  if (!cfg.equipment_custom && !eq.length) eq = FACTORY.equipment;
+  EQUIPMENT_ITEMS.splice(0, EQUIPMENT_ITEMS.length, ...eq);
+
+  // Optional room names (stored as room_1, room_2, ...)
+  for (const k of Object.keys(ROOM_NAMES)) delete ROOM_NAMES[k];
+  for (const [k, v] of Object.entries(cfg.room_names || {})) {
+    const m = /^room_(\d+)$/.exec(k);
+    if (m && v) ROOM_NAMES[Number(m[1])] = clean(v, 40);
+  }
+
+  // Site text + thresholds
+  const s = cfg.site || {};
+  SITE.title_main = clean(s.title_main, 40) || FACTORY.site.title_main;
+  SITE.title_accent = clean(s.title_accent, 40) || FACTORY.site.title_accent;
+  SITE.subtitle = clean(s.subtitle, 80) || FACTORY.site.subtitle;
+  const t = cfg.thresholds || {};
+  for (const k of Object.keys(THRESHOLDS)) {
+    const n = Number(t[k]);
+    THRESHOLDS[k] = Number.isFinite(n) && n >= 0 ? n : FACTORY.thresholds[k];
+  }
+
+  // Remember for instant first paint next time
+  try {
+    const { admin_pin_hash, ...rest } = cfg;
+    const json = JSON.stringify(rest);
+    if (json !== _lastCfgJson) { _lastCfgJson = json; localStorage.setItem("techops_cfg_cache", json); }
+  } catch { /* ignore */ }
+
+  if (Number(cfg.room_count) >= 1) return Math.round(Number(cfg.room_count));
+  return null;
+}
+
+// Apply the cached config immediately so pages paint with the right names.
+try { applyRemoteConfig(JSON.parse(localStorage.getItem("techops_cfg_cache") || "{}")); } catch { /* ignore */ }
+
 export const CONFIG_OK = !FIREBASE_DATABASE_URL.includes("YOUR-PROJECT-ID");
 
 const app = initializeApp({ databaseURL: FIREBASE_DATABASE_URL });
@@ -86,6 +192,19 @@ export async function restPatch(path, data) {
   const url = `${FIREBASE_DATABASE_URL}/${clean ? clean + ".json" : ".json"}`;
   const res = await fetch(url, {
     method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+// PUT replaces the whole node (used for lists such as team / equipment)
+export async function restPut(path, data) {
+  const clean = path.replace(/^\/+|\/+$/g, "");
+  const url = `${FIREBASE_DATABASE_URL}/${clean}.json`;
+  const res = await fetch(url, {
+    method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });

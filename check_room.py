@@ -91,6 +91,67 @@ DEFAULTS = {
     "checker_name": "Khairy",
 }
 
+# Limits set from the website's Admin page (filled by apply_remote_config)
+REMOTE_THRESHOLDS = {}
+
+
+def _to_list(v):
+    if not v:
+        return []
+    if isinstance(v, list):
+        return [x for x in v if x]
+    if isinstance(v, dict):
+        return [x for x in v.values() if x]
+    return []
+
+
+def apply_remote_config():
+    """Pull the admin-editable team / materials / limits from Firebase (best effort).
+
+    Runs once at start-up, so restart the app after changing them on the Admin page.
+    """
+    try:
+        r = requests.get(f"{DEFAULTS['firebase_url'].rstrip('/')}/config.json", timeout=6)
+        if not r.ok:
+            return
+        remote = r.json() or {}
+        if not isinstance(remote, dict):
+            return
+    except Exception:
+        return
+
+    try:
+        team, seen = [], set()
+        for m in _to_list(remote.get("team")):
+            mid = re.sub(r"[^a-z0-9_]", "", str(m.get("id", "")).lower())
+            name = str(m.get("name", "")).strip()[:30]
+            if mid and name and mid != "materials_room" and mid not in seen:
+                seen.add(mid)
+                team.append((mid, name))
+        if team:
+            TEAM_MEMBERS[:] = team
+            EQUIPMENT_HOLDERS[:] = [("materials_room", "Materials Room")] + team
+
+        items, seen_i = [], set()
+        for i in _to_list(remote.get("equipment")):
+            iid = re.sub(r"[^a-z0-9_]", "", str(i.get("id", "")).lower())
+            title = str(i.get("title", "")).strip()[:40]
+            typ = i.get("type") if i.get("type") in ("mac", "strip") else "other"
+            if iid and title and iid not in seen_i:
+                seen_i.add(iid)
+                items.append((iid, title, typ))
+        if items or remote.get("equipment_custom"):
+            EQUIPMENT_ITEMS[:] = items
+
+        thr = remote.get("thresholds") or {}
+        for key, cast in (("min_mbps", float), ("max_ping_ms", int), ("min_wifi_percent", int)):
+            try:
+                REMOTE_THRESHOLDS[key] = cast(float(thr[key]))
+            except (KeyError, TypeError, ValueError):
+                pass
+    except Exception:
+        pass
+
 
 def load_config() -> dict:
     cfg = dict(DEFAULTS)
@@ -99,8 +160,10 @@ def load_config() -> dict:
             cfg.update(json.loads(CONFIG_PATH.read_text(encoding="utf-8")))
         except Exception:
             pass
-    low = str(cfg.get("checker_name", "Khairy")).lower()
-    matched = "Khairy"
+    cfg.update(REMOTE_THRESHOLDS)  # Admin-page limits always win over the local file
+    default_name = TEAM_MEMBERS[-1][1]
+    low = str(cfg.get("checker_name", default_name)).lower()
+    matched = default_name
     for mid, mname in TEAM_MEMBERS:
         if mid in low or mname.lower() in low:
             matched = mname
@@ -421,7 +484,7 @@ class TechOpsInspectorApp(tk.Tk):
         title_box.pack(side="left")
         tk.Label(
             title_box,
-            text="🛰️ NASA SPACE APPS CAIRO · ROOM STRIKE TEAM (KARIM · TASBEEH · OMAR · LOJINE · KHAIRY)",
+            text="🛰️ NASA SPACE APPS CAIRO · ROOM STRIKE TEAM (" + " · ".join(n.upper() for _, n in TEAM_MEMBERS) + ")",
             font=("Segoe UI", 8, "bold"), fg="#38bdf8", bg="#0c1226",
         ).pack(anchor="w")
         tk.Label(
@@ -458,10 +521,10 @@ class TechOpsInspectorApp(tk.Tk):
 
         tk.Label(cfg_bar, text="Team Member (Slider):", font=("Segoe UI", 9, "bold"), fg="#38bdf8", bg="#080c1c").pack(side="left")
 
-        init_idx = next((i for i, (_, n) in enumerate(TEAM_MEMBERS) if n == self.cfg.get("checker_name")), 4)
+        init_idx = next((i for i, (_, n) in enumerate(TEAM_MEMBERS) if n == self.cfg.get("checker_name")), len(TEAM_MEMBERS) - 1)
         self.slider_var = tk.IntVar(value=init_idx)
         self.member_scale = tk.Scale(
-            cfg_bar, from_=0, to=4, orient="horizontal", variable=self.slider_var,
+            cfg_bar, from_=0, to=max(0, len(TEAM_MEMBERS) - 1), orient="horizontal", variable=self.slider_var,
             showvalue=False, length=160, bg="#080c1c", fg="#38bdf8", highlightthickness=0,
             troughcolor="#121a36", activebackground="#38bdf8", command=self._on_slider_move,
         )
@@ -1088,6 +1151,7 @@ class TechOpsInspectorApp(tk.Tk):
 
 
 def main():
+    apply_remote_config()
     app = TechOpsInspectorApp()
     app.mainloop()
 

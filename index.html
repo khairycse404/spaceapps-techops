@@ -94,7 +94,7 @@
       box-shadow: 0 0 12px rgba(56, 189, 248, .85); cursor: pointer;
     }
     .slider-ticks {
-      display: grid; grid-template-columns: repeat(5, 1fr); gap: .35rem; text-align: center;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(72px, 1fr)); gap: .35rem; text-align: center;
     }
     .tick-btn {
       appearance: none; border: 1px solid var(--line); background: #070b1a; color: var(--muted);
@@ -334,12 +334,13 @@
 
   <header class="top">
     <div class="brand">
-      <small>NASA Space Apps Cairo · Bootcamp</small>
-      <h1>🛰️ TECH OPS <span>MISSION CONTROL</span></h1>
+      <small id="brandSmall">NASA Space Apps Cairo · Bootcamp</small>
+      <h1 id="brandTitle">🛰️ TECH OPS <span>MISSION CONTROL</span></h1>
     </div>
     <div class="header-right">
       <a href="check.html" class="btn sm primary" style="text-decoration:none;">📱 Mobile Inspector</a>
       <a href="qr.html" class="btn sm" style="text-decoration:none;">🖨️ QR Codes</a>
+      <a href="admin.html" class="btn sm" style="text-decoration:none;">⚙️ Admin</a>
       <span id="conn" class="pill offline"><span class="dot"></span><span id="connText">Connecting…</span></span>
       <span class="pill">🕒 <span id="clock">--:--:--</span></span>
     </div>
@@ -363,7 +364,7 @@
   <!-- Team Member Slider + Sidebar Triggers + Smart Request Buttons -->
   <section class="controls">
     <div class="slider-header">
-      <span class="slider-title">👤 Team Member Slider (Karim - Tasbeeh - Omar - Lojine - Khairy):</span>
+      <span class="slider-title" id="sliderTitle">👤 Team Member Slider:</span>
       <span class="active-member-badge" id="activeMemberBadge">Active: Khairy</span>
     </div>
     <div class="member-slider-wrap">
@@ -396,7 +397,7 @@
 <!-- LEFT SIDEBAR: 5 Team Members × 4 Status Choices -->
 <aside id="teamDrawer" class="drawer" aria-label="Team Status Sidebar">
   <div class="drawer-head">
-    <h2>👥 Team Member Status (5)</h2>
+    <h2 id="teamDrawerTitle">👥 Team Member Status (5)</h2>
     <button type="button" class="btn sm" id="closeTeamDrawerBtn">✕ Close</button>
   </div>
   <div class="drawer-body" id="teamGrid"></div>
@@ -405,7 +406,7 @@
 <!-- RIGHT SIDEBAR: Materials & Backup Gear (2 Mac Converters + 4 Power Strips) -->
 <aside id="eqDrawer" class="drawer right" aria-label="Materials Sidebar">
   <div class="drawer-head">
-    <h2>🧰 Materials &amp; Gear (6)</h2>
+    <h2 id="eqDrawerTitle">🧰 Materials &amp; Gear (6)</h2>
     <button type="button" class="btn sm" id="closeEqDrawerBtn">✕ Close</button>
   </div>
   <div class="drawer-body">
@@ -457,9 +458,9 @@
 <script type="module">
 import {
   db, CONFIG_OK, ROOM_COUNT, ROOM_NAMES, ROOMS_TEAM, EQUIPMENT_HOLDERS, MEMBER_STATUSES,
-  EQUIPMENT_ITEMS, DEFAULT_HOLDERS, roomKey, ref, onValue, update, restGet, restPatch, restDelete,
-  esc, pad2, MISSING_CONFIG_MESSAGE,
-} from "./firebase-config.js?v=4";
+  EQUIPMENT_ITEMS, DEFAULT_HOLDERS, SITE, roomKey, ref, onValue, update, restGet, restPatch, restDelete,
+  applyRemoteConfig, esc, pad2, MISSING_CONFIG_MESSAGE,
+} from "./firebase-config.js?v=5";
 
 const $ = (id) => document.getElementById(id);
 const STATUS_LABEL = { UNCHECKED: "UNCHECKED", READY: "READY", WARNING: "WARNING", SOS: "SOS" };
@@ -488,7 +489,7 @@ function toast(msg) {
 function findMember(val) {
   if (!val) return ROOMS_TEAM[0];
   const low = String(val).trim().toLowerCase();
-  if (low === "logain") return ROOMS_TEAM.find((m) => m.id === "lojine");
+  if (low === "logain") return ROOMS_TEAM.find((m) => m.id === "lojine") || ROOMS_TEAM[0];
   return ROOMS_TEAM.find(
     (m) => m.id === low || m.name.toLowerCase() === low || low.includes(m.id)
   ) || ROOMS_TEAM[0];
@@ -503,6 +504,7 @@ function setSelectedMemberByIndex(idx, showToastMsg = true) {
   const i = Math.max(0, Math.min(ROOMS_TEAM.length - 1, Number(idx) || 0));
   const m = ROOMS_TEAM[i];
   localStorage.setItem("techops_name", m.name);
+  renderLabels();
   $("memberSlider").value = String(i);
   $("activeMemberBadge").textContent = `Active: ${m.name}`;
   renderSliderTicks();
@@ -586,7 +588,21 @@ function initMemberControls() {
   setSelectedMemberByIndex(idx >= 0 ? idx : 0, false);
 }
 
+/* Labels that depend on the admin-editable team / materials / site text */
+function renderLabels() {
+  const names = ROOMS_TEAM.map((m) => m.name).join(" - ");
+  $("sliderTitle").textContent = `👤 Team Member Slider (${names}):`;
+  $("memberSlider").max = String(Math.max(0, ROOMS_TEAM.length - 1));
+  $("openTeamDrawerBtn").textContent = `👥 Team Status Sidebar (${ROOMS_TEAM.length})`;
+  $("openEqDrawerBtn").textContent = `🧰 Materials Sidebar (${EQUIPMENT_ITEMS.length})`;
+  $("teamDrawerTitle").textContent = `👥 Team Member Status (${ROOMS_TEAM.length})`;
+  $("eqDrawerTitle").textContent = `🧰 Materials & Gear (${EQUIPMENT_ITEMS.length})`;
+  $("brandSmall").textContent = SITE.subtitle;
+  $("brandTitle").innerHTML = `🛰️ ${esc(SITE.title_main)} <span>${esc(SITE.title_accent)}</span>`;
+}
+
 function renderSliderTicks() {
+  renderLabels();
   const cur = getSelectedMember();
   $("sliderTicks").innerHTML = ROOMS_TEAM.map((m, i) => `
     <button type="button" class="tick-btn ${m.id === cur.id ? "active" : ""}" data-idx="${i}">
@@ -677,6 +693,8 @@ $("teamGrid").addEventListener("change", async (e) => {
 /* ------------------------------------------- Right Sidebar: 6 Equipment Items */
 function renderEquipment() {
   let macAvail = 0, stripAvail = 0;
+  const macTotal = EQUIPMENT_ITEMS.filter((i) => i.type === "mac").length;
+  const stripTotal = EQUIPMENT_ITEMS.filter((i) => i.type === "strip").length;
   const me = getSelectedMember();
 
   const html = EQUIPMENT_ITEMS.map((it) => {
@@ -687,7 +705,7 @@ function renderEquipment() {
 
     if (!inRoom) {
       if (it.type === "mac") macAvail++;
-      else stripAvail++;
+      else if (it.type === "strip") stripAvail++;
     }
 
     const holderText = holderLabel(st.holder);
@@ -735,9 +753,9 @@ function renderEquipment() {
       </article>`;
   }).join("");
 
-  $("eqGrid").innerHTML = html;
-  $("cMac").textContent = `${macAvail}/2`;
-  $("cStrip").textContent = `${stripAvail}/4`;
+  $("eqGrid").innerHTML = html || `<p style="color:var(--muted)">No materials yet. Add some from the Admin page.</p>`;
+  $("cMac").textContent = `${macAvail}/${macTotal}`;
+  $("cStrip").textContent = `${stripAvail}/${stripTotal}`;
 }
 
 $("eqGrid").addEventListener("click", async (e) => {
@@ -1224,8 +1242,9 @@ function handleIncomingRooms(newRooms) {
 }
 
 function handleIncomingConfig(cfg) {
-  if (cfg && typeof cfg.room_count === "number" && cfg.room_count >= 1) {
-    roomCount = Math.round(cfg.room_count);
+  const rc = applyRemoteConfig(cfg || {});
+  if (rc) {
+    roomCount = rc;
     localStorage.setItem("techops_room_count", String(roomCount));
   }
 }

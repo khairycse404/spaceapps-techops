@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#04060f">
+  <meta name="robots" content="noindex">
+  <title>Admin Control Panel · Tech Ops</title>
+  <link rel="stylesheet" href="theme.css?v=4">
+  <style>
+    .wrap { max-width: 1100px; margin: 0 auto; padding: .8rem 1rem 3rem; }
+    header.top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .6rem 1rem; margin-bottom: .6rem; }
+    header.top h1 { font-size: clamp(1.15rem, 3vw, 1.6rem); }
+    header.top h1 span { color: var(--cyan); }
+    header.top small { display: block; color: var(--muted); font-size: .75rem; letter-spacing: .1em; text-transform: uppercase; }
+    .header-right { display: flex; gap: .45rem; flex-wrap: wrap; align-items: center; }
+    a.btn { text-decoration: none; display: inline-block; }
+    .btn.sm { padding: .42rem .7rem; font-size: .84rem; }
+    .btn.xs { padding: .25rem .5rem; font-size: .76rem; border-radius: 7px; }
+
+    /* Tabs */
+    .tabs {
+      position: sticky; top: 0; z-index: 20; display: flex; gap: .4rem; overflow-x: auto;
+      padding: .55rem 0; margin-bottom: .8rem; background: rgba(4, 6, 15, .94); backdrop-filter: blur(6px);
+      border-bottom: 1px solid var(--line);
+    }
+    .tab { flex: 0 0 auto; white-space: nowrap; }
+    .tab.active { background: var(--nasa-blue); border-color: var(--cyan); box-shadow: 0 0 12px rgba(56, 189, 248, .35); }
+
+    .hint {
+      background: rgba(56, 189, 248, .08); border: 1px solid rgba(56, 189, 248, .35); color: #bae6fd;
+      border-radius: 12px; padding: .6rem .85rem; font-size: .85rem; margin-bottom: .8rem; line-height: 1.45;
+    }
+    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: .95rem; margin-bottom: .85rem; }
+    .panel h2 { font-size: 1.02rem; margin-bottom: .6rem; display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; }
+    .panel h2 small { color: var(--muted); font-weight: 500; font-size: .78rem; }
+    .panel.danger-zone { border-color: #b91c1c; background: linear-gradient(180deg, #2a0d0d, var(--panel)); }
+
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(135px, 1fr)); gap: .6rem; margin-bottom: .85rem; }
+    .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: .65rem .85rem; }
+    .stat .num { font-size: 1.7rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .stat .lbl { color: var(--muted); font-size: .78rem; }
+    .stat.ready .num { color: var(--ready); } .stat.warning .num { color: var(--warning); }
+    .stat.sos .num { color: var(--sos); } .stat.gear .num { color: var(--cyan); }
+
+    .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: .85rem; }
+
+    input[type=text], input[type=number], input[type=password], select {
+      background: #070b1a; color: var(--text); border: 1px solid var(--line); border-radius: 9px;
+      padding: .5rem .65rem; font: inherit; font-size: .9rem; min-width: 0;
+    }
+    input:focus, select:focus { outline: 2px solid var(--cyan); }
+    label.f { display: flex; flex-direction: column; gap: .25rem; font-size: .78rem; color: var(--muted); flex: 1 1 150px; }
+    label.f input, label.f select { width: 100%; }
+    .form-row { display: flex; flex-wrap: wrap; gap: .55rem; align-items: flex-end; }
+    .row { display: flex; gap: .45rem; flex-wrap: wrap; align-items: center; }
+
+    .item {
+      display: flex; flex-wrap: wrap; gap: .55rem; align-items: flex-end; padding: .7rem;
+      background: var(--panel-2); border: 1px solid var(--line); border-radius: 12px; margin-bottom: .55rem;
+    }
+    .item.sos { border-color: var(--sos); background: rgba(239, 68, 68, .1); }
+    .item .tag { font-weight: 800; min-width: 74px; align-self: center; }
+    .item label.f { flex: 1 1 130px; }
+    .item label.f.small { flex: 0 0 74px; }
+    .item .acts { display: flex; gap: .35rem; align-items: center; margin-left: auto; }
+
+    .badge { font-size: .72rem; font-weight: 800; padding: .18rem .55rem; border-radius: 999px; border: 1px solid var(--line); background: rgba(255,255,255,.05); }
+    .badge.READY, .badge.STANDBY { background: rgba(34,197,94,.18); border-color: #16a34a; color: #86efac; }
+    .badge.WARNING, .badge.HALL { background: rgba(250,204,21,.16); border-color: #ca8a04; color: #fde047; }
+    .badge.SOS { background: rgba(239,68,68,.22); border-color: #dc2626; color: #fca5a5; }
+    .badge.CHECKING { background: rgba(56,189,248,.16); border-color: #0284c7; color: #7dd3fc; }
+    .muted { color: var(--muted); font-size: .82rem; }
+    .empty { color: var(--muted); padding: .5rem 0; }
+    .counter { display: inline-flex; align-items: center; gap: .5rem; }
+    .counter .big { font-size: 1.6rem; font-weight: 800; min-width: 2.2rem; text-align: center; }
+
+    /* PIN gate */
+    #gate { position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1rem; background: var(--bg); }
+    #gate form { width: min(94vw, 380px); background: var(--panel); border: 1px solid var(--cyan); border-radius: 18px; padding: 1.3rem; display: flex; flex-direction: column; gap: .7rem; }
+    #gate h2 { font-size: 1.25rem; }
+    #gate input { width: 100%; font-size: 1.1rem; letter-spacing: .15em; text-align: center; }
+    #gateMsg { color: #fca5a5; min-height: 1.2em; font-size: .85rem; }
+  </style>
+</head>
+<body>
+
+<!-- PIN gate -->
+<div id="gate">
+  <form id="gateForm" autocomplete="off">
+    <h2 id="gateTitle">🔐 Admin Login</h2>
+    <p class="muted" id="gateSub">Enter the admin PIN to continue.</p>
+    <input id="gatePin" type="password" inputmode="numeric" placeholder="PIN" autocomplete="off">
+    <input id="gatePin2" type="password" inputmode="numeric" placeholder="Repeat PIN" autocomplete="off" hidden>
+    <div id="gateMsg"></div>
+    <button class="btn primary block" type="submit" id="gateBtn">Unlock</button>
+    <a class="muted" href="index.html" style="text-align:center;">← Back to Mission Control</a>
+  </form>
+</div>
+
+<div class="wrap" id="app" hidden>
+  <div id="configBanner" class="banner" hidden></div>
+
+  <header class="top">
+    <div>
+      <small>Tech Ops · Full Control</small>
+      <h1>⚙️ Admin <span>Control Panel</span></h1>
+    </div>
+    <div class="header-right">
+      <a class="btn sm primary" href="index.html">🛰️ Mission Control</a>
+      <a class="btn sm" href="check.html">📱 Mobile Inspector</a>
+      <a class="btn sm" href="qr.html">🖨️ QR Codes</a>
+      <span id="conn" class="pill offline"><span class="dot"></span><span id="connText">Connecting…</span></span>
+      <button class="btn sm" id="lockBtn" type="button">🔒 Lock</button>
+    </div>
+  </header>
+
+  <nav class="tabs" id="tabs"></nav>
+  <main id="view"></main>
+</div>
+
+<div id="toast" class="toast" role="status"></div>
+
+<script type="module">
+import {
+  CONFIG_OK, FACTORY, ROOMS_TEAM, EQUIPMENT_ITEMS, EQUIPMENT_HOLDERS, MEMBER_STATUSES,
+  EQUIPMENT_TYPES, DEFAULT_ICON_BY_TYPE, SITE, THRESHOLDS, ROOM_NAMES,
+  applyRemoteConfig, restGet, restPut, restPatch, restDelete, esc, pad2, roomKey, MISSING_CONFIG_MESSAGE,
+} from "./firebase-config.js?v=5";
+
+const $ = (id) => document.getElementById(id);
+const MAX_ROOMS = 60;
+const TYPE_LABEL = { mac: "Mac Converter", strip: "Power Strip", other: "Other / Custom" };
+const TABS = [
+  ["dash", "📊 Dashboard"], ["rooms", "🏛️ Rooms"], ["team", "👥 Team"],
+  ["gear", "🧰 Materials"], ["settings", "⚙️ Settings"],
+];
+
+let data = {};
+let cfg = {};
+let roomCount = 12;
+let locked = true;
+let tab = localStorage.getItem("techops_admin_tab") || "dash";
+
+/* ------------------------------------------------------------ helpers */
+function toast(msg) {
+  const t = $("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => t.classList.remove("show"), 3200);
+}
+const opt = (v, label, sel) => `<option value="${esc(v)}" ${sel ? "selected" : ""}>${esc(label)}</option>`;
+const slug = (s) => String(s ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
+const holderName = (id) => EQUIPMENT_HOLDERS.find((h) => h.id === id)?.name || id;
+const memberName = (id) => ROOMS_TEAM.find((m) => m.id === id)?.name || id;
+
+function roomState(n) {
+  const r = data.rooms?.[roomKey(n)] || {};
+  if (r.sos || r.status === "SOS") return "SOS";
+  return ["READY", "WARNING"].includes(r.status) ? r.status : "UNCHECKED";
+}
+
+function itemState(it) {
+  const raw = data.inventory?.[it.id] || {};
+  let holder = raw.holder || "materials_room";
+  if (holder !== "materials_room" && !ROOMS_TEAM.some((m) => m.id === holder)) holder = "materials_room";
+  return { holder, room: raw.room ? Number(raw.room) : null };
+}
+
+async function hashPin(pin) {
+  const s = "techops-admin:" + pin;
+  if (window.crypto?.subtle) {
+    const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
+    return "s256:" + [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+  }
+  let h = 2166136261;
+  for (const c of s) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619) >>> 0; }
+  return "f:" + h.toString(16);
+}
+
+function setOnline(on) {
+  $("conn").className = "pill " + (on ? "online" : "offline");
+  $("connText").textContent = on ? "Live" : "Reconnecting…";
+}
+
+function isEditing() {
+  const a = document.activeElement;
+  return a && $("view").contains(a) && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName);
+}
+
+async function refresh(force = false) {
+  try {
+    const d = await restGet("");
+    data = d || {};
+    cfg = data.config || {};
+    const rc = applyRemoteConfig(cfg);
+    roomCount = rc || Math.max(1, Number(localStorage.getItem("techops_room_count")) || FACTORY.room_count);
+    setOnline(true);
+    if (!locked && (force || !isEditing())) render();
+    return true;
+  } catch { setOnline(false); return false; }
+}
+
+async function run(label, fn) {
+  try {
+    await fn();
+    await refresh(true);
+    if (label) toast("✔ " + label);
+  } catch (e) { toast("❌ " + (e.message || e)); }
+}
+
+/* ------------------------------------------------------------ saving helpers */
+const saveTeam = async (list) => restPut("config/team", list.map((m) => ({ id: m.id, name: m.name })));
+const saveEquipment = async (list) => {
+  await restPut("config/equipment", list.map((i) => ({ id: i.id, type: i.type, icon: i.icon, title: i.title, sub: i.sub })));
+  await restPatch("config", { equipment_custom: true });
+};
+const teamCopy = () => ROOMS_TEAM.map((m) => ({ id: m.id, name: m.name }));
+const gearCopy = () => EQUIPMENT_ITEMS.map((i) => ({ ...i }));
+
+/* ------------------------------------------------------------ tabs */
+function renderTabs() {
+  $("tabs").innerHTML = TABS.map(([id, label]) =>
+    `<button type="button" class="btn tab ${tab === id ? "active" : ""}" data-tab="${id}">${label}</button>`).join("");
+}
+$("tabs").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-tab]");
+  if (!b) return;
+  tab = b.dataset.tab;
+  localStorage.setItem("techops_admin_tab", tab);
+  render();
+  window.scrollTo({ top: 0 });
+});
+
+function render() {
+  renderTabs();
+  const views = { dash: viewDash, rooms: viewRooms, team: viewTeam, gear: viewGear, settings: viewSettings };
+  $("view").innerHTML = (views[tab] || viewDash)();
+}
+
+const AUTOSAVE_HINT = `<div class="hint">💡 Everything here <b>saves automatically</b> when you change a value (press Enter or tap outside the box). Changes show up on every phone and laptop within a few seconds.</div>`;
+
+/* ------------------------------------------------------------ DASHBOARD */
+function viewDash() {
+  let ready = 0, warn = 0, sos = 0, unc = 0;
+  const sosRooms = [];
+  for (let n = 1; n <= roomCount; n++) {
+    const st = roomState(n);
+    if (st === "READY") ready++; else if (st === "WARNING") warn++;
+    else if (st === "SOS") { sos++; sosRooms.push(n); } else unc++;
+  }
+  let inStore = 0, inRooms = 0, withTeam = 0;
+  for (const it of EQUIPMENT_ITEMS) {
+    const s = itemState(it);
+    if (s.room) inRooms++; else if (s.holder === "materials_room") inStore++; else withTeam++;
+  }
+  const reqs = Object.entries(data.gear_requests || {}).filter(([, r]) => r && typeof r === "object");
+
+  const sosHtml = sosRooms.length ? sosRooms.map((n) => {
+    const s = data.rooms?.[roomKey(n)]?.sos || {};
+    return `<div class="item sos">
+      <div class="tag">🚨 Room ${pad2(n)}</div>
+      <div style="flex:1 1 200px;"><div style="font-weight:700;white-space:pre-line;">${esc(s.issue || "SOS (no details)")}</div>
+        <div class="muted">${s.claimed_by ? "⚙️ " + esc(s.claimed_by) + " is on the way" : "Nobody has claimed it yet"}</div></div>
+      <div class="acts">
+        ${s.claimed_by ? `<button class="btn xs" data-act="release-sos" data-room="${n}">↩ Release</button>` : ""}
+        <button class="btn xs good" data-act="resolve-sos" data-room="${n}">✅ Resolve</button>
+      </div></div>`;
+  }).join("") : `<div class="empty">✅ No active SOS alerts.</div>`;
+
+  const reqHtml = reqs.length ? reqs.map(([key, r]) => `
+    <div class="item">
+      <div style="flex:1 1 200px;"><b>${esc(r.from_name || r.requester_name || "?")}</b> → <b>${esc(r.target_name || "?")}</b>
+        <div class="muted">${esc(r.item_title || "item")} · ${esc(r.status || "")}</div></div>
+      <div class="acts"><button class="btn xs danger" data-act="clear-req" data-id="${esc(key)}">Clear</button></div>
+    </div>`).join("") : `<div class="empty">No pending material requests.</div>`;
+
+  const teamHtml = ROOMS_TEAM.map((m) => {
+    const t = data.team_status?.[m.id] || {};
+    const st = t.status || "STANDBY";
+    const held = EQUIPMENT_ITEMS.filter((it) => { const s = itemState(it); return s.holder === m.id && !s.room; });
+    return `<div class="item" style="align-items:center;">
+      <div class="tag">👤 ${esc(m.name)}</div>
+      <span class="badge ${esc(st)}">${esc(MEMBER_STATUSES.find((s) => s.id === st)?.short || st)}</span>
+      ${t.room ? `<span class="muted">📍 Room ${pad2(t.room)}</span>` : ""}
+      <span class="muted" style="margin-left:auto;">${held.length ? "🎒 " + held.map((i) => esc(i.title)).join(", ") : "no gear"}</span>
+    </div>`;
+  }).join("");
+
+  return `
+    <div class="stats">
+      <div class="stat ready"><div class="num">${ready}</div><div class="lbl">🟢 Ready rooms</div></div>
+      <div class="stat"><div class="num">${unc}</div><div class="lbl">⚪ Unchecked</div></div>
+      <div class="stat warning"><div class="num">${warn}</div><div class="lbl">🟡 Warnings</div></div>
+      <div class="stat sos"><div class="num">${sos}</div><div class="lbl">🚨 Active SOS</div></div>
+      <div class="stat gear"><div class="num">${inStore}</div><div class="lbl">📦 In Materials Room</div></div>
+      <div class="stat gear"><div class="num">${withTeam}</div><div class="lbl">🎒 With team</div></div>
+      <div class="stat gear"><div class="num">${inRooms}</div><div class="lbl">🏛️ Lent to rooms</div></div>
+      <div class="stat"><div class="num">${roomCount}</div><div class="lbl">Rooms total</div></div>
+    </div>
+    <div class="two">
+      <div class="panel"><h2>🚨 Needs attention</h2>${sosHtml}</div>
+      <div class="panel"><h2>🔔 Material requests</h2>${reqHtml}
+        ${reqs.length ? `<button class="btn sm danger" data-act="clear-all-req">Clear all requests</button>` : ""}</div>
+    </div>
+    <div class="panel"><h2>👥 Team right now <small>${ROOMS_TEAM.length} members</small></h2>${teamHtml}</div>
+    <div class="panel"><h2>⚡ Quick actions</h2>
+      <div class="row">
+        <button class="btn good" data-act="rc-inc">➕ Add Room ${pad2(roomCount + 1)}</button>
+        <button class="btn" data-go="team">👥 Manage team</button>
+        <button class="btn" data-go="gear">🧰 Manage materials</button>
+        <button class="btn" data-go="settings">⚙️ Settings &amp; backup</button>
+      </div>
+    </div>`;
+}
+
+/* ------------------------------------------------------------ ROOMS */
+function viewRooms() {
+  let rows = "";
+  for (let n = 1; n <= roomCount; n++) {
+    const st = roomState(n);
+    const name = ROOM_NAMES[n] || "";
+    rows += `
+      <div class="item ${st === "SOS" ? "sos" : ""}">
+        <div class="tag">Room ${pad2(n)}</div>
+        <label class="f">Name (optional)
+          <input type="text" maxlength="40" placeholder="e.g. Hall A" value="${esc(name)}" data-change="room-name" data-room="${n}">
+        </label>
+        <label class="f">Status
+          <select data-change="room-status" data-room="${n}">
+            ${opt("UNCHECKED", "⚪ Unchecked", st === "UNCHECKED")}
+            ${opt("READY", "🟢 Ready", st === "READY")}
+            ${opt("WARNING", "🟡 Warning", st === "WARNING")}
+            ${opt("SOS", "🚨 SOS", st === "SOS")}
+          </select>
+        </label>
+        <div class="acts">
+          <button class="btn xs" data-act="reset-room" data-room="${n}" title="Erase all check data for this room">↺ Reset</button>
+        </div>
+      </div>`;
+  }
+  return `${AUTOSAVE_HINT}
+    <div class="panel">
+      <h2>Number of rooms</h2>
+      <div class="counter">
+        <button class="btn" data-act="rc-dec" ${roomCount <= 1 ? "disabled" : ""}>−</button>
+        <span class="big">${roomCount}</span>
+        <button class="btn good" data-act="rc-inc" ${roomCount >= MAX_ROOMS ? "disabled" : ""}>＋</button>
+        <span class="muted">Max ${MAX_ROOMS}. Removing a room also clears its data and returns any gear lent to it.</span>
+      </div>
+    </div>
+    <div class="panel"><h2>Rooms <small>name them, or set / reset their status by hand</small></h2>${rows}</div>`;
+}
+
+async function setRoomCount(n) {
+  n = Math.max(1, Math.min(MAX_ROOMS, Math.round(n)));
+  if (n === roomCount) return;
+  if (n < roomCount && !confirm(`Remove Room ${pad2(n + 1)}${roomCount - n > 1 ? " to " + pad2(roomCount) : ""}? Their check data will be erased and any gear lent to them returned.`)) return;
+  await run(`Rooms: ${n}`, async () => {
+    if (n < roomCount) {
+      const jobs = [];
+      for (let k = n + 1; k <= roomCount; k++) {
+        jobs.push(restDelete(`rooms/${roomKey(k)}`));
+      }
+      for (const it of EQUIPMENT_ITEMS) {
+        const s = itemState(it);
+        if (s.room && s.room > n) jobs.push(restPatch(`inventory/${it.id}`, { room: null, lent_by: null, updated_at: Date.now() }));
+      }
+      for (const m of ROOMS_TEAM) {
+        const t = data.team_status?.[m.id];
+        if (t?.room && Number(t.room) > n) jobs.push(restPatch(`team_status/${m.id}`, { room: null, updated_at: Date.now() }));
+      }
+      const names = {};
+      for (let k = n + 1; k <= roomCount; k++) names[roomKey(k)] = null;
+      jobs.push(restPatch("config/room_names", names));
+      await Promise.all(jobs);
+    }
+    await restPatch("config", { room_count: n, updated_at: Date.now() });
+    localStorage.setItem("techops_room_count", String(n));
+  });
+}
+
+/* ------------------------------------------------------------ TEAM */
+function viewTeam() {
+  const cards = ROOMS_TEAM.map((m, i) => {
+    const t = data.team_status?.[m.id] || {};
+    const st = t.status || "STANDBY";
+    const room = t.room ? Number(t.room) : 0;
+    const held = EQUIPMENT_ITEMS.filter((it) => { const s = itemState(it); return s.holder === m.id; }).length;
+    let roomOpts = opt("0", "— Not in a room —", !room);
+    for (let n = 1; n <= roomCount; n++) roomOpts += opt(String(n), `📍 Room ${pad2(n)}`, room === n);
+    return `
+      <div class="item">
+        <label class="f">Name
+          <input type="text" maxlength="30" value="${esc(m.name)}" data-change="rename-member" data-id="${esc(m.id)}">
+        </label>
+        <label class="f">Status
+          <select data-change="member-status" data-id="${esc(m.id)}">
+            ${MEMBER_STATUSES.map((s) => opt(s.id, s.label, s.id === st)).join("")}
+          </select>
+        </label>
+        <label class="f">Current room
+          <select data-change="member-room" data-id="${esc(m.id)}">${roomOpts}</select>
+        </label>
+        <div class="acts">
+          <span class="muted">🎒 ${held}</span>
+          <button class="btn xs" data-act="move-member" data-id="${esc(m.id)}" data-dir="-1" ${i === 0 ? "disabled" : ""}>▲</button>
+          <button class="btn xs" data-act="move-member" data-id="${esc(m.id)}" data-dir="1" ${i === ROOMS_TEAM.length - 1 ? "disabled" : ""}>▼</button>
+          <button class="btn xs danger" data-act="remove-member" data-id="${esc(m.id)}" ${ROOMS_TEAM.length <= 1 ? "disabled" : ""}>🗑 Remove</button>
+        </div>
+      </div>`;
+  }).join("");
+
+  return `${AUTOSAVE_HINT}
+    <div class="panel">
+      <h2>➕ Add a team member</h2>
+      <form class="form-row" id="addMemberForm">
+        <label class="f">Name<input type="text" id="newMemberName" maxlength="30" placeholder="e.g. Sara" required></label>
+        <button class="btn good" type="submit">Add member</button>
+      </form>
+    </div>
+    <div class="panel"><h2>👥 Team members <small>${ROOMS_TEAM.length} · the order here is the slider order</small></h2>${cards}</div>`;
+}
+
+async function addMember(name) {
+  name = name.trim();
+  if (!name) return;
+  const list = teamCopy();
+  const taken = new Set(list.map((m) => m.id));
+  const base = slug(name) || "member";
+  let id = base, i = 2;
+  while (taken.has(id) || id === "materials_room") id = `${base}${i++}`;
+  list.push({ id, name });
+  await run(`Added ${name}`, () => saveTeam(list));
+}
+
+async function removeMember(id) {
+  if (ROOMS_TEAM.length <= 1) return toast("You need at least one team member.");
+  const name = memberName(id);
+  if (!confirm(`Remove ${name}? Any gear they hold goes back to the Materials Room.`)) return;
+  await run(`Removed ${name}`, async () => {
+    const jobs = [];
+    for (const it of EQUIPMENT_ITEMS) {
+      if (itemState(it).holder === id) jobs.push(restPatch(`inventory/${it.id}`, { holder: "materials_room", updated_at: Date.now() }));
+    }
+    for (const [k, r] of Object.entries(data.gear_requests || {})) {
+      if (r && (r.target_id === id || r.from_id === id || r.requester_id === id)) jobs.push(restDelete(`gear_requests/${k}`));
+    }
+    jobs.push(restDelete(`team_status/${id}`));
+    await Promise.all(jobs);
+    await saveTeam(teamCopy().filter((m) => m.id !== id));
+  });
+}
+
+/* ------------------------------------------------------------ MATERIALS */
+function holderOptions(sel) {
+  return EQUIPMENT_HOLDERS.map((h) => opt(h.id, `${h.icon} ${h.name}`, h.id === sel)).join("");
+}
+
+function viewGear() {
+  const cards = EQUIPMENT_ITEMS.map((it) => {
+    const s = itemState(it);
+    let roomOpts = opt("0", "🟢 Not in a room", !s.room);
+    for (let n = 1; n <= roomCount; n++) roomOpts += opt(String(n), `🏛️ Lent to Room ${pad2(n)}`, s.room === n);
+    return `
+      <div class="item">
+        <label class="f small">Icon<input type="text" maxlength="8" value="${esc(it.icon)}" data-change="item-field" data-field="icon" data-id="${esc(it.id)}"></label>
+        <label class="f">Name<input type="text" maxlength="40" value="${esc(it.title)}" data-change="item-field" data-field="title" data-id="${esc(it.id)}"></label>
+        <label class="f">Description<input type="text" maxlength="60" value="${esc(it.sub)}" data-change="item-field" data-field="sub" data-id="${esc(it.id)}"></label>
+        <label class="f">Type
+          <select data-change="item-field" data-field="type" data-id="${esc(it.id)}">
+            ${EQUIPMENT_TYPES.map((t) => opt(t, TYPE_LABEL[t], t === it.type)).join("")}
+          </select>
+        </label>
+        <label class="f">Held by / location
+          <select data-change="item-holder" data-id="${esc(it.id)}">${holderOptions(s.holder)}</select>
+        </label>
+        <label class="f">Lent to room
+          <select data-change="item-room" data-id="${esc(it.id)}">${roomOpts}</select>
+        </label>
+        <div class="acts"><button class="btn xs danger" data-act="delete-item" data-id="${esc(it.id)}">🗑 Delete</button></div>
+      </div>`;
+  }).join("");
+
+  return `${AUTOSAVE_HINT}
+    <div class="panel">
+      <h2>➕ Add a new material</h2>
+      <form class="form-row" id="addItemForm">
+        <label class="f small" style="flex:0 0 80px;">Icon<input type="text" id="newItemIcon" maxlength="8" placeholder="🔌"></label>
+        <label class="f">Name<input type="text" id="newItemTitle" maxlength="40" placeholder="e.g. HDMI Cable #1" required></label>
+        <label class="f">Description (optional)<input type="text" id="newItemSub" maxlength="60" placeholder="e.g. 5 meter cable"></label>
+        <label class="f">Type
+          <select id="newItemType">${EQUIPMENT_TYPES.map((t) => opt(t, TYPE_LABEL[t], t === "other")).join("")}</select>
+        </label>
+        <label class="f">Starts in
+          <select id="newItemHolder">${holderOptions("materials_room")}</select>
+        </label>
+        <button class="btn good" type="submit">Add material</button>
+      </form>
+      <p class="muted" style="margin:.5rem 0 0;">Type <b>Mac Converter</b> / <b>Power Strip</b> adds the item to the matching “🔔 Need …” request buttons. Use <b>Other</b> for anything else.</p>
+    </div>
+    <div class="panel">
+      <h2>🧰 Materials <small>${EQUIPMENT_ITEMS.length} items</small></h2>
+      ${cards || `<div class="empty">No materials yet — add one above.</div>`}
+      ${EQUIPMENT_ITEMS.length ? `<button class="btn sm" data-act="return-all">📦 Return everything to the Materials Room</button>` : ""}
+    </div>`;
+}
+
+async function addItem() {
+  const type = $("newItemType").value;
+  const title = $("newItemTitle").value.trim();
+  if (!title) return;
+  const icon = $("newItemIcon").value.trim() || DEFAULT_ICON_BY_TYPE[type];
+  const sub = $("newItemSub").value.trim();
+  const holder = $("newItemHolder").value || "materials_room";
+  const id = `item_${Date.now().toString(36)}`;
+  const list = gearCopy();
+  list.push({ id, type, icon, title, sub });
+  await run(`Added ${title}`, async () => {
+    await saveEquipment(list);
+    await restPatch(`inventory/${id}`, { holder, room: null, lent_by: null, updated_at: Date.now() });
+  });
+}
+
+async function deleteItem(id) {
+  const it = EQUIPMENT_ITEMS.find((i) => i.id === id);
+  if (!it || !confirm(`Delete “${it.title}” completely?`)) return;
+  await run(`Deleted ${it.title}`, async () => {
+    const jobs = [restDelete(`inventory/${id}`)];
+    for (const [k, r] of Object.entries(data.gear_requests || {})) {
+      if (r && r.item_id === id) jobs.push(restDelete(`gear_requests/${k}`));
+    }
+    await Promise.all(jobs);
+    await saveEquipment(gearCopy().filter((i) => i.id !== id));
+  });
+}
+
+/* ------------------------------------------------------------ SETTINGS */
+function viewSettings() {
+  return `${AUTOSAVE_HINT}
+    <div class="two">
+      <div class="panel">
+        <h2>🏷️ Site title &amp; text</h2>
+        <div class="form-row" style="flex-direction:column;align-items:stretch;">
+          <label class="f">Title (white part)<input type="text" maxlength="40" value="${esc(SITE.title_main)}" data-change="site" data-field="title_main"></label>
+          <label class="f">Title (red part)<input type="text" maxlength="40" value="${esc(SITE.title_accent)}" data-change="site" data-field="title_accent"></label>
+          <label class="f">Small line above the title<input type="text" maxlength="80" value="${esc(SITE.subtitle)}" data-change="site" data-field="subtitle"></label>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>📡 Room check limits <small>used to mark a room “Warning”</small></h2>
+        <div class="form-row" style="flex-direction:column;align-items:stretch;">
+          <label class="f">Minimum download speed (Mbps)<input type="number" min="0" step="0.5" value="${THRESHOLDS.min_mbps}" data-change="threshold" data-field="min_mbps"></label>
+          <label class="f">Maximum ping (ms)<input type="number" min="0" step="10" value="${THRESHOLDS.max_ping_ms}" data-change="threshold" data-field="max_ping_ms"></label>
+          <label class="f">Minimum Wi-Fi signal (%) — desktop app<input type="number" min="0" max="100" step="5" value="${THRESHOLDS.min_wifi_percent}" data-change="threshold" data-field="min_wifi_percent"></label>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>🔐 Admin PIN</h2>
+      <form class="form-row" id="pinForm">
+        <label class="f">New PIN (min 4 characters)<input type="password" id="newPin" autocomplete="off"></label>
+        <label class="f">Repeat new PIN<input type="password" id="newPin2" autocomplete="off"></label>
+        <button class="btn primary" type="submit">Change PIN</button>
+      </form>
+      <p class="muted" style="margin:.5rem 0 0;">⚠️ The PIN only keeps teammates from opening this page by accident. It is <b>not</b> real security — anyone who knows the database address could still edit data.</p>
+    </div>
+
+    <div class="panel">
+      <h2>💾 Backup &amp; restore</h2>
+      <div class="row">
+        <button class="btn good" data-act="backup">⬇️ Download backup (.json)</button>
+        <label class="btn" style="cursor:pointer;">⬆️ Restore from backup…<input type="file" id="restoreFile" accept="application/json,.json" hidden></label>
+      </div>
+      <p class="muted" style="margin:.5rem 0 0;">Tip: download a backup before the event starts and before any big reset.</p>
+    </div>
+
+    <div class="panel danger-zone">
+      <h2>⚠️ Reset tools</h2>
+      <div class="row">
+        <button class="btn danger" data-act="reset-rooms">Reset all room statuses</button>
+        <button class="btn danger" data-act="return-all">Return all materials to Materials Room</button>
+        <button class="btn danger" data-act="reset-team-status">Reset team statuses</button>
+        <button class="btn danger" data-act="clear-all-req">Clear all requests</button>
+        <button class="btn danger" data-act="reset-layout">Restore factory layout (team, materials, names, rooms = 12)</button>
+      </div>
+    </div>`;
+}
+
+/* ------------------------------------------------------------ actions */
+const acts = {
+  async "rc-inc"() { await setRoomCount(roomCount + 1); },
+  async "rc-dec"() { await setRoomCount(roomCount - 1); },
+
+  async "resolve-sos"(b) {
+    const n = Number(b.dataset.room);
+    await run(`Room ${pad2(n)} resolved`, () => restPatch(`rooms/${roomKey(n)}`, {
+      sos: null, status: "READY", checked_by: "Admin", updated_at: Date.now(), source: "admin",
+    }));
+  },
+  async "release-sos"(b) {
+    const n = Number(b.dataset.room);
+    await run("Claim released", () => restPatch(`rooms/${roomKey(n)}/sos`, { claimed_by: null, claimed_at: null }));
+  },
+  async "reset-room"(b) {
+    const n = Number(b.dataset.room);
+    if (!confirm(`Erase all check data for Room ${pad2(n)}?`)) return;
+    await run(`Room ${pad2(n)} reset`, () => restDelete(`rooms/${roomKey(n)}`));
+  },
+  async "clear-req"(b) { await run("Request cleared", () => restDelete(`gear_requests/${b.dataset.id}`)); },
+  async "clear-all-req"() {
+    if (!confirm("Clear ALL pending material requests?")) return;
+    await run("All requests cleared", () => restDelete("gear_requests"));
+  },
+
+  async "move-member"(b) {
+    const list = teamCopy();
+    const i = list.findIndex((m) => m.id === b.dataset.id);
+    const j = i + Number(b.dataset.dir);
+    if (i < 0 || j < 0 || j >= list.length) return;
+    [list[i], list[j]] = [list[j], list[i]];
+    await run("Order updated", () => saveTeam(list));
+  },
+  async "remove-member"(b) { await removeMember(b.dataset.id); },
+
+  async "delete-item"(b) { await deleteItem(b.dataset.id); },
+  async "return-all"() {
+    if (!confirm("Put every material back in the Materials Room?")) return;
+    await run("All materials returned", async () => {
+      await Promise.all(EQUIPMENT_ITEMS.map((it) =>
+        restPatch(`inventory/${it.id}`, { holder: "materials_room", room: null, lent_by: null, updated_at: Date.now() })));
+    });
+  },
+
+  async "backup"() {
+    const all = await restGet("");
+    const blob = new Blob([JSON.stringify({ exported_at: new Date().toISOString(), data: all }, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `techops-backup-${new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-")}.json`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    toast("⬇️ Backup downloaded");
+  },
+  async "reset-rooms"() {
+    if (!confirm("Reset ALL room statuses to Unchecked? This erases every room's check data and SOS.")) return;
+    await run("All rooms reset", () => Promise.all(Object.keys(data.rooms || {}).map((k) => restDelete(`rooms/${k}`))));
+  },
+  async "reset-team-status"() {
+    if (!confirm("Reset every team member to Standby?")) return;
+    await run("Team statuses reset", () => restDelete("team_status"));
+  },
+  async "reset-layout"() {
+    if (!confirm("Restore the factory team, materials, room names, site text and 12 rooms? (Your PIN is kept.)")) return;
+    await run("Factory layout restored", async () => {
+      await restPatch("config", {
+        team: null, equipment: null, equipment_custom: null, room_names: null,
+        site: null, thresholds: null, room_count: FACTORY.room_count, updated_at: Date.now(),
+      });
+      localStorage.setItem("techops_room_count", String(FACTORY.room_count));
+    });
+  },
+};
+
+$("view").addEventListener("click", async (e) => {
+  const go = e.target.closest("[data-go]");
+  if (go) { tab = go.dataset.go; localStorage.setItem("techops_admin_tab", tab); render(); window.scrollTo({ top: 0 }); return; }
+  const b = e.target.closest("[data-act]");
+  if (!b || b.disabled) return;
+  const fn = acts[b.dataset.act];
+  if (fn) await fn(b);
+});
+
+const changes = {
+  async "room-name"(el) {
+    const n = Number(el.dataset.room);
+    const v = el.value.trim();
+    await run("Room name saved", () => restPatch("config/room_names", { [roomKey(n)]: v || null }));
+  },
+  async "room-status"(el) {
+    const n = Number(el.dataset.room);
+    const st = el.value;
+    await run(`Room ${pad2(n)} → ${st}`, async () => {
+      if (st === "UNCHECKED") return restDelete(`rooms/${roomKey(n)}`);
+      const payload = { status: st, checked_by: "Admin", updated_at: Date.now(), source: "admin" };
+      payload.sos = st === "SOS" ? { issue: "🚨 Raised by Admin", created_at: Date.now() } : null;
+      return restPatch(`rooms/${roomKey(n)}`, payload);
+    });
+  },
+
+  async "rename-member"(el) {
+    const name = el.value.trim();
+    if (!name) { toast("Name can't be empty."); return refresh(true); }
+    const list = teamCopy();
+    const m = list.find((x) => x.id === el.dataset.id);
+    if (!m || m.name === name) return;
+    m.name = name;
+    await run("Name saved", () => saveTeam(list));
+  },
+  async "member-status"(el) {
+    await run("Status updated", () => restPatch(`team_status/${el.dataset.id}`, { status: el.value, updated_at: Date.now() }));
+  },
+  async "member-room"(el) {
+    await run("Room updated", () => restPatch(`team_status/${el.dataset.id}`, { room: Number(el.value) || null, updated_at: Date.now() }));
+  },
+
+  async "item-field"(el) {
+    const list = gearCopy();
+    const it = list.find((x) => x.id === el.dataset.id);
+    if (!it) return;
+    const f = el.dataset.field;
+    const v = el.value.trim();
+    if (f === "title" && !v) { toast("Name can't be empty."); return refresh(true); }
+    if (f === "icon" && !v) it.icon = DEFAULT_ICON_BY_TYPE[it.type];
+    else it[f] = v;
+    if (f === "type" && !EQUIPMENT_TYPES.includes(v)) return;
+    await run("Saved", () => saveEquipment(list));
+  },
+  async "item-holder"(el) {
+    const holder = el.value;
+    const payload = { holder, updated_at: Date.now() };
+    if (holder === "materials_room") { payload.room = null; payload.lent_by = null; }
+    await run(`Now with ${holderName(holder)}`, () => restPatch(`inventory/${el.dataset.id}`, payload));
+  },
+  async "item-room"(el) {
+    const n = Number(el.value) || null;
+    await run(n ? `Lent to Room ${pad2(n)}` : "Returned", () =>
+      restPatch(`inventory/${el.dataset.id}`, { room: n, lent_by: n ? "Admin" : null, updated_at: Date.now() }));
+  },
+
+  async "site"(el) {
+    await run("Site text saved", () => restPatch("config/site", { [el.dataset.field]: el.value.trim() }));
+  },
+  async "threshold"(el) {
+    const n = Number(el.value);
+    if (!Number.isFinite(n) || n < 0) { toast("Enter a valid number."); return refresh(true); }
+    await run("Limit saved", () => restPatch("config/thresholds", { [el.dataset.field]: n }));
+  },
+};
+
+$("view").addEventListener("change", async (e) => {
+  const el = e.target;
+  if (el.id === "restoreFile") return restoreBackup(el.files[0], el);
+  const key = el.dataset?.change;
+  if (key && changes[key]) await changes[key](el);
+});
+
+$("view").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (e.target.id === "addMemberForm") {
+    const v = $("newMemberName").value;
+    await addMember(v);
+  } else if (e.target.id === "addItemForm") {
+    await addItem();
+  } else if (e.target.id === "pinForm") {
+    const a = $("newPin").value.trim(), b = $("newPin2").value.trim();
+    if (a.length < 4) return toast("PIN must be at least 4 characters.");
+    if (a !== b) return toast("The two PINs don't match.");
+    const h = await hashPin(a);
+    await run("PIN changed", () => restPatch("config", { admin_pin_hash: h }));
+    sessionStorage.setItem("techops_admin_ok", h);
+    $("newPin").value = $("newPin2").value = "";
+  }
+});
+
+async function restoreBackup(file, input) {
+  if (!file) return;
+  try {
+    const parsed = JSON.parse(await file.text());
+    const src = parsed.data || parsed;
+    if (!src || typeof src !== "object") throw new Error("Not a valid backup file");
+    if (!confirm("Restore this backup? It will overwrite current rooms, materials, team status and settings.")) { input.value = ""; return; }
+    const jobs = [];
+    for (const [room, v] of Object.entries(src.rooms || {})) jobs.push(restPut(`rooms/${room}`, v));
+    for (const key of ["inventory", "team_status", "gear_requests", "sos_log"]) {
+      if (src[key]) jobs.push(restPut(key, src[key]));
+    }
+    if (src.config) {
+      const { admin_pin_hash, ...rest } = src.config;
+      jobs.push(restPatch("config", rest));
+    }
+    await Promise.all(jobs);
+    await refresh(true);
+    toast("✔ Backup restored");
+  } catch (e) { toast("❌ Restore failed: " + (e.message || e)); }
+  input.value = "";
+}
+
+/* ------------------------------------------------------------ PIN gate */
+let gateMode = "enter";
+function showGate(mode) {
+  gateMode = mode;
+  $("gate").hidden = false;
+  $("app").hidden = true;
+  $("gateTitle").textContent = mode === "create" ? "🔐 Create Admin PIN" : "🔐 Admin Login";
+  $("gateSub").textContent = mode === "create"
+    ? "First time here — choose a PIN (at least 4 characters) to protect this page."
+    : "Enter the admin PIN to continue.";
+  $("gatePin2").hidden = mode !== "create";
+  $("gateBtn").textContent = mode === "create" ? "Save PIN & continue" : "Unlock";
+  $("gatePin").value = $("gatePin2").value = "";
+  $("gateMsg").textContent = "";
+  setTimeout(() => $("gatePin").focus(), 50);
+}
+
+function unlock() {
+  locked = false;
+  $("gate").hidden = true;
+  $("app").hidden = false;
+  render();
+}
+
+$("gateForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const pin = $("gatePin").value.trim();
+  const msg = $("gateMsg");
+  if (gateMode === "create") {
+    if (pin.length < 4) return (msg.textContent = "PIN must be at least 4 characters.");
+    if (pin !== $("gatePin2").value.trim()) return (msg.textContent = "The two PINs don't match.");
+    try {
+      // Re-check first: never overwrite a PIN that already exists.
+      if (!(await refresh())) return (msg.textContent = "Can't reach the database. Check your internet and try again.");
+      if (cfg.admin_pin_hash) { showGate("enter"); $("gateMsg").textContent = "A PIN already exists — enter it."; return; }
+      const h = await hashPin(pin);
+      await restPatch("config", { admin_pin_hash: h });
+      sessionStorage.setItem("techops_admin_ok", h);
+      await refresh();
+      unlock();
+    } catch (err) { msg.textContent = "Couldn't save the PIN: " + err.message; }
+  } else {
+    if (!(await refresh())) return (msg.textContent = "Can't reach the database. Check your internet and try again.");
+    const h = await hashPin(pin);
+    if (h === cfg.admin_pin_hash) { sessionStorage.setItem("techops_admin_ok", h); unlock(); }
+    else { msg.textContent = "Wrong PIN, try again."; $("gatePin").select(); }
+  }
+});
+
+$("lockBtn").addEventListener("click", () => {
+  sessionStorage.removeItem("techops_admin_ok");
+  locked = true;
+  showGate("enter");
+});
+
+/* ------------------------------------------------------------ start */
+(async function start() {
+  if (!CONFIG_OK) {
+    $("configBanner").innerHTML = MISSING_CONFIG_MESSAGE;
+    $("configBanner").hidden = false;
+  }
+  const loaded = await refresh();
+  const stored = cfg.admin_pin_hash;
+  if (loaded && stored && sessionStorage.getItem("techops_admin_ok") === stored) unlock();
+  else if (!loaded) { showGate("enter"); $("gateMsg").textContent = "Can't reach the database yet — check your internet, then tap Unlock to retry."; }
+  else showGate(stored ? "enter" : "create");
+  setInterval(refresh, 3500);
+})();
+</script>
+</body>
+</html>

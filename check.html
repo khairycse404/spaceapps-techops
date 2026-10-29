@@ -71,7 +71,7 @@
       box-shadow: 0 0 12px rgba(56, 189, 248, .85); cursor: pointer;
     }
 
-    .member-pills { display: grid; grid-template-columns: repeat(5, 1fr); gap: .32rem; }
+    .member-pills { display: grid; grid-template-columns: repeat(auto-fit, minmax(56px, 1fr)); gap: .32rem; }
     .mpill {
       appearance: none; border: 1px solid var(--line); background: #080d20; color: var(--muted);
       padding: .45rem .15rem; border-radius: 10px; font: inherit; font-size: .8rem; font-weight: 700;
@@ -238,7 +238,7 @@
   </div>
 
   <div class="brand">
-    <small>Room Strike Team · Karim · Tasbeeh · Omar · Lojine · Khairy</small>
+    <small id="brandTeam">Room Strike Team</small>
     <h1>📱 Mobile <span>Room Inspector</span></h1>
   </div>
 
@@ -329,7 +329,7 @@
 
 <aside id="teamDrawer" class="drawer" aria-label="Team Status Sidebar">
   <div class="drawer-head">
-    <h2>👥 Team Member Status (5)</h2>
+    <h2 id="teamDrawerTitle">👥 Team Member Status (5)</h2>
     <button type="button" class="btn sm" id="closeTeamDrawerBtn">✕ Close</button>
   </div>
   <div class="drawer-body" id="teamDrawerBody"></div>
@@ -337,7 +337,7 @@
 
 <aside id="eqDrawer" class="drawer right" aria-label="Materials Sidebar">
   <div class="drawer-head">
-    <h2>🧰 Materials &amp; Gear (6)</h2>
+    <h2 id="eqDrawerTitle">🧰 Materials &amp; Gear (6)</h2>
     <button type="button" class="btn sm" id="closeEqDrawerBtn">✕ Close</button>
   </div>
   <div class="drawer-body">
@@ -364,8 +364,9 @@
 <script type="module">
 import {
   db, CONFIG_OK, ROOM_COUNT, ROOMS_TEAM, EQUIPMENT_HOLDERS, MEMBER_STATUSES, EQUIPMENT_ITEMS, DEFAULT_HOLDERS,
+  THRESHOLDS, applyRemoteConfig,
   roomKey, ref, onValue, update, restGet, restPatch, restDelete, esc, pad2, MISSING_CONFIG_MESSAGE
-} from "./firebase-config.js?v=4";
+} from "./firebase-config.js?v=5";
 
 const $ = (id) => document.getElementById(id);
 
@@ -392,7 +393,7 @@ function toast(msg) {
 function findMember(val) {
   if (!val) return ROOMS_TEAM[0];
   const low = String(val).trim().toLowerCase();
-  if (low === "logain") return ROOMS_TEAM.find((m) => m.id === "lojine");
+  if (low === "logain") return ROOMS_TEAM.find((m) => m.id === "lojine") || ROOMS_TEAM[0];
   return ROOMS_TEAM.find(
     (m) => m.id === low || m.name.toLowerCase() === low || low.includes(m.id)
   ) || ROOMS_TEAM[0];
@@ -439,11 +440,20 @@ $("closeTeamDrawerBtn").addEventListener("click", () => openDrawer(null));
 $("closeEqDrawerBtn").addEventListener("click", () => openDrawer(null));
 $("drawerBackdrop").addEventListener("click", () => openDrawer(null));
 
+/* Labels that depend on the admin-editable team / materials */
+function renderStaticLabels() {
+  $("brandTeam").textContent = `Room Strike Team · ${ROOMS_TEAM.map((m) => m.name).join(" · ")}`;
+  $("memberSlider").max = String(Math.max(0, ROOMS_TEAM.length - 1));
+  $("teamDrawerTitle").textContent = `👥 Team Member Status (${ROOMS_TEAM.length})`;
+  $("eqDrawerTitle").textContent = `🧰 Materials & Gear (${EQUIPMENT_ITEMS.length})`;
+}
+
 /* ------------------------------------------- Team Slider & Status Drawer */
 function setMemberByIndex(idx, showToastMsg = true) {
   const i = Math.max(0, Math.min(ROOMS_TEAM.length - 1, Number(idx) || 0));
   const m = ROOMS_TEAM[i];
   localStorage.setItem("techops_name", m.name);
+  renderStaticLabels();
   $("memberSlider").value = String(i);
   $("activeNameLabel").textContent = m.name;
   renderMemberPills();
@@ -460,7 +470,11 @@ function initMemberSelector() {
   setMemberByIndex(idx >= 0 ? idx : 0, false);
 }
 
+// Re-render everything that depends on the (admin-editable) team & materials
+function syncMemberFromConfig() { initMemberSelector(); }
+
 function renderMemberPills() {
+  renderStaticLabels();
   const activeM = getSelectedMember();
   $("memberPills").innerHTML = ROOMS_TEAM.map((m, i) => `
     <button type="button" class="mpill ${activeM.id === m.id ? "active" : ""}" data-idx="${i}">
@@ -914,8 +928,8 @@ $("submitBtn").addEventListener("click", async () => {
   const key = roomKey(selectedRoom);
   const issues = [];
   if (datashowStatus === "Issue") issues.push("Data Show Issue");
-  if (pingMs !== null && pingMs > 150) issues.push(`High Ping (${pingMs}ms)`);
-  if (downloadMbps !== null && downloadMbps < 5.0) issues.push(`Slow Speed (${downloadMbps}Mbps)`);
+  if (pingMs !== null && pingMs > THRESHOLDS.max_ping_ms) issues.push(`High Ping (${pingMs}ms)`);
+  if (downloadMbps !== null && downloadMbps < THRESHOLDS.min_mbps) issues.push(`Slow Speed (${downloadMbps}Mbps)`);
 
   const manualNotes = $("notes").value.trim();
   if (manualNotes) issues.push(manualNotes);
@@ -980,19 +994,17 @@ async function pollRestOnce() {
     const data = await restGet("");
     setOnlineState(true);
     if (data && typeof data === "object") {
-      if (data.config && typeof data.config.room_count === "number" && data.config.room_count >= 1) {
-        roomCount = Math.round(data.config.room_count);
+      const rc = applyRemoteConfig(data.config || {});
+      if (rc) {
+        roomCount = rc;
         localStorage.setItem("techops_room_count", String(roomCount));
       }
       roomsData = data.rooms || {};
       teamStatus = data.team_status || {};
       inventory = data.inventory || {};
       handleIncomingGearRequests(data.gear_requests || {});
-      renderMemberPills();
-      renderTeamDrawer();
+      syncMemberFromConfig();
       renderRooms();
-      renderMobileEquipment();
-      renderPersonalAlarms();
     }
   } catch { /* ignore */ }
 }
@@ -1025,14 +1037,13 @@ if (!CONFIG_OK) {
     renderPersonalAlarms();
   });
   onValue(ref(db, "config"), (snap) => {
-    const cfg = snap.val() || {};
-    if (typeof cfg.room_count === "number" && cfg.room_count >= 1) {
-      roomCount = Math.round(cfg.room_count);
+    const rc = applyRemoteConfig(snap.val() || {});
+    if (rc) {
+      roomCount = rc;
       localStorage.setItem("techops_room_count", String(roomCount));
-      renderRooms();
-      renderMobileEquipment();
-      validateForm();
     }
+    syncMemberFromConfig();
+    renderRooms();
   });
 }
 
