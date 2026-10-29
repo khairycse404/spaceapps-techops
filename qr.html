@@ -68,10 +68,21 @@
 </div>
 
 <script>
-const ROOM_COUNT = 12;
+let roomCount = Math.max(1, Number(localStorage.getItem("techops_room_count")) || 12);
 const baseInput = document.getElementById("base");
 const sheet = document.getElementById("sheet");
 const warn = document.getElementById("warn");
+
+fetch("https://spaceapps-cairo-techops-default-rtdb.firebaseio.com/config.json?_t=" + Date.now(), { cache: "no-store" })
+  .then((r) => r.json())
+  .then((cfg) => {
+    if (cfg && typeof cfg.room_count === "number" && cfg.room_count >= 1) {
+      roomCount = Math.round(cfg.room_count);
+      localStorage.setItem("techops_room_count", String(roomCount));
+      generate();
+    }
+  })
+  .catch(() => {});
 
 function detectBase() {
   const saved = localStorage.getItem("techops_base_url");
@@ -102,7 +113,7 @@ function generate() {
   sheet.className = "sheet" + (document.getElementById("layout").value === "six" ? " six" : "");
   const size = document.getElementById("layout").value === "six" ? 190 : 150;
 
-  for (let n = 1; n <= ROOM_COUNT; n++) {
+  for (let n = 1; n <= roomCount; n++) {
     const url = `${base}sos.html?room=${n}`;
     const card = document.createElement("div");
     card.className = "qcard";

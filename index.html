@@ -288,6 +288,35 @@
     .row .btn { flex: 1 1 auto; }
     .btn.sm { padding: .45rem .7rem; font-size: .85rem; }
 
+    .card.add-room-card {
+      background: rgba(11, 61, 145, .12);
+      border: 2px dashed rgba(56, 189, 248, .55);
+      border-top: 2px dashed rgba(56, 189, 248, .55);
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      min-height: 210px;
+      cursor: pointer;
+      transition: all .18s ease;
+    }
+    .card.add-room-card:hover {
+      background: rgba(56, 189, 248, .18);
+      border-color: var(--cyan);
+      box-shadow: 0 0 20px rgba(56, 189, 248, .28);
+      transform: translateY(-2px);
+    }
+    .add-room-plus {
+      width: 64px; height: 64px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--nasa-blue), #0284c7);
+      border: 2px solid var(--cyan); color: #fff;
+      font-size: 2.2rem; font-weight: 800; line-height: 1;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 16px rgba(56, 189, 248, .45);
+      margin-bottom: .35rem;
+    }
+    .add-room-title { font-size: 1.1rem; font-weight: 800; color: #fff; }
+    .add-room-sub { font-size: .8rem; color: var(--muted); }
+
     /* ---- dialogs ---- */
     dialog { background: var(--panel); color: var(--text); border: 1px solid var(--cyan); border-radius: 16px; padding: 1.1rem; width: min(92vw, 430px); }
     dialog::backdrop { background: rgba(0, 0, 0, .7); }
@@ -351,10 +380,10 @@
     </div>
   </section>
 
-  <!-- Live 12 Workshop Rooms Grid (Immediately at the top — no scrolling needed!) -->
+  <!-- Live Workshop Rooms Grid (Immediately at the top — no scrolling needed!) -->
   <div class="sec-head">
-    <h2>🏛️ Live 12 Workshop Rooms</h2>
-    <small>Real-time diagnostics, SOS dispatch, and borrowed materials</small>
+    <h2>🏛️ Live <span id="roomCountLabel">12</span> Workshop Rooms</h2>
+    <small>Real-time diagnostics, SOS dispatch, borrowed materials · Tap <strong>+</strong> after the last room to add a room</small>
   </div>
   <main id="grid" class="grid" aria-live="polite"></main>
 
@@ -439,6 +468,7 @@ let rooms = {};
 let teamStatus = {};
 let inventory = {};
 let gearRequests = {};
+let roomCount = Math.max(1, Number(localStorage.getItem("techops_room_count")) || ROOM_COUNT);
 let firstSnapshot = true;
 let knownSos = new Set();
 let knownMyReqs = new Set();
@@ -595,7 +625,7 @@ function renderTeam() {
       : `<div class="mcard-gear"><span style="font-size:.73rem;color:var(--muted);">No spare gear currently held</span></div>`;
 
     let roomOpts = `<option value="0">— Current Room: None —</option>`;
-    for (let r = 1; r <= ROOM_COUNT; r++) {
+    for (let r = 1; r <= roomCount; r++) {
       roomOpts += `<option value="${r}" ${curRoom === r ? "selected" : ""}>📍 In Room ${pad2(r)}</option>`;
     }
 
@@ -683,7 +713,7 @@ function renderEquipment() {
     `).join("");
 
     let roomOptions = `<option value="0" ${!inRoom ? "selected" : ""}>🟢 Not in a Workshop Room (${esc(holderNameOnly(st.holder))})</option>`;
-    for (let r = 1; r <= ROOM_COUNT; r++) {
+    for (let r = 1; r <= roomCount; r++) {
       roomOptions += `<option value="${r}" ${st.room === r ? "selected" : ""}>🏛️ Lent to Room ${pad2(r)}</option>`;
     }
 
@@ -1056,13 +1086,25 @@ function render() {
   renderEquipment();
   renderPersonalAlarms();
 
+  $("roomCountLabel").textContent = roomCount;
   let ready = 0, unchecked = 0, warning = 0, sos = 0, html = "";
-  for (let n = 1; n <= ROOM_COUNT; n++) {
+  for (let n = 1; n <= roomCount; n++) {
     const st = stateOf(rooms[roomKey(n)]);
     if (st === "READY") ready++; else if (st === "WARNING") warning++;
     else if (st === "SOS") sos++; else unchecked++;
     html += cardHTML(n);
   }
+  html += `
+    <article class="card add-room-card" data-act="add-room" title="Click + to add Room ${pad2(roomCount + 1)}">
+      <div class="add-room-plus">+</div>
+      <div class="add-room-title">Add Room ${pad2(roomCount + 1)}</div>
+      <div class="add-room-sub">Tap + to increase rooms by 1 (Current: ${roomCount})</div>
+      ${roomCount > 1 ? `
+        <button type="button" class="btn xs danger" data-act="remove-room" style="margin-top:.55rem;">
+          − Remove Room ${pad2(roomCount)}
+        </button>
+      ` : ""}
+    </article>`;
   $("grid").innerHTML = html;
   $("cReady").textContent = ready;
   $("cUnchecked").textContent = unchecked;
@@ -1168,7 +1210,7 @@ function setOnlineState(on) {
 function handleIncomingRooms(newRooms) {
   rooms = newRooms || {};
   const nowSos = new Set();
-  for (let n = 1; n <= ROOM_COUNT; n++) if (stateOf(rooms[roomKey(n)]) === "SOS") nowSos.add(n);
+  for (let n = 1; n <= roomCount; n++) if (stateOf(rooms[roomKey(n)]) === "SOS") nowSos.add(n);
 
   if (!firstSnapshot) {
     const fresh = [...nowSos].filter((n) => !knownSos.has(n));
@@ -1179,6 +1221,13 @@ function handleIncomingRooms(newRooms) {
   }
   knownSos = nowSos;
   firstSnapshot = false;
+}
+
+function handleIncomingConfig(cfg) {
+  if (cfg && typeof cfg.room_count === "number" && cfg.room_count >= 1) {
+    roomCount = Math.round(cfg.room_count);
+    localStorage.setItem("techops_room_count", String(roomCount));
+  }
 }
 
 function handleIncomingGearRequests(newReqs) {
@@ -1202,6 +1251,7 @@ async function pollRestOnce() {
     const data = await restGet("");
     setOnlineState(true);
     if (data && typeof data === "object") {
+      handleIncomingConfig(data.config || {});
       handleIncomingRooms(data.rooms || {});
       teamStatus = data.team_status || {};
       inventory = data.inventory || {};
@@ -1241,6 +1291,11 @@ if (!CONFIG_OK) {
 
   onValue(ref(db, "gear_requests"), (snap) => {
     handleIncomingGearRequests(snap.val() || {});
+    render();
+  });
+
+  onValue(ref(db, "config"), (snap) => {
+    handleIncomingConfig(snap.val() || {});
     render();
   });
 }
@@ -1395,7 +1450,42 @@ $("manualSave").addEventListener("click", async () => {
   } catch (e) { toast("Save failed: " + e.message); }
 });
 
+async function addRoom() {
+  const nextCount = roomCount + 1;
+  roomCount = nextCount;
+  localStorage.setItem("techops_room_count", String(roomCount));
+  render();
+  try {
+    await writeData("config", { room_count: nextCount, updated_at: Date.now() });
+    toast(`➕ Added Room ${pad2(nextCount)}! (Total: ${nextCount} rooms)`);
+  } catch (e) { toast("Failed to update room count: " + e.message); }
+}
+
+async function removeLastRoom() {
+  if (roomCount <= 1) return;
+  const removed = roomCount;
+  const nextCount = roomCount - 1;
+  roomCount = nextCount;
+  localStorage.setItem("techops_room_count", String(roomCount));
+  render();
+  try {
+    await writeData("config", { room_count: nextCount, updated_at: Date.now() });
+    toast(`➖ Removed Room ${pad2(removed)} (Total: ${nextCount} rooms)`);
+  } catch (e) { toast("Failed to update room count: " + e.message); }
+}
+
 $("grid").addEventListener("click", async (e) => {
+  const rmBtn = e.target.closest("[data-act='remove-room']");
+  if (rmBtn) {
+    e.stopPropagation();
+    await removeLastRoom();
+    return;
+  }
+  const addBtn = e.target.closest("[data-act='add-room']");
+  if (addBtn) {
+    await addRoom();
+    return;
+  }
   const retBtn = e.target.closest("[data-act='return-eq']");
   if (retBtn) {
     const eqId = retBtn.dataset.eq;

@@ -23,6 +23,10 @@
       ".read": true,
       ".write": true
     },
+    "config": {
+      ".read": true,
+      ".write": true
+    },
     "sos_log": {
       ".read": true,
       ".write": true

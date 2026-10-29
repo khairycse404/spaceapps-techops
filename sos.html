@@ -131,19 +131,31 @@ const VIEWS = ["viewPicker", "viewForm", "viewWait", "viewClaimed", "viewDone"];
 function show(id) { VIEWS.forEach((v) => { $(v).hidden = v !== id; }); }
 
 const room = parseInt(new URLSearchParams(location.search).get("room"), 10);
-const validRoom = Number.isInteger(room) && room >= 1 && room <= ROOM_COUNT;
+let roomCount = Math.max(1, Number(localStorage.getItem("techops_room_count")) || ROOM_COUNT);
+const validRoom = Number.isInteger(room) && room >= 1;
 
 if (!CONFIG_OK) {
   $("configBanner").innerHTML = MISSING_CONFIG_MESSAGE;
   $("configBanner").hidden = false;
 }
 
+function renderPicker() {
+  let h = "";
+  for (let n = 1; n <= roomCount; n++) h += `<a class="btn" style="text-align:center;text-decoration:none" href="?room=${n}">Room ${pad2(n)}</a>`;
+  $("pickerGrid").innerHTML = h;
+}
+
 if (!validRoom) {
   $("title").innerHTML = `NASA Space Apps Cairo Tech Ops<br>— <span class="room">Support</span>`;
-  let h = "";
-  for (let n = 1; n <= ROOM_COUNT; n++) h += `<a class="btn" style="text-align:center;text-decoration:none" href="?room=${n}">Room ${pad2(n)}</a>`;
-  $("pickerGrid").innerHTML = h;
+  renderPicker();
   show("viewPicker");
+  restGet("config").then((cfg) => {
+    if (cfg && typeof cfg.room_count === "number" && cfg.room_count >= 1) {
+      roomCount = Math.round(cfg.room_count);
+      localStorage.setItem("techops_room_count", String(roomCount));
+      renderPicker();
+    }
+  }).catch(() => {});
 } else {
   $("title").innerHTML = `NASA Space Apps Cairo Tech Ops<br>— <span class="room">Room ${room}</span> Support`;
   document.title = `Room ${room} Support · Tech Ops`;

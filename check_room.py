@@ -386,6 +386,7 @@ class TechOpsInspectorApp(tk.Tk):
             pass
 
         self.cfg = load_config()
+        self.room_count = ROOM_COUNT
         self.selected_room = 1
         self.datashow_choice = "OK"
         self.current_ping = None
@@ -499,28 +500,26 @@ class TechOpsInspectorApp(tk.Tk):
         content = tk.Frame(self, bg="#04060f")
         content.pack(fill="both", expand=True, padx=14, pady=4)
 
-        # Left Column: 12 Rooms Grid
+        # Left Column: Workshop Rooms Grid
         left_col = tk.Frame(content, bg="#0c1226", padx=12, pady=10, highlightthickness=1, highlightbackground="#1b2545")
         left_col.pack(side="left", fill="both", expand=True, padx=(0, 6))
 
-        tk.Label(left_col, text="SELECT WORKSHOP ROOM (1 TO 12)", font=("Segoe UI", 10, "bold"), fg="#94a3b8", bg="#0c1226").pack(anchor="w", pady=(0, 6))
+        left_hdr = tk.Frame(left_col, bg="#0c1226")
+        left_hdr.pack(fill="x", pady=(0, 6))
+        self.lbl_rooms_hdr = tk.Label(left_hdr, text=f"SELECT WORKSHOP ROOM (1 TO {self.room_count})", font=("Segoe UI", 10, "bold"), fg="#94a3b8", bg="#0c1226")
+        self.lbl_rooms_hdr.pack(side="left")
+        tk.Button(
+            left_hdr, text="− Remove Last", font=("Segoe UI", 8, "bold"),
+            bg="#4c0519", fg="#fda4af", relief="flat", padx=6, pady=2, cursor="hand2",
+            command=lambda: self._change_room_count(-1),
+        ).pack(side="right")
 
-        grid_frame = tk.Frame(left_col, bg="#0c1226")
-        grid_frame.pack(fill="both", expand=True)
+        self.grid_frame = tk.Frame(left_col, bg="#0c1226")
+        self.grid_frame.pack(fill="both", expand=True)
 
         self.room_buttons = {}
-        for i in range(ROOM_COUNT):
-            rn = i + 1
-            btn = tk.Button(
-                grid_frame, text=f"Room {rn:02d}\n⚪ UNCHECKED", font=("Segoe UI", 10, "bold"),
-                bg="#121a36", fg="#ffffff", activebackground="#0b3d91", activeforeground="#ffffff",
-                relief="flat", bd=0, padx=6, pady=6, cursor="hand2",
-                command=lambda n=rn: self._select_room(n),
-            )
-            btn.grid(row=i // 3, column=i % 3, sticky="nsew", padx=4, pady=4)
-            grid_frame.grid_columnconfigure(i % 3, weight=1)
-            grid_frame.grid_rowconfigure(i // 3, weight=1)
-            self.room_buttons[rn] = btn
+        self.eq_room_combos = {}
+        self._rebuild_room_grid()
 
         # Right Column: Room Action Panel + Backup Equipment Panel
         right_col = tk.Frame(content, bg="#0c1226", padx=14, pady=8, highlightthickness=1, highlightbackground="#1b2545", width=450)
@@ -614,7 +613,7 @@ class TechOpsInspectorApp(tk.Tk):
         ).pack(side="right", fill="x", expand=True, padx=(3, 0))
 
         self.eq_widgets = {}
-        room_vals = ["Available (Not in room)"] + [f"Room {r:02d}" for r in range(1, ROOM_COUNT + 1)]
+        room_vals = ["Available (Not in room)"] + [f"Room {r:02d}" for r in range(1, self.room_count + 1)]
         holder_vals = [n for _, n in EQUIPMENT_HOLDERS]
 
         for eq_id, eq_title, _ in EQUIPMENT_ITEMS:
@@ -633,12 +632,71 @@ class TechOpsInspectorApp(tk.Tk):
             r_cb.bind("<<ComboboxSelected>>", lambda _e, eid=eq_id, v=r_var: self._on_eq_room_change(eid, v.get()))
 
             self.eq_widgets[eq_id] = (h_var, r_var)
+            self.eq_room_combos[eq_id] = r_cb
 
         # Status log bar at bottom
         self.lbl_log = tk.Label(self, text="Ready. Slide to choose your name, select a room, or request materials.", font=("Segoe UI", 9), fg="#94a3b8", bg="#04060f", anchor="w")
         self.lbl_log.pack(fill="x", padx=16, pady=4)
 
         self._select_room(1)
+
+    def _rebuild_room_grid(self):
+        for w in self.grid_frame.winfo_children():
+            w.destroy()
+        self.room_buttons.clear()
+        self.lbl_rooms_hdr.configure(text=f"SELECT WORKSHOP ROOM (1 TO {self.room_count})")
+        cols = 3 if self.room_count <= 12 else 4
+        for c in range(4):
+            self.grid_frame.grid_columnconfigure(c, weight=1 if c < cols else 0)
+        total_rows = (self.room_count // cols) + 1
+        for r in range(max(6, total_rows + 1)):
+            self.grid_frame.grid_rowconfigure(r, weight=1 if r < total_rows else 0)
+
+        for i in range(self.room_count):
+            rn = i + 1
+            btn = tk.Button(
+                self.grid_frame, text=f"Room {rn:02d}\n⚪ UNCHECKED", font=("Segoe UI", 9 if self.room_count > 12 else 10, "bold"),
+                bg="#121a36", fg="#ffffff", activebackground="#0b3d91", activeforeground="#ffffff",
+                relief="solid" if rn == self.selected_room else "flat", bd=2 if rn == self.selected_room else 0,
+                padx=4, pady=4, cursor="hand2",
+                command=lambda n=rn: self._select_room(n),
+            )
+            btn.grid(row=i // cols, column=i % cols, sticky="nsew", padx=3, pady=3)
+            self.room_buttons[rn] = btn
+
+        # Add '+' button right after the last room
+        add_idx = self.room_count
+        add_btn = tk.Button(
+            self.grid_frame, text=f"➕\nAdd Room {self.room_count + 1:02d}", font=("Segoe UI", 9, "bold"),
+            bg="#0b3d91", fg="#38bdf8", activebackground="#1e40af", activeforeground="#ffffff",
+            relief="flat", bd=0, padx=4, pady=4, cursor="hand2",
+            command=lambda: self._change_room_count(1),
+        )
+        add_btn.grid(row=add_idx // cols, column=add_idx % cols, sticky="nsew", padx=3, pady=3)
+
+        room_vals = ["Available (Not in room)"] + [f"Room {r:02d}" for r in range(1, self.room_count + 1)]
+        for r_cb in self.eq_room_combos.values():
+            r_cb.configure(values=room_vals)
+
+    def _change_room_count(self, delta: int):
+        new_count = max(1, self.room_count + delta)
+        if new_count == self.room_count:
+            return
+        self.room_count = new_count
+        if self.selected_room > self.room_count:
+            self.selected_room = self.room_count
+        self._rebuild_room_grid()
+        self._render_live_state()
+        base_url = self.cfg["firebase_url"].rstrip("/")
+        threading.Thread(
+            target=lambda: requests.patch(
+                f"{base_url}/config.json",
+                json={"room_count": new_count, "updated_at": {".sv": "timestamp"}},
+                timeout=5,
+            ),
+            daemon=True,
+        ).start()
+        self.lbl_log.configure(text=f"Updated workshop room count -> {new_count} rooms")
 
     def _set_member_idx(self, idx: int):
         self.slider_var.set(idx)
@@ -952,13 +1010,23 @@ class TechOpsInspectorApp(tk.Tk):
                 self.inventory_cache = data.get("inventory") or {}
                 self.team_cache = data.get("team_status") or {}
                 self.gear_requests_cache = data.get("gear_requests") or {}
+                cfg_data = data.get("config") or {}
+                remote_rc = cfg_data.get("room_count")
+                if isinstance(remote_rc, (int, float)) and int(remote_rc) >= 1:
+                    self._pending_room_count = int(remote_rc)
                 self.after(0, self._render_live_state)
         except Exception:
             pass
 
     def _render_live_state(self):
+        if hasattr(self, "_pending_room_count") and self._pending_room_count != self.room_count:
+            self.room_count = self._pending_room_count
+            if self.selected_room > self.room_count:
+                self.selected_room = self.room_count
+            self._rebuild_room_grid()
+
         # Update rooms grid
-        for i in range(ROOM_COUNT):
+        for i in range(self.room_count):
             rn = i + 1
             btn = self.room_buttons.get(rn)
             if not btn:

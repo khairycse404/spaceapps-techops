@@ -117,6 +117,13 @@
     .room-btn.READY { border-bottom: 4px solid var(--ready); }
     .room-btn.WARNING { border-bottom: 4px solid var(--warning); }
     .room-btn.SOS { border-bottom: 4px solid var(--sos); animation: sosbtn 1s infinite; }
+    .room-btn.add-room-btn {
+      border: 2px dashed rgba(56, 189, 248, 0.65);
+      background: rgba(11, 61, 145, 0.16);
+      color: var(--cyan);
+      font-size: 1.25rem;
+    }
+    .room-btn.add-room-btn:hover { background: rgba(56, 189, 248, 0.22); color: #fff; }
     @keyframes sosbtn { 50% { background: rgba(239, 68, 68, 0.3); } }
 
     /* Projector status toggle */
@@ -260,7 +267,10 @@
 
   <!-- Step 1: Room Selector (Immediately accessible!) -->
   <div class="card-panel">
-    <div class="section-title"><span>📍 Select Room (1 to 12)</span></div>
+    <div class="section-title">
+      <span>📍 Select Room (1 to <span id="roomCountLabel">12</span>)</span>
+      <button type="button" class="btn xs danger" id="removeLastRoomBtn" title="Remove last room">− Remove Last</button>
+    </div>
     <div class="room-grid" id="roomGrid"></div>
     <div id="roomHistory" class="history-card" style="display:none;"></div>
   </div>
@@ -360,6 +370,7 @@ import {
 const $ = (id) => document.getElementById(id);
 
 let selectedRoom = 1;
+let roomCount = Math.max(1, Number(localStorage.getItem("techops_room_count")) || ROOM_COUNT);
 let datashowStatus = null;
 let pingMs = null;
 let downloadMbps = null;
@@ -503,14 +514,18 @@ $("teamDrawerBody").addEventListener("click", async (e) => {
 
 /* ------------------------------------------- Rooms Grid */
 function renderRooms() {
+  if (selectedRoom > roomCount) selectedRoom = roomCount;
+  $("roomCountLabel").textContent = roomCount;
+  $("removeLastRoomBtn").style.display = roomCount > 1 ? "inline-flex" : "none";
   let html = "";
-  for (let n = 1; n <= ROOM_COUNT; n++) {
+  for (let n = 1; n <= roomCount; n++) {
     const key = roomKey(n);
     const r = roomsData[key] || {};
     const st = r.sos ? "SOS" : (r.status || "UNCHECKED");
     const active = n === selectedRoom ? "active" : "";
-    html += `<button class="room-btn ${active} ${st}" data-room="${n}">R${n < 10 ? '0' + n : n}</button>`;
+    html += `<button type="button" class="room-btn ${active} ${st}" data-room="${n}">R${n < 10 ? '0' + n : n}</button>`;
   }
+  html += `<button type="button" class="room-btn add-room-btn" data-add-room="1" title="Add Room ${roomCount + 1}">+</button>`;
   $("roomGrid").innerHTML = html;
   updateRoomHistory();
 }
@@ -528,12 +543,43 @@ function updateRoomHistory() {
   }
 }
 
-$("roomGrid").addEventListener("click", (e) => {
+$("roomGrid").addEventListener("click", async (e) => {
+  const addB = e.target.closest("[data-add-room]");
+  if (addB) {
+    const nextCount = roomCount + 1;
+    roomCount = nextCount;
+    selectedRoom = nextCount;
+    localStorage.setItem("techops_room_count", String(roomCount));
+    renderRooms();
+    renderMobileEquipment();
+    validateForm();
+    try {
+      await writeData("config", { room_count: nextCount, updated_at: Date.now() });
+      toast(`➕ Added Room ${pad2(nextCount)}!`);
+    } catch (err) { toast("Error: " + err.message); }
+    return;
+  }
   const b = e.target.closest("[data-room]");
   if (!b) return;
   selectedRoom = Number(b.dataset.room);
   renderRooms();
   validateForm();
+});
+
+$("removeLastRoomBtn").addEventListener("click", async () => {
+  if (roomCount <= 1) return;
+  const removed = roomCount;
+  const nextCount = roomCount - 1;
+  roomCount = nextCount;
+  if (selectedRoom > roomCount) selectedRoom = roomCount;
+  localStorage.setItem("techops_room_count", String(roomCount));
+  renderRooms();
+  renderMobileEquipment();
+  validateForm();
+  try {
+    await writeData("config", { room_count: nextCount, updated_at: Date.now() });
+    toast(`➖ Removed Room ${pad2(removed)}`);
+  } catch (err) { toast("Error: " + err.message); }
 });
 
 /* ------------------------------------------- Materials Sidebar & Smart Request */
@@ -550,7 +596,7 @@ function renderMobileEquipment() {
     `).join("");
 
     let roomOpts = `<option value="0" ${!room ? "selected" : ""}>🟢 Not in a Room</option>`;
-    for (let r = 1; r <= ROOM_COUNT; r++) {
+    for (let r = 1; r <= roomCount; r++) {
       roomOpts += `<option value="${r}" ${room === r ? "selected" : ""}>🏛️ Lent to Room ${pad2(r)}</option>`;
     }
 
@@ -895,7 +941,7 @@ $("submitBtn").addEventListener("click", async () => {
       updated_at: Date.now(),
     });
     toast(`🎉 Room ${selectedRoom} updated to ${status}!`);
-    if (selectedRoom < ROOM_COUNT) selectedRoom++;
+    if (selectedRoom < roomCount) selectedRoom++;
     datashowStatus = null;
     $("dsOkBtn").classList.remove("sel-ok");
     $("dsBadBtn").classList.remove("sel-bad");
@@ -934,6 +980,10 @@ async function pollRestOnce() {
     const data = await restGet("");
     setOnlineState(true);
     if (data && typeof data === "object") {
+      if (data.config && typeof data.config.room_count === "number" && data.config.room_count >= 1) {
+        roomCount = Math.round(data.config.room_count);
+        localStorage.setItem("techops_room_count", String(roomCount));
+      }
       roomsData = data.rooms || {};
       teamStatus = data.team_status || {};
       inventory = data.inventory || {};
@@ -973,6 +1023,16 @@ if (!CONFIG_OK) {
   onValue(ref(db, "gear_requests"), (snap) => {
     handleIncomingGearRequests(snap.val() || {});
     renderPersonalAlarms();
+  });
+  onValue(ref(db, "config"), (snap) => {
+    const cfg = snap.val() || {};
+    if (typeof cfg.room_count === "number" && cfg.room_count >= 1) {
+      roomCount = Math.round(cfg.room_count);
+      localStorage.setItem("techops_room_count", String(roomCount));
+      renderRooms();
+      renderMobileEquipment();
+      validateForm();
+    }
   });
 }
 
