@@ -8,10 +8,26 @@ import { getDatabase } from "https://www.gstatic.com/firebasejs/10.12.2/firebase
 export const FIREBASE_DATABASE_URL = "https://spaceapps-cairo-techops-default-rtdb.firebaseio.com";
 
 // Number of workshop rooms (rooms 1..ROOM_COUNT).
-export const ROOM_COUNT = 12;
+export const ROOM_COUNT = 15;
 
-// Optional friendly names shown next to "Room 05" (leave empty if not needed).
-export const ROOM_NAMES = {};
+// Optional friendly names / room codes shown next to "Room 01" (e.g. "D142").
+export const ROOM_NAMES = {
+  1: "D142",
+  2: "D145",
+  3: "D148",
+  4: "D150",
+  5: "D154",
+  6: "C129",
+  7: "C132",
+  8: "C134",
+  9: "D242",
+  10: "D245",
+  11: "D248",
+  12: "D250",
+  13: "D254",
+  14: "C232",
+  15: "C234",
+};
 
 // The 5 Rooms Strike Team members (Karim - Tasbeeh - Omar - Lojine - Khairy)
 export const ROOMS_TEAM = [
@@ -137,10 +153,14 @@ export function applyRemoteConfig(cfg) {
   EQUIPMENT_ITEMS.splice(0, EQUIPMENT_ITEMS.length, ...eq);
 
   // Optional room names (stored as room_1, room_2, ...)
-  for (const k of Object.keys(ROOM_NAMES)) delete ROOM_NAMES[k];
+  const parsedNames = {};
   for (const [k, v] of Object.entries(cfg.room_names || {})) {
     const m = /^room_(\d+)$/.exec(k);
-    if (m && v) ROOM_NAMES[Number(m[1])] = clean(v, 40);
+    if (m && v) parsedNames[Number(m[1])] = clean(v, 40);
+  }
+  if (Object.keys(parsedNames).length > 0) {
+    for (const k of Object.keys(ROOM_NAMES)) delete ROOM_NAMES[k];
+    Object.assign(ROOM_NAMES, parsedNames);
   }
 
   // Site text + thresholds

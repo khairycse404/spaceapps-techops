@@ -117,7 +117,7 @@
 
 <script type="module">
 import {
-  db, CONFIG_OK, ROOM_COUNT, roomKey, ref, onValue, update, serverTimestamp, restGet, restPatch, esc, pad2, MISSING_CONFIG_MESSAGE,
+  db, CONFIG_OK, ROOM_COUNT, ROOM_NAMES, roomKey, ref, onValue, update, serverTimestamp, restGet, restPatch, esc, pad2, MISSING_CONFIG_MESSAGE,
 } from "./firebase-config.js?v=5";
 
 const $ = (id) => document.getElementById(id);
@@ -139,10 +139,20 @@ if (!CONFIG_OK) {
   $("configBanner").hidden = false;
 }
 
+function roomLabel(n) {
+  const code = ROOM_NAMES[n];
+  return `Room ${pad2(n)}${code ? " · " + code : ""}`;
+}
+
 function renderPicker() {
   let h = "";
-  for (let n = 1; n <= roomCount; n++) h += `<a class="btn" style="text-align:center;text-decoration:none" href="?room=${n}">Room ${pad2(n)}</a>`;
+  for (let n = 1; n <= roomCount; n++) h += `<a class="btn" style="text-align:center;text-decoration:none" href="?room=${n}">${esc(roomLabel(n))}</a>`;
   $("pickerGrid").innerHTML = h;
+}
+
+function updateTitle() {
+  $("title").innerHTML = `NASA Space Apps Cairo Tech Ops<br>— <span class="room">${esc(roomLabel(room))}</span> Support`;
+  document.title = `${roomLabel(room)} Support · Tech Ops`;
 }
 
 if (!validRoom) {
@@ -150,15 +160,22 @@ if (!validRoom) {
   renderPicker();
   show("viewPicker");
   restGet("config").then((cfg) => {
-    if (cfg && typeof cfg.room_count === "number" && cfg.room_count >= 1) {
-      roomCount = Math.round(cfg.room_count);
-      localStorage.setItem("techops_room_count", String(roomCount));
+    if (cfg && typeof cfg === "object") {
+      if (typeof cfg.room_count === "number" && cfg.room_count >= 1) {
+        roomCount = Math.round(cfg.room_count);
+        localStorage.setItem("techops_room_count", String(roomCount));
+      }
+      if (cfg.room_names && typeof cfg.room_names === "object") {
+        for (const [k, v] of Object.entries(cfg.room_names)) {
+          const m = /^room_(\d+)$/.exec(k);
+          if (m && v) ROOM_NAMES[Number(m[1])] = String(v).trim();
+        }
+      }
       renderPicker();
     }
   }).catch(() => {});
 } else {
-  $("title").innerHTML = `NASA Space Apps Cairo Tech Ops<br>— <span class="room">Room ${room}</span> Support`;
-  document.title = `Room ${room} Support · Tech Ops`;
+  updateTitle();
   const key = roomKey(room);
   const roomRef = ref(db, `rooms/${key}`);
 
@@ -209,9 +226,16 @@ if (!validRoom) {
 
   async function pollRoomRest() {
     try {
-      const data = await restGet(`rooms/${key}`);
+      const [data, cfg] = await Promise.all([restGet(`rooms/${key}`), restGet("config")]);
       setOnline(true);
       latest = data || {};
+      if (cfg && typeof cfg === "object" && cfg.room_names) {
+        for (const [k, v] of Object.entries(cfg.room_names)) {
+          const m = /^room_(\d+)$/.exec(k);
+          if (m && v) ROOM_NAMES[Number(m[1])] = String(v).trim();
+        }
+        updateTitle();
+      }
       render();
     } catch { /* ignore */ }
   }

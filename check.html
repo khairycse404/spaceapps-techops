@@ -363,7 +363,7 @@
 
 <script type="module">
 import {
-  db, CONFIG_OK, ROOM_COUNT, ROOMS_TEAM, EQUIPMENT_HOLDERS, MEMBER_STATUSES, EQUIPMENT_ITEMS, DEFAULT_HOLDERS,
+  db, CONFIG_OK, ROOM_COUNT, ROOM_NAMES, ROOMS_TEAM, EQUIPMENT_HOLDERS, MEMBER_STATUSES, EQUIPMENT_ITEMS, DEFAULT_HOLDERS,
   THRESHOLDS, applyRemoteConfig,
   roomKey, ref, onValue, update, restGet, restPatch, restDelete, esc, pad2, MISSING_CONFIG_MESSAGE
 } from "./firebase-config.js?v=5";
@@ -537,7 +537,11 @@ function renderRooms() {
     const r = roomsData[key] || {};
     const st = r.sos ? "SOS" : (r.status || "UNCHECKED");
     const active = n === selectedRoom ? "active" : "";
-    html += `<button type="button" class="room-btn ${active} ${st}" data-room="${n}">R${n < 10 ? '0' + n : n}</button>`;
+    const code = ROOM_NAMES[n] || "";
+    html += `<button type="button" class="room-btn ${active} ${st}" data-room="${n}">
+      <div>R${n < 10 ? '0' + n : n}</div>
+      ${code ? `<small style="display:block;font-size:0.62rem;opacity:0.85;font-weight:700;line-height:1.1;">${esc(code)}</small>` : ''}
+    </button>`;
   }
   html += `<button type="button" class="room-btn add-room-btn" data-add-room="1" title="Add Room ${roomCount + 1}">+</button>`;
   $("roomGrid").innerHTML = html;
@@ -547,13 +551,14 @@ function renderRooms() {
 function updateRoomHistory() {
   const key = roomKey(selectedRoom);
   const r = roomsData[key];
+  const code = ROOM_NAMES[selectedRoom] ? ` · ${ROOM_NAMES[selectedRoom]}` : "";
   const box = $("roomHistory");
   if (r && r.status) {
     box.style.display = "flex";
-    box.innerHTML = `<span>Current: <strong>${r.status}</strong></span><span>Checked by: <strong>${esc(r.checked_by || 'Unknown')}</strong></span>`;
+    box.innerHTML = `<span>Room ${pad2(selectedRoom)}${esc(code)}: <strong>${r.status}</strong></span><span>Checked by: <strong>${esc(r.checked_by || 'Unknown')}</strong></span>`;
   } else {
     box.style.display = "flex";
-    box.innerHTML = `<span>Current: <strong>UNCHECKED</strong></span><span>No tests recorded</span>`;
+    box.innerHTML = `<span>Room ${pad2(selectedRoom)}${esc(code)}: <strong>UNCHECKED</strong></span><span>No tests recorded</span>`;
   }
 }
 
@@ -909,10 +914,11 @@ $("runSpeedBtn").addEventListener("click", async () => {
 function validateForm() {
   const valid = datashowStatus !== null;
   $("submitBtn").disabled = !valid;
+  const code = ROOM_NAMES[selectedRoom] ? ` · ${ROOM_NAMES[selectedRoom]}` : "";
   if (valid) {
-    $("submitBtn").textContent = `💾 Save Room ${selectedRoom < 10 ? '0' + selectedRoom : selectedRoom} (${getSelectedMember().name}) -> ${datashowStatus === 'OK' ? 'READY 🟢' : 'WARNING 🟡'}`;
+    $("submitBtn").textContent = `💾 Save Room ${selectedRoom < 10 ? '0' + selectedRoom : selectedRoom}${code} (${getSelectedMember().name}) -> ${datashowStatus === 'OK' ? 'READY 🟢' : 'WARNING 🟡'}`;
   } else {
-    $("submitBtn").textContent = `💾 Select Projector Status (Step 1)`;
+    $("submitBtn").textContent = `💾 Select Projector Status for Room ${selectedRoom < 10 ? '0' + selectedRoom : selectedRoom}${code}`;
   }
 }
 

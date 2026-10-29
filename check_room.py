@@ -35,10 +35,28 @@ else:
     APP_DIR = Path(__file__).parent
 
 CONFIG_PATH = APP_DIR / "config.json"
-ROOM_COUNT = 12
+ROOM_COUNT = 15
 PING_HOST = "8.8.8.8"
 SPEED_URL = "https://speed.cloudflare.com/__down?bytes=5000000"
 IS_WINDOWS = sys.platform.startswith("win")
+
+ROOM_NAMES = {
+    1: "D142",
+    2: "D145",
+    3: "D148",
+    4: "D150",
+    5: "D154",
+    6: "C129",
+    7: "C132",
+    8: "C134",
+    9: "D242",
+    10: "D245",
+    11: "D248",
+    12: "D250",
+    13: "D254",
+    14: "C232",
+    15: "C234",
+}
 
 TEAM_MEMBERS = [
     ("karim", "Karim"),
@@ -142,6 +160,13 @@ def apply_remote_config():
                 items.append((iid, title, typ))
         if items or remote.get("equipment_custom"):
             EQUIPMENT_ITEMS[:] = items
+
+        r_names = remote.get("room_names") or {}
+        if isinstance(r_names, dict):
+            for k, v in r_names.items():
+                m = re.match(r"^room_(\d+)$", str(k))
+                if m and v:
+                    ROOM_NAMES[int(m.group(1))] = str(v).strip()
 
         thr = remote.get("thresholds") or {}
         for key, cast in (("min_mbps", float), ("max_ping_ms", int), ("min_wifi_percent", int)):
@@ -717,8 +742,9 @@ class TechOpsInspectorApp(tk.Tk):
 
         for i in range(self.room_count):
             rn = i + 1
+            code = f" · {ROOM_NAMES[rn]}" if rn in ROOM_NAMES else ""
             btn = tk.Button(
-                self.grid_frame, text=f"Room {rn:02d}\n⚪ UNCHECKED", font=("Segoe UI", 9 if self.room_count > 12 else 10, "bold"),
+                self.grid_frame, text=f"Room {rn:02d}{code}\n⚪ UNCHECKED", font=("Segoe UI", 8 if self.room_count > 12 else 9, "bold"),
                 bg="#121a36", fg="#ffffff", activebackground="#0b3d91", activeforeground="#ffffff",
                 relief="solid" if rn == self.selected_room else "flat", bd=2 if rn == self.selected_room else 0,
                 padx=4, pady=4, cursor="hand2",
@@ -955,7 +981,8 @@ class TechOpsInspectorApp(tk.Tk):
 
     def _select_room(self, n):
         self.selected_room = n
-        self.lbl_selected_room.configure(text=f"ROOM {n:02d} INSPECTION")
+        code = f" · {ROOM_NAMES[n]}" if n in ROOM_NAMES else ""
+        self.lbl_selected_room.configure(text=f"ROOM {n:02d}{code} INSPECTION")
         for rn, btn in self.room_buttons.items():
             if rn == n:
                 btn.configure(relief="solid", bd=2)
@@ -1103,7 +1130,8 @@ class TechOpsInspectorApp(tk.Tk):
                 "UNCHECKED": ("#121a36", "#ffffff", "⚪ UNCHECKED"),
             }
             bg, fg, label = color_map.get(st, ("#121a36", "#ffffff", st))
-            btn.configure(text=f"Room {rn:02d}\n{label}", bg=bg, fg=fg)
+            code = f" · {ROOM_NAMES[rn]}" if rn in ROOM_NAMES else ""
+            btn.configure(text=f"Room {rn:02d}{code}\n{label}", bg=bg, fg=fg)
 
         # Update equipment widgets
         id_to_name = dict(EQUIPMENT_HOLDERS)

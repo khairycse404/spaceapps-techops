@@ -7,32 +7,82 @@
   <link rel="stylesheet" href="theme.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
-    .wrap { max-width: 1000px; margin: 0 auto; padding: 1rem; }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 1rem; }
     .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 1rem; margin-bottom: 1rem; }
-    .panel h1 { font-size: 1.3rem; margin-bottom: .3rem; }
-    .panel p { color: var(--muted); margin: .2rem 0 .8rem; }
+    .panel h1 { font-size: 1.35rem; margin-bottom: .3rem; }
+    .panel p { color: var(--muted); margin: .2rem 0 .8rem; font-size: .9rem; line-height: 1.45; }
     .row { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
     .row input[type=text] { flex: 1 1 340px; background: #070b1a; color: var(--text); border: 1px solid var(--line); border-radius: 10px; padding: .65rem .8rem; font: inherit; }
     .row select { background: #070b1a; color: var(--text); border: 1px solid var(--line); border-radius: 10px; padding: .65rem; font: inherit; }
     .warn { color: #fde68a; font-size: .9rem; margin-top: .6rem; }
 
-    /* ---- card sheet ---- */
-    .sheet { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; background: #fff; border: 1px solid #ccc; }
-    .sheet.six { grid-template-columns: repeat(2, 1fr); }
-    .qcard {
-      background: #fff; color: #0b1020; border: 1px dashed #888; padding: 4mm 3mm;
-      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.5mm;
-      text-align: center; break-inside: avoid; page-break-inside: avoid; min-height: 70mm;
+    /* ---- Card Sheet ---- */
+    .sheet {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 0;
+      background: #fff; border: 1px solid #ccc;
     }
-    .sheet.six .qcard { min-height: 92mm; }
-    .qcard .org { font-size: 8pt; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #0b3d91; }
-    .qcard .room { font-size: 26pt; font-weight: 900; line-height: 1; color: #fc3d21; }
-    .sheet.six .qcard .room { font-size: 34pt; }
-    .qcard .qr { padding: 2mm; background: #fff; }
-    .qcard .qr img, .qcard .qr canvas { display: block; }
-    .qcard .cta { font-size: 9pt; font-weight: 700; }
-    .sheet.six .qcard .cta { font-size: 11pt; }
-    .qcard .url { font-size: 5.5pt; color: #555; word-break: break-all; max-width: 95%; }
+    .sheet.six { grid-template-columns: repeat(2, 1fr); }
+    .sheet.fifteen { grid-template-columns: repeat(3, 1fr); }
+
+    .qcard {
+      background: #fff; color: #0b1020; border: 1px dashed #888; padding: 3mm 2.5mm;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.2mm;
+      text-align: center; break-inside: avoid; page-break-inside: avoid; min-height: 68mm;
+    }
+    .sheet.six .qcard { min-height: 92mm; padding: 5mm 4mm; gap: 2mm; }
+    .sheet.fifteen .qcard { min-height: 54mm; padding: 2mm 2mm; gap: 1mm; }
+
+    .qcard .org {
+      font-size: 7.5pt; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #0b3d91;
+    }
+    .sheet.six .qcard .org { font-size: 9pt; }
+    .sheet.fifteen .qcard .org { font-size: 6.8pt; }
+
+    .qcard .room-header {
+      display: flex; flex-direction: column; align-items: center; gap: 1mm; line-height: 1;
+    }
+    .qcard .room {
+      font-size: 22pt; font-weight: 900; line-height: 1; color: #fc3d21; letter-spacing: .02em;
+    }
+    .sheet.six .qcard .room { font-size: 30pt; }
+    .sheet.fifteen .qcard .room { font-size: 18pt; }
+
+    /* Distinct Room Code Number Badge */
+    .qcard .room-code-badge {
+      display: inline-flex; align-items: center; gap: 1.5mm;
+      font-size: 11pt; font-weight: 800; color: #0b3d91;
+      background: #eff6ff; border: 1.5px solid #2563eb;
+      border-radius: 4px; padding: 0.8mm 3mm; letter-spacing: .05em; line-height: 1.15;
+    }
+    .qcard .room-code-badge .lbl {
+      font-size: 7pt; font-weight: 700; color: #1e40af; letter-spacing: .08em; text-transform: uppercase;
+    }
+    .qcard .room-code-badge .code {
+      font-size: 13pt; font-weight: 900; color: #0b3d91;
+    }
+
+    .sheet.six .qcard .room-code-badge {
+      font-size: 13pt; padding: 1.2mm 4.5mm;
+    }
+    .sheet.six .qcard .room-code-badge .lbl { font-size: 8.5pt; }
+    .sheet.six .qcard .room-code-badge .code { font-size: 16pt; }
+
+    .sheet.fifteen .qcard .room-code-badge {
+      font-size: 9pt; padding: 0.5mm 2.2mm; gap: 1mm;
+    }
+    .sheet.fifteen .qcard .room-code-badge .lbl { font-size: 6pt; }
+    .sheet.fifteen .qcard .room-code-badge .code { font-size: 10.5pt; }
+
+    .qcard .qr { padding: 1.5mm; background: #fff; }
+    .qcard .qr img, .qcard .qr canvas { display: block; margin: 0 auto; }
+
+    .qcard .cta { font-size: 8pt; font-weight: 700; line-height: 1.25; color: #1e293b; }
+    .sheet.six .qcard .cta { font-size: 10.5pt; }
+    .sheet.fifteen .qcard .cta { font-size: 7pt; }
+
+    .qcard .url { font-size: 5.2pt; color: #64748b; word-break: break-all; max-width: 95%; line-height: 1.1; }
+    .sheet.six .qcard .url { font-size: 6.5pt; }
+    .sheet.fifteen .qcard .url { font-size: 4.8pt; }
 
     @page { size: A4 portrait; margin: 8mm; }
     @media print {
@@ -40,10 +90,20 @@
       .noprint { display: none !important; }
       .wrap { max-width: none; padding: 0; }
       .sheet { border: none; }
-      .sheet:not(.six) { grid-auto-rows: 70mm; }
+
+      .sheet.fifteen { grid-template-columns: repeat(3, 1fr); grid-auto-rows: 55mm; }
+      .sheet.fifteen .qcard { min-height: 54mm; }
+
+      .sheet:not(.six):not(.fifteen) { grid-auto-rows: 68mm; }
+      .sheet:not(.six):not(.fifteen) .qcard { min-height: 67mm; }
+
       .sheet.six { grid-auto-rows: 92mm; }
+      .sheet.six .qcard { min-height: 91mm; }
+
       .qcard { min-height: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       .sheet.six .qcard:nth-child(6n) { break-after: page; }
+      .sheet:not(.six):not(.fifteen) .qcard:nth-child(12n) { break-after: page; }
+      .sheet.fifteen .qcard:nth-child(15n) { break-after: page; }
     }
   </style>
 </head>
@@ -51,24 +111,52 @@
 <div class="wrap">
   <div class="panel noprint">
     <h1>🖨️ Printable Room QR Codes</h1>
-    <p>Each card opens <code>sos.html?room=N</code> on the mentor’s phone. Print on A4 (<b>Ctrl+P</b> → margins “Default”, Scale 100%), cut along the dashed lines, tape one on every podium.</p>
+    <p>Each card opens <code>sos.html?room=N</code> on the mentor’s phone with the exact <strong>Room Code Number</strong> printed right on the card. Print on A4 (<b>Ctrl+P</b> → margins “Default”, Scale 100%), cut along the dashed lines, and tape one on every podium.</p>
     <div class="row">
       <input id="base" type="text" spellcheck="false" placeholder="https://username.github.io/spaceapps-techops/">
       <button id="gen" class="btn primary">Generate</button>
       <select id="layout" title="Layout">
-        <option value="twelve">12 per page (1 × A4)</option>
-        <option value="six">6 per page (2 × A4, larger)</option>
+        <option value="fifteen" selected>15 per page (1 × A4 sheet for all 15 rooms)</option>
+        <option value="twelve">12 per page (3 × 4 grid)</option>
+        <option value="six">6 per page (2 × 3 grid, larger cards)</option>
       </select>
       <button id="print" class="btn good">🖨️ Print</button>
     </div>
     <div id="warn" class="warn" hidden></div>
   </div>
 
-  <div id="sheet" class="sheet"></div>
+  <div id="sheet" class="sheet fifteen"></div>
 </div>
 
 <script>
-let roomCount = Math.max(1, Number(localStorage.getItem("techops_room_count")) || 12);
+const DEFAULT_ROOM_NAMES = {
+  1: "D142",
+  2: "D145",
+  3: "D148",
+  4: "D150",
+  5: "D154",
+  6: "C129",
+  7: "C132",
+  8: "C134",
+  9: "D242",
+  10: "D245",
+  11: "D248",
+  12: "D250",
+  13: "D254",
+  14: "C232",
+  15: "C234",
+};
+
+let roomCount = Math.max(1, Number(localStorage.getItem("techops_room_count")) || 15);
+let roomNames = { ...DEFAULT_ROOM_NAMES };
+
+try {
+  const cachedNames = JSON.parse(localStorage.getItem("techops_room_names") || "null");
+  if (cachedNames && typeof cachedNames === "object") {
+    Object.assign(roomNames, cachedNames);
+  }
+} catch (e) {}
+
 const baseInput = document.getElementById("base");
 const sheet = document.getElementById("sheet");
 const warn = document.getElementById("warn");
@@ -76,9 +164,18 @@ const warn = document.getElementById("warn");
 fetch("https://spaceapps-cairo-techops-default-rtdb.firebaseio.com/config.json?_t=" + Date.now(), { cache: "no-store" })
   .then((r) => r.json())
   .then((cfg) => {
-    if (cfg && typeof cfg.room_count === "number" && cfg.room_count >= 1) {
-      roomCount = Math.round(cfg.room_count);
-      localStorage.setItem("techops_room_count", String(roomCount));
+    if (cfg && typeof cfg === "object") {
+      if (typeof cfg.room_count === "number" && cfg.room_count >= 1) {
+        roomCount = Math.round(cfg.room_count);
+        localStorage.setItem("techops_room_count", String(roomCount));
+      }
+      if (cfg.room_names && typeof cfg.room_names === "object") {
+        for (const [k, v] of Object.entries(cfg.room_names)) {
+          const m = /^room_(\d+)$/.exec(k);
+          if (m && v) roomNames[Number(m[1])] = String(v).trim();
+        }
+        localStorage.setItem("techops_room_names", JSON.stringify(roomNames));
+      }
       generate();
     }
   })
@@ -87,16 +184,21 @@ fetch("https://spaceapps-cairo-techops-default-rtdb.firebaseio.com/config.json?_
 function detectBase() {
   const saved = localStorage.getItem("techops_base_url");
   if (saved) return saved;
-  // current page URL minus "qr.html" and any query/hash
   return location.href.split("#")[0].split("?")[0].replace(/[^/]*$/, "");
 }
 
 function normaliseBase(v) {
   v = (v || "").trim();
   if (!v) return "";
-  v = v.replace(/sos\.html.*$/, "").replace(/qr\.html.*$/, "").replace(/index\.html.*$/, "");
+  v = v.replace(/sos\.html.*$/, "").replace(/qr\.html.*$/, "").replace(/index\.html.*$/, "").replace(/admin\.html.*$/, "");
   if (!v.endsWith("/")) v += "/";
   return v;
+}
+
+function getCardQrSize(layout) {
+  if (layout === "six") return 175;
+  if (layout === "fifteen") return 115;
+  return 135;
 }
 
 function generate() {
@@ -109,17 +211,27 @@ function generate() {
   warn.hidden = !local;
   if (local) warn.textContent = "⚠️ This looks like a local address — phones won’t reach it. Use your https://<user>.github.io/<repo>/ URL before printing.";
 
+  const layout = document.getElementById("layout").value;
   sheet.innerHTML = "";
-  sheet.className = "sheet" + (document.getElementById("layout").value === "six" ? " six" : "");
-  const size = document.getElementById("layout").value === "six" ? 190 : 150;
+  sheet.className = "sheet " + layout;
+  const size = getCardQrSize(layout);
 
   for (let n = 1; n <= roomCount; n++) {
+    const code = roomNames[n] || "";
     const url = `${base}sos.html?room=${n}`;
     const card = document.createElement("div");
     card.className = "qcard";
+
+    const codeBadgeHtml = code
+      ? `<div class="room-code-badge"><span class="lbl">ROOM CODE</span><span class="code">${code}</span></div>`
+      : "";
+
     card.innerHTML = `
       <div class="org">NASA Space Apps Cairo · Tech Ops</div>
-      <div class="room">ROOM ${String(n).padStart(2, "0")}</div>
+      <div class="room-header">
+        <div class="room">ROOM ${String(n).padStart(2, "0")}</div>
+        ${codeBadgeHtml}
+      </div>
       <div class="qr"></div>
       <div class="cta">📱 Scan for instant Tech Ops help<br>(Data Show · Wi-Fi · Audio · Cables)</div>
       <div class="url"></div>`;
