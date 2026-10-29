@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#04060f">
   <title>Tech Ops Mission Control · NASA Space Apps Cairo</title>
-  <link rel="stylesheet" href="theme.css">
+  <link rel="stylesheet" href="theme.css?v=3">
   <style>
     .wrap { max-width: 1520px; margin: 0 auto; padding: 1rem; }
 
@@ -38,39 +38,72 @@
     .stat.sos.active { animation: statflash 1s infinite; border-color: var(--sos); }
     @keyframes statflash { 50% { background: rgba(239, 68, 68, .35); } }
 
-    /* ---- identity & controls bar ---- */
+    /* ---- Team Member Slider & Controls Bar ---- */
     .controls {
-      display: flex; flex-direction: column; gap: .65rem; margin-bottom: 1.1rem;
-      background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: .85rem;
+      display: flex; flex-direction: column; gap: .8rem; margin-bottom: 1.1rem;
+      background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: .95rem 1.1rem;
     }
-    .team-QuickPick {
-      display: flex; flex-wrap: wrap; align-items: center; gap: .45rem;
+    .slider-header {
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .5rem;
     }
-    .team-QuickPick .pick-label {
-      font-size: .82rem; font-weight: 700; color: var(--cyan); margin-right: .25rem;
+    .slider-title {
+      font-size: .85rem; font-weight: 700; color: var(--cyan); text-transform: uppercase; letter-spacing: .05em;
     }
-    .member-pill {
-      appearance: none; border: 1px solid var(--line); background: #080d1f; color: var(--text);
-      padding: .45rem .8rem; border-radius: 999px; font: inherit; font-size: .88rem; font-weight: 700;
+    .active-member-badge {
+      background: rgba(56, 189, 248, .15); border: 1px solid var(--cyan); color: #fff;
+      padding: .25rem .75rem; border-radius: 999px; font-size: .85rem; font-weight: 800;
+    }
+    .member-slider-wrap {
+      display: flex; flex-direction: column; gap: .45rem; padding: .2rem .2rem 0;
+    }
+    input[type=range].team-slider {
+      -webkit-appearance: none; appearance: none;
+      width: 100%; height: 10px; border-radius: 999px;
+      background: linear-gradient(90deg, var(--nasa-blue), var(--cyan));
+      outline: none; cursor: pointer; margin: .25rem 0;
+    }
+    input[type=range].team-slider::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none;
+      width: 26px; height: 26px; border-radius: 50%;
+      background: #fff; border: 3px solid var(--cyan);
+      box-shadow: 0 0 12px rgba(56, 189, 248, .85); cursor: pointer;
+      transition: transform .1s ease;
+    }
+    input[type=range].team-slider::-webkit-slider-thumb:active { transform: scale(1.15); }
+    input[type=range].team-slider::-moz-range-thumb {
+      width: 26px; height: 26px; border-radius: 50%;
+      background: #fff; border: 3px solid var(--cyan);
+      box-shadow: 0 0 12px rgba(56, 189, 248, .85); cursor: pointer;
+    }
+    .slider-ticks {
+      display: grid; grid-template-columns: repeat(5, 1fr); gap: .35rem; text-align: center;
+    }
+    .tick-btn {
+      appearance: none; border: 1px solid var(--line); background: #070b1a; color: var(--muted);
+      padding: .45rem .3rem; border-radius: 10px; font: inherit; font-size: .86rem; font-weight: 700;
       cursor: pointer; transition: all .15s ease;
     }
-    .member-pill:hover { border-color: var(--cyan); }
-    .member-pill.active {
+    .tick-btn:hover { color: var(--text); border-color: var(--cyan); }
+    .tick-btn.active {
       background: var(--nasa-blue); border-color: var(--cyan); color: #fff;
-      box-shadow: 0 0 12px rgba(56, 189, 248, .45);
+      box-shadow: 0 0 12px rgba(56, 189, 248, .4);
     }
+
     .controls-bottom {
-      display: flex; flex-wrap: wrap; gap: .6rem; align-items: center;
+      display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; justify-content: space-between;
+      border-top: 1px solid var(--line); padding-top: .7rem;
     }
-    .controls .name-box { display: flex; gap: .4rem; flex: 1 1 260px; }
-    .controls input[type=text] {
-      flex: 1; min-width: 0; background: #070b1a; color: var(--text); border: 1px solid var(--line);
-      border-radius: 10px; padding: .6rem .8rem; font: inherit;
+    .controls-bottom .select-box {
+      display: flex; align-items: center; gap: .5rem; flex: 1 1 240px;
     }
-    .controls input:focus, dialog textarea:focus, select:focus { outline: 2px solid var(--cyan); }
+    .controls-bottom select {
+      flex: 1; background: #070b1a; color: var(--text); border: 1px solid var(--line);
+      border-radius: 10px; padding: .58rem .8rem; font: inherit; font-weight: 700;
+    }
+    select:focus, dialog textarea:focus { outline: 2px solid var(--cyan); }
     #audioBtn.on { background: #14532d; border-color: #16a34a; }
 
-    /* ---- collapsible section headers ---- */
+    /* ---- section headers ---- */
     .sec-head {
       display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
       gap: .5rem; margin: 1.2rem 0 .65rem;
@@ -80,7 +113,7 @@
     }
     .sec-head small { color: var(--muted); font-size: .8rem; font-weight: 500; }
 
-    /* ---- 5-Member Strike Team Grid (4 choices each) ---- */
+    /* ---- 5-Member Strike Team Grid (4 status choices each) ---- */
     .team-grid {
       display: grid; grid-template-columns: repeat(auto-fit, minmax(245px, 1fr)); gap: .75rem;
       margin-bottom: 1.1rem;
@@ -156,16 +189,16 @@
     .eq-state.in-room   { background: rgba(250, 204, 21, .22); color: #fde047; border: 1px solid #ca8a04; }
 
     .eq-status-line {
-      font-size: .86rem; font-weight: 700; padding: .45rem .6rem; border-radius: 9px;
+      font-size: .85rem; font-weight: 600; padding: .45rem .6rem; border-radius: 9px;
       background: rgba(0, 0, 0, .28); border: 1px solid rgba(255, 255, 255, .06);
     }
     .eq-holder-Group { display: flex; flex-direction: column; gap: .3rem; }
     .eq-holder-Group .lbl { font-size: .75rem; color: var(--muted); }
-    .holder-btns { display: flex; flex-wrap: wrap; gap: .3rem; }
+    .holder-btns { display: grid; grid-template-columns: repeat(5, 1fr); gap: .3rem; }
     .h-btn {
       appearance: none; border: 1px solid var(--line); background: #070b1a; color: var(--muted);
-      border-radius: 7px; padding: .28rem .5rem; font: inherit; font-size: .76rem; font-weight: 700;
-      cursor: pointer;
+      border-radius: 7px; padding: .3rem .25rem; font: inherit; font-size: .75rem; font-weight: 700;
+      cursor: pointer; text-align: center;
     }
     .h-btn:hover { color: var(--text); border-color: var(--cyan); }
     .h-btn.active { background: var(--nasa-blue); border-color: var(--cyan); color: #fff; }
@@ -244,7 +277,7 @@
       <h1>🛰️ TECH OPS <span>MISSION CONTROL</span></h1>
     </div>
     <div class="header-right">
-      <a href="check.html" class="btn sm primary" style="text-decoration:none;">📱 Mobile Checker</a>
+      <a href="check.html" class="btn sm primary" style="text-decoration:none;">📱 Mobile Inspector</a>
       <a href="qr.html" class="btn sm" style="text-decoration:none;">🖨️ QR Codes</a>
       <span id="conn" class="pill offline"><span class="dot"></span><span id="connText">Connecting…</span></span>
       <span class="pill">🕒 <span id="clock">--:--:--</span></span>
@@ -260,16 +293,20 @@
     <div class="stat gear"><span class="label">⚡ Power Strips<br><small>Available w/ Team</small></span><span class="num" id="cStrip">4/4</span></div>
   </section>
 
-  <!-- Quick Identity Selection for the 5 Rooms Team Members -->
+  <!-- Team Member Slider (Karim - Tasbeeh - Omar - Lojine - Khairy) -->
   <section class="controls">
-    <div class="team-QuickPick">
-      <span class="pick-label">👤 اختار اسمك (Rooms Team):</span>
-      <div id="memberPills" style="display:flex;flex-wrap:wrap;gap:.4rem;"></div>
+    <div class="slider-header">
+      <span class="slider-title">👤 Slide or Tap to Choose Team Member (Rooms Team):</span>
+      <span class="active-member-badge" id="activeMemberBadge">Active: Khairy</span>
+    </div>
+    <div class="member-slider-wrap">
+      <input id="memberSlider" class="team-slider" type="range" min="0" max="4" step="1" value="4">
+      <div class="slider-ticks" id="sliderTicks"></div>
     </div>
     <div class="controls-bottom">
-      <div class="name-box">
-        <input id="nameInput" type="text" maxlength="30" placeholder="Tap your name above or type here…" autocomplete="off">
-        <button id="saveName" class="btn primary">Save</button>
+      <div class="select-box">
+        <label for="memberSelect" style="font-size:.82rem;color:var(--muted);font-weight:700;">Selected Member:</label>
+        <select id="memberSelect"></select>
       </div>
       <button id="audioBtn" class="btn">🔊 Enable Audio &amp; Vibration Alerts</button>
     </div>
@@ -277,31 +314,31 @@
 
   <!-- Section 1: 5 Rooms Team Members × 4 Status Choices -->
   <div class="sec-head">
-    <h2>👥 فريق القاعات · Rooms Strike Team (5 Members × 4 Statuses)</h2>
-    <small>كريم · تسبيح · عمر · خيري · لجين — اضغط على حالتك أو القاعة اللي انت فيها</small>
+    <h2>👥 Rooms Strike Team · Live Status (5 Members × 4 Choices)</h2>
+    <small>Karim · Tasbeeh · Omar · Lojine · Khairy — Set member status &amp; current room</small>
   </div>
   <section id="teamGrid" class="team-grid" aria-label="Rooms Strike Team"></section>
 
   <!-- Section 2: Equipment & Backup Material Tracker (2 Mac Converters + 4 Power Strips) -->
   <div class="sec-head">
-    <h2>🧰 الماتيريال الاحتياطي · Backup Gear (2 Mac Converters + 4 Power Strips)</h2>
-    <small>حدد كل قطعة مع مين من التيم، أو لو اتسلفت لقاعة من الـ 12 قاعة</small>
+    <h2>🧰 Backup Equipment Tracker (2 Mac Converters + 4 Power Strips)</h2>
+    <small>Track who holds each item and which workshop room borrowed it</small>
   </div>
   <section id="eqGrid" class="eq-grid" aria-label="Equipment Tracker"></section>
 
   <!-- Section 3: 12 Workshop Rooms Grid -->
   <div class="sec-head">
-    <h2>🏛️ القاعات · Live 12 Workshop Rooms</h2>
-    <small>تحديث لحظي لحالة كل قاعة + الماتيريال المتسلف ليها</small>
+    <h2>🏛️ Live 12 Workshop Rooms</h2>
+    <small>Real-time room diagnostics, SOS dispatch, and borrowed equipment</small>
   </div>
   <main id="grid" class="grid" aria-live="polite"></main>
 
-  <p class="foot">Live data · Firebase Realtime Database · Rooms checked via <code>check_room.py</code> or <code>check.html</code>, SOS via QR codes</p>
+  <p class="foot">Live data · Firebase Realtime Database · Rooms checked via <code>TechOps_RoomInspector.exe</code> or <code>check.html</code>, SOS via QR codes</p>
 </div>
 
 <!-- Manual check dialog -->
 <dialog id="manualDlg">
-  <h3 id="manualTitle">Manual check</h3>
+  <h3 id="manualTitle">Manual Check</h3>
   <div class="choice" id="manualChoice">
     <button class="btn good" data-status="READY">🟢 Ready</button>
     <button class="btn warn" data-status="WARNING">🟡 Warning</button>
@@ -310,17 +347,17 @@
   <textarea id="manualNote" maxlength="200" placeholder="Optional note (e.g. weak Wi-Fi at the back)"></textarea>
   <div class="row">
     <button class="btn" id="manualCancel">Cancel</button>
-    <button class="btn primary" id="manualSave" disabled>Save check</button>
+    <button class="btn primary" id="manualSave" disabled>Save Check</button>
   </div>
 </dialog>
 
 <!-- Lend gear to room dialog -->
 <dialog id="lendDlg">
-  <h3 id="lendTitle">🧰 تسليف ماتيريال للقاعة</h3>
-  <p style="color:var(--muted);font-size:.86rem;margin:0;">اختار الكونڤرتر أو المشترك اللي هيتسلف للقاعة دي:</p>
+  <h3 id="lendTitle">🧰 Lend Equipment to Room</h3>
+  <p style="color:var(--muted);font-size:.86rem;margin:0;">Select a Mac Converter or Power Strip to lend to this room:</p>
   <div id="lendList" class="lend-list"></div>
   <div class="row">
-    <button class="btn block" id="lendClose">إغلاق · Close</button>
+    <button class="btn block" id="lendClose">Close</button>
   </div>
 </dialog>
 
@@ -328,22 +365,13 @@
 
 <script type="module">
 import {
-  db, CONFIG_OK, ROOM_COUNT, ROOM_NAMES, ROOMS_TEAM, MEMBER_STATUSES, EQUIPMENT_ITEMS,
-  roomKey, ref, onValue, update, push, runTransaction, serverTimestamp, esc, pad2, MISSING_CONFIG_MESSAGE,
-} from "./firebase-config.js";
+  db, CONFIG_OK, ROOM_COUNT, ROOM_NAMES, ROOMS_TEAM, MEMBER_STATUSES, EQUIPMENT_ITEMS, DEFAULT_HOLDERS,
+  roomKey, ref, onValue, update, push, runTransaction, serverTimestamp, restGet, restPatch,
+  esc, pad2, MISSING_CONFIG_MESSAGE,
+} from "./firebase-config.js?v=3";
 
 const $ = (id) => document.getElementById(id);
 const STATUS_LABEL = { UNCHECKED: "UNCHECKED", READY: "READY", WARNING: "WARNING", SOS: "SOS" };
-
-// Default initial holders distributed across the 5 team members if DB node is empty
-const DEFAULT_HOLDERS = {
-  mac_1: "khairy",
-  mac_2: "karim",
-  strip_1: "tasbeeh",
-  strip_2: "omar",
-  strip_3: "logain",
-  strip_4: "khairy",
-};
 
 let rooms = {};
 let teamStatus = {};
@@ -363,32 +391,38 @@ function toast(msg) {
   toast._t = setTimeout(() => t.classList.remove("show"), 3200);
 }
 
-const getName = () => ($("nameInput").value || "").trim();
-
-function findMemberByName(n) {
-  if (!n) return null;
-  const low = n.toLowerCase();
+function findMember(val) {
+  if (!val) return ROOMS_TEAM[0];
+  const low = String(val).trim().toLowerCase();
+  if (low === "logain") return ROOMS_TEAM.find((m) => m.id === "lojine");
   return ROOMS_TEAM.find(
-    (m) => m.id === low || m.name.toLowerCase() === low || m.short === n || m.en.toLowerCase() === low
-  ) || null;
+    (m) => m.id === low || m.name.toLowerCase() === low || low.includes(m.id)
+  ) || ROOMS_TEAM[0];
 }
+
+function getSelectedMember() {
+  const saved = localStorage.getItem("techops_name") || "Khairy";
+  return findMember(saved);
+}
+
+function setSelectedMemberByIndex(idx, showToastMsg = true) {
+  const i = Math.max(0, Math.min(ROOMS_TEAM.length - 1, Number(idx) || 0));
+  const m = ROOMS_TEAM[i];
+  localStorage.setItem("techops_name", m.name);
+  $("memberSlider").value = String(i);
+  $("memberSelect").value = m.id;
+  $("activeMemberBadge").textContent = `Active: ${m.name}`;
+  renderSliderTicks();
+  renderTeam();
+  if (showToastMsg) toast(`👤 Active Member: ${m.name}`);
+}
+
+const getName = () => getSelectedMember().name;
 
 function memberLabel(idOrName) {
-  if (!idOrName) return "الشنطة · Bag";
-  const m = findMemberByName(idOrName);
+  if (!idOrName) return "Unassigned";
+  const m = findMember(idOrName);
   return m ? m.name : idOrName;
-}
-
-function requireName() {
-  const n = getName();
-  if (!n) {
-    toast("✋ اختار اسمك فوق الأول (كريم / تسبيح / عمر / خيري / لجين)");
-    $("nameInput").focus();
-    $("nameInput").scrollIntoView({ behavior: "smooth", block: "center" });
-    return null;
-  }
-  localStorage.setItem("techops_name", n);
-  return n;
 }
 
 function stateOf(r) {
@@ -398,7 +432,7 @@ function stateOf(r) {
 const sosOf = (r) => r.sos || { issue: "🚨 SOS (no details)" };
 
 function fmtTime(ms) {
-  if (!ms) return "—";
+  if (!ms || typeof ms !== "number") return "—";
   const d = new Date(ms);
   const clock = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   const mins = Math.max(0, Math.round((Date.now() - ms) / 60000));
@@ -408,7 +442,8 @@ function fmtTime(ms) {
 
 function itemState(item) {
   const raw = inventory[item.id] || {};
-  const holder = raw.holder || DEFAULT_HOLDERS[item.id] || "khairy";
+  let holder = raw.holder || DEFAULT_HOLDERS[item.id] || "khairy";
+  if (holder === "logain") holder = "lojine";
   const room = raw.room ? Number(raw.room) : null;
   return {
     holder,
@@ -418,31 +453,41 @@ function itemState(item) {
   };
 }
 
-/* --------------------------------------------------- render identity pills */
-function renderIdentityPills() {
-  const cur = getName();
-  const activeMember = findMemberByName(cur);
-  $("memberPills").innerHTML = ROOMS_TEAM.map((m) => {
-    const isAct = activeMember && activeMember.id === m.id;
-    return `<button type="button" class="member-pill ${isAct ? "active" : ""}" data-pick-member="${m.id}">${esc(m.name)}</button>`;
-  }).join("");
+/* --------------------------------------------------- init slider & select */
+function initMemberControls() {
+  $("memberSelect").innerHTML = ROOMS_TEAM.map((m) => `<option value="${m.id}">${esc(m.name)}</option>`).join("");
+  const cur = getSelectedMember();
+  const idx = ROOMS_TEAM.findIndex((m) => m.id === cur.id);
+  setSelectedMemberByIndex(idx >= 0 ? idx : 0, false);
 }
 
-$("memberPills").addEventListener("click", (e) => {
-  const b = e.target.closest("[data-pick-member]");
+function renderSliderTicks() {
+  const cur = getSelectedMember();
+  $("sliderTicks").innerHTML = ROOMS_TEAM.map((m, i) => `
+    <button type="button" class="tick-btn ${m.id === cur.id ? "active" : ""}" data-idx="${i}">
+      ${esc(m.name)}
+    </button>
+  `).join("");
+}
+
+$("memberSlider").addEventListener("input", (e) => {
+  setSelectedMemberByIndex(Number(e.target.value), true);
+});
+
+$("sliderTicks").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-idx]");
   if (!b) return;
-  const m = ROOMS_TEAM.find((x) => x.id === b.dataset.pickMember);
-  if (!m) return;
-  $("nameInput").value = m.name;
-  localStorage.setItem("techops_name", m.name);
-  renderIdentityPills();
-  renderTeam();
-  toast(`👋 أهلاً ${m.short}! تم تسجيل الدخول باسم ${m.name}`);
+  setSelectedMemberByIndex(Number(b.dataset.idx), true);
+});
+
+$("memberSelect").addEventListener("change", (e) => {
+  const idx = ROOMS_TEAM.findIndex((m) => m.id === e.target.value);
+  if (idx >= 0) setSelectedMemberByIndex(idx, true);
 });
 
 /* ------------------------------------------- render 5-member team & 4 choices */
 function renderTeam() {
-  const curMember = findMemberByName(getName());
+  const curMember = getSelectedMember();
   $("teamGrid").innerHTML = ROOMS_TEAM.map((m) => {
     const stObj = teamStatus[m.id] || {};
     const curStatusId = stObj.status || "STANDBY";
@@ -450,19 +495,19 @@ function renderTeam() {
     const curRoom = stObj.room ? Number(stObj.room) : 0;
     const isMe = curMember && curMember.id === m.id;
 
-    // Find equipment currently carried by this member (and not lent to a room)
+    // Equipment carried by this member (and not currently lent to a room)
     const carriedGear = EQUIPMENT_ITEMS.filter((it) => {
       const s = itemState(it);
       return s.holder === m.id && !s.room;
     });
 
     const gearHtml = carriedGear.length
-      ? `<div class="mcard-gear">${carriedGear.map((it) => `<span class="gear-chip">${it.icon} ${esc(it.ar)}</span>`).join("")}</div>`
-      : `<div class="mcard-gear"><span style="font-size:.73rem;color:var(--muted);">لا يحمل ماتيريال متاح حالياً</span></div>`;
+      ? `<div class="mcard-gear">${carriedGear.map((it) => `<span class="gear-chip">${it.icon} ${esc(it.title)}</span>`).join("")}</div>`
+      : `<div class="mcard-gear"><span style="font-size:.73rem;color:var(--muted);">No spare gear currently held</span></div>`;
 
-    let roomOpts = `<option value="0">— القاعة الحالية: غير محدد —</option>`;
+    let roomOpts = `<option value="0">— Current Room: None —</option>`;
     for (let r = 1; r <= ROOM_COUNT; r++) {
-      roomOpts += `<option value="${r}" ${curRoom === r ? "selected" : ""}>📍 في Room ${pad2(r)}</option>`;
+      roomOpts += `<option value="${r}" ${curRoom === r ? "selected" : ""}>📍 In Room ${pad2(r)}</option>`;
     }
 
     const choicesHtml = MEMBER_STATUSES.map((s) => `
@@ -473,7 +518,7 @@ function renderTeam() {
     return `
       <article class="mcard ${isMe ? "is-me" : ""}">
         <div class="mcard-top">
-          <span class="mcard-name">👤 ${esc(m.name)} ${isMe ? "<small style='color:var(--cyan)'>(أنت)</small>" : ""}</span>
+          <span class="mcard-name">👤 ${esc(m.name)} ${isMe ? "<small style='color:var(--cyan)'>(You)</small>" : ""}</span>
           <span class="mcard-badge ${statusMeta.cls}">${statusMeta.short}</span>
         </div>
         <div class="status-choices">${choicesHtml}</div>
@@ -485,16 +530,23 @@ function renderTeam() {
   }).join("");
 }
 
+async function writeData(path, payload) {
+  try {
+    await restPatch(path, payload);
+    await pollRestOnce();
+  } catch {
+    await update(ref(db, path), payload);
+  }
+}
+
 $("teamGrid").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-member-status]");
   if (!b) return;
   const memberId = b.dataset.memberStatus;
   const st = b.dataset.st;
   try {
-    await update(ref(db, `team_status/${memberId}`), {
-      status: st,
-      updated_at: serverTimestamp(),
-    });
+    await writeData(`team_status/${memberId}`, { status: st, updated_at: Date.now() });
+    toast(`✔ Updated ${memberLabel(memberId)} -> ${st}`);
   } catch (err) { toast("Error updating status: " + err.message); }
 });
 
@@ -504,10 +556,10 @@ $("teamGrid").addEventListener("change", async (e) => {
   const memberId = sel.dataset.memberRoom;
   const roomNum = Number(sel.value) || null;
   try {
-    await update(ref(db, `team_status/${memberId}`), {
+    await writeData(`team_status/${memberId}`, {
       room: roomNum,
       ...(roomNum ? { status: "CHECKING" } : {}),
-      updated_at: serverTimestamp(),
+      updated_at: Date.now(),
     });
   } catch (err) { toast("Error updating member room: " + err.message); }
 });
@@ -526,37 +578,37 @@ function renderEquipment() {
 
     const holderName = memberLabel(st.holder);
     const stateBadge = inRoom
-      ? `<span class="eq-state in-room">🏛️ في Room ${pad2(st.room)}</span>`
-      : `<span class="eq-state with-team">🟢 متاح مع التيم</span>`;
+      ? `<span class="eq-state in-room">🏛️ In Room ${pad2(st.room)}</span>`
+      : `<span class="eq-state with-team">🟢 Available w/ Team</span>`;
 
     const statusLine = inRoom
-      ? `📍 موجود حالياً في <strong>Room ${pad2(st.room)}</strong> <small style="color:var(--muted)">(مسؤول عنه: ${esc(holderName)} · ${esc(fmtTime(st.updated_at))})</small>`
-      : `🎒 موجود مع: <strong>${esc(holderName)}</strong> <small style="color:var(--muted)">(جاهز للتسليف)</small>`;
+      ? `📍 Lent to <strong>Room ${pad2(st.room)}</strong> <small style="color:var(--muted)">(Holder: ${esc(holderName)} · ${esc(fmtTime(st.updated_at))})</small>`
+      : `🎒 Held by: <strong>${esc(holderName)}</strong> <small style="color:var(--muted)">(Available to lend)</small>`;
 
     const holderBtns = ROOMS_TEAM.map((m) => `
       <button type="button" class="h-btn ${st.holder === m.id ? "active" : ""}"
-        data-eq-holder="${it.id}" data-holder="${m.id}">${esc(m.short)}</button>
+        data-eq-holder="${it.id}" data-holder="${m.id}">${esc(m.name)}</button>
     `).join("");
 
-    let roomOptions = `<option value="0" ${!inRoom ? "selected" : ""}>🟢 مع التيم (غير متسلف لقاعة)</option>`;
+    let roomOptions = `<option value="0" ${!inRoom ? "selected" : ""}>🟢 Available with Team (Not in a room)</option>`;
     for (let r = 1; r <= ROOM_COUNT; r++) {
-      roomOptions += `<option value="${r}" ${st.room === r ? "selected" : ""}>🏛️ متسلف لـ Room ${pad2(r)}</option>`;
+      roomOptions += `<option value="${r}" ${st.room === r ? "selected" : ""}>🏛️ Lent to Room ${pad2(r)}</option>`;
     }
 
     return `
       <article class="eq-card ${inRoom ? "lent" : ""}">
         <div class="eq-head">
-          <div class="eq-title">${it.icon} ${esc(it.ar)}<small>${esc(it.title)}</small></div>
+          <div class="eq-title">${it.icon} ${esc(it.title)}<small>${esc(it.sub)}</small></div>
           ${stateBadge}
         </div>
         <div class="eq-status-line">${statusLine}</div>
         <div class="eq-holder-Group">
-          <span class="lbl">👤 مع مين من الـ 5؟ (اضغط لتحديد المسؤول عنها):</span>
+          <span class="lbl">👤 Held by Team Member (Tap to assign holder):</span>
           <div class="holder-btns">${holderBtns}</div>
         </div>
         <div class="eq-actions">
           <select class="eq-select" data-eq-room="${it.id}">${roomOptions}</select>
-          ${inRoom ? `<button type="button" class="btn sm good" data-eq-return="${it.id}">↩️ استلام</button>` : ""}
+          ${inRoom ? `<button type="button" class="btn sm good" data-eq-return="${it.id}">↩️ Return</button>` : ""}
         </div>
       </article>`;
   }).join("");
@@ -572,11 +624,8 @@ $("eqGrid").addEventListener("click", async (e) => {
     const eqId = hb.dataset.eqHolder;
     const holderId = hb.dataset.holder;
     try {
-      await update(ref(db, `inventory/${eqId}`), {
-        holder: holderId,
-        updated_at: serverTimestamp(),
-      });
-      toast(`✔ تم التحديث: ${memberLabel(holderId)}`);
+      await writeData(`inventory/${eqId}`, { holder: holderId, updated_at: Date.now() });
+      toast(`✔ Assigned to ${memberLabel(holderId)}`);
     } catch (err) { toast("Update failed: " + err.message); }
     return;
   }
@@ -584,17 +633,15 @@ $("eqGrid").addEventListener("click", async (e) => {
   const rb = e.target.closest("[data-eq-return]");
   if (rb) {
     const eqId = rb.dataset.eqReturn;
-    const curM = findMemberByName(getName());
-    const st = itemState(EQUIPMENT_ITEMS.find((x) => x.id === eqId));
-    const newHolder = curM ? curM.id : st.holder;
+    const curM = getSelectedMember();
     try {
-      await update(ref(db, `inventory/${eqId}`), {
+      await writeData(`inventory/${eqId}`, {
         room: null,
         lent_by: null,
-        holder: newHolder,
-        updated_at: serverTimestamp(),
+        holder: curM.id,
+        updated_at: Date.now(),
       });
-      toast(`↩️ تم استلام القطعة من القاعة (مع ${memberLabel(newHolder)})`);
+      toast(`↩️ Returned to ${curM.name}`);
     } catch (err) { toast("Return failed: " + err.message); }
   }
 });
@@ -604,17 +651,16 @@ $("eqGrid").addEventListener("change", async (e) => {
   if (!sel) return;
   const eqId = sel.dataset.eqRoom;
   const roomNum = Number(sel.value) || null;
-  const who = getName() || "Tech Ops";
-  const curM = findMemberByName(who);
+  const curM = getSelectedMember();
   const st = itemState(EQUIPMENT_ITEMS.find((x) => x.id === eqId));
   try {
-    await update(ref(db, `inventory/${eqId}`), {
+    await writeData(`inventory/${eqId}`, {
       room: roomNum,
-      holder: st.holder || (curM ? curM.id : "khairy"),
-      lent_by: roomNum ? who : null,
-      updated_at: serverTimestamp(),
+      holder: st.holder || curM.id,
+      lent_by: roomNum ? curM.name : null,
+      updated_at: Date.now(),
     });
-    toast(roomNum ? `🏛️ تم تسليف القطعة إلى Room ${pad2(roomNum)}` : "🟢 تم إرجاع القطعة مع التيم");
+    toast(roomNum ? `🏛️ Lent to Room ${pad2(roomNum)}` : "🟢 Returned to Team");
   } catch (err) { toast("Update failed: " + err.message); }
 });
 
@@ -639,12 +685,12 @@ function cardHTML(n) {
   const roomGear = EQUIPMENT_ITEMS.filter((it) => itemState(it).room === n);
   const gearBoxHtml = roomGear.length
     ? `<div class="room-gear-box">
-        <div class="room-gear-title">🧰 ماتيريال متسلف في القاعة دي (${roomGear.length}):</div>
+        <div class="room-gear-title">🧰 Borrowed Gear in Room (${roomGear.length}):</div>
         ${roomGear.map((it) => {
           const ist = itemState(it);
           return `<div class="room-gear-item">
-            <span>${it.icon} ${esc(it.ar)} <small style="color:var(--muted)">(${esc(memberLabel(ist.holder))})</small></span>
-            <button type="button" class="btn xs good" data-act="return-eq" data-eq="${it.id}">↩️ استلام</button>
+            <span>${it.icon} ${esc(it.title)} <small style="color:var(--muted)">(via ${esc(memberLabel(ist.holder))})</small></span>
+            <button type="button" class="btn xs good" data-act="return-eq" data-eq="${it.id}">↩️ Return</button>
           </div>`;
         }).join("")}
       </div>`
@@ -653,7 +699,7 @@ function cardHTML(n) {
   // Team members currently located in this room
   const membersHere = ROOMS_TEAM.filter((m) => Number(teamStatus[m.id]?.room) === n);
   const membersHereHtml = membersHere.length
-    ? `<div class="note" style="border-left:3px solid var(--cyan)">👥 متواجد هنا: <strong>${membersHere.map((m) => esc(m.short)).join(" ، ")}</strong></div>`
+    ? `<div class="note" style="border-left:3px solid var(--cyan)">👥 In Room: <strong>${membersHere.map((m) => esc(m.name)).join(", ")}</strong></div>`
     : "";
 
   const name = ROOM_NAMES[n] ? ` <small>· ${esc(ROOM_NAMES[n])}</small>` : "";
@@ -676,12 +722,12 @@ function cardHTML(n) {
       ? `<div class="claimed">⚙️ ${esc(s.claimed_by)} is heading to Room ${n}</div>
          <div class="row">
            <button class="btn good" data-act="resolve" data-room="${n}">✅ Mark Resolved</button>
-           <button class="btn sm" data-act="lend" data-room="${n}">🔌 تسليف كونڤرتر/مشترك</button>
+           <button class="btn sm" data-act="lend" data-room="${n}">🔌 Lend Gear</button>
            <button class="btn sm" data-act="release" data-room="${n}">↩ Release</button>
          </div>`
       : `<div class="row">
            <button class="btn primary" data-act="claim" data-room="${n}">🏃‍♂️ Claim Task</button>
-           <button class="btn sm" data-act="lend" data-room="${n}">🔌 تسليف كونڤرتر/مشترك</button>
+           <button class="btn sm" data-act="lend" data-room="${n}">🔌 Lend Gear</button>
            <button class="btn good" data-act="resolve" data-room="${n}">✅ Mark Resolved</button>
          </div>`;
     body = `
@@ -703,13 +749,13 @@ function cardHTML(n) {
       ${st === "SOS" ? "" : `
         <div class="row">
           <button class="btn sm" data-act="manual" data-room="${n}">✍️ Manual Check</button>
-          <button class="btn sm" data-act="lend" data-room="${n}">🔌 تسليف ماتيريال</button>
+          <button class="btn sm" data-act="lend" data-room="${n}">🔌 Lend Gear</button>
         </div>`}
     </article>`;
 }
 
 function render() {
-  renderIdentityPills();
+  renderSliderTicks();
   renderTeam();
   renderEquipment();
 
@@ -779,34 +825,62 @@ $("audioBtn").addEventListener("click", () => {
   }
 });
 
-/* ----------------------------------------------------------------- firebase */
+/* ------------------------------------------- Firebase + Instant REST Sync */
+function setOnlineState(on) {
+  $("conn").className = "pill " + (on ? "online" : "offline");
+  $("connText").textContent = on ? "Live" : "Reconnecting…";
+}
+
+function handleIncomingRooms(newRooms) {
+  rooms = newRooms || {};
+  const nowSos = new Set();
+  for (let n = 1; n <= ROOM_COUNT; n++) if (stateOf(rooms[roomKey(n)]) === "SOS") nowSos.add(n);
+
+  if (!firstSnapshot) {
+    const fresh = [...nowSos].filter((n) => !knownSos.has(n));
+    if (fresh.length) {
+      toast(`🚨 SOS from Room ${fresh.join(", ")}!`);
+      beepSiren();
+    }
+  }
+  knownSos = nowSos;
+  firstSnapshot = false;
+}
+
+async function pollRestOnce() {
+  if (!CONFIG_OK) return;
+  try {
+    const data = await restGet("");
+    setOnlineState(true);
+    if (data && typeof data === "object") {
+      handleIncomingRooms(data.rooms || {});
+      teamStatus = data.team_status || {};
+      inventory = data.inventory || {};
+      render();
+    }
+  } catch {
+    // Let WebSocket or next poll handle it
+  }
+}
+
 if (!CONFIG_OK) {
   $("configBanner").innerHTML = MISSING_CONFIG_MESSAGE;
   $("configBanner").hidden = false;
   render();
 } else {
+  // Immediate REST fetch so mobile devices connect in <300ms
+  pollRestOnce();
+  setInterval(pollRestOnce, 4000);
+
   onValue(ref(db, ".info/connected"), (snap) => {
-    const on = snap.val() === true;
-    $("conn").className = "pill " + (on ? "online" : "offline");
-    $("connText").textContent = on ? "Live" : "Reconnecting…";
+    if (snap.val() === true) setOnlineState(true);
   });
 
   onValue(ref(db, "rooms"), (snap) => {
-    rooms = snap.val() || {};
-    const nowSos = new Set();
-    for (let n = 1; n <= ROOM_COUNT; n++) if (stateOf(rooms[roomKey(n)]) === "SOS") nowSos.add(n);
-
-    if (!firstSnapshot) {
-      const fresh = [...nowSos].filter((n) => !knownSos.has(n));
-      if (fresh.length) {
-        toast(`🚨 SOS from Room ${fresh.join(", ")}!`);
-        beepSiren();
-      }
-    }
-    knownSos = nowSos;
-    firstSnapshot = false;
+    setOnlineState(true);
+    handleIncomingRooms(snap.val() || {});
     render();
-  }, (err) => toast("Database error: " + err.message));
+  });
 
   onValue(ref(db, "team_status"), (snap) => {
     teamStatus = snap.val() || {};
@@ -824,60 +898,44 @@ setInterval(() => { $("clock").textContent = new Date().toLocaleTimeString([], {
 
 /* ------------------------------------------------------------------ actions */
 async function claim(n) {
-  const name = requireName();
-  if (!name) return;
+  const member = getSelectedMember();
+  const name = member.name;
   const key = roomKey(n);
-  const member = findMemberByName(name);
   try {
-    const res = await runTransaction(ref(db, `rooms/${key}/sos`), (cur) => {
-      if (!cur || cur.claimed_by) return;
-      return { ...cur, claimed_by: name, claimed_at: Date.now() };
-    });
-    if (res.committed) {
-      if (member) {
-        update(ref(db, `team_status/${member.id}`), {
-          status: "SOS", room: n, updated_at: serverTimestamp(),
-        });
-      }
-      toast(`🏃‍♂️ You claimed Room ${n}. Go go go!`);
-    } else {
-      const who = rooms[key]?.sos?.claimed_by;
-      toast(who ? `Already claimed by ${who}` : "Nothing to claim (already resolved?)");
+    const curSos = rooms[key]?.sos || {};
+    if (curSos.claimed_by) {
+      toast(`Already claimed by ${curSos.claimed_by}`);
+      return;
     }
+    await writeData(`rooms/${key}/sos`, { ...curSos, claimed_by: name, claimed_at: Date.now() });
+    await writeData(`team_status/${member.id}`, { status: "SOS", room: n, updated_at: Date.now() });
+    toast(`🏃‍♂️ ${name} claimed Room ${n}. Go go go!`);
   } catch (e) { toast("Claim failed: " + e.message); }
 }
 
 async function release(n) {
   try {
-    await update(ref(db, `rooms/${roomKey(n)}/sos`), { claimed_by: null, claimed_at: null });
+    await writeData(`rooms/${roomKey(n)}/sos`, { claimed_by: null, claimed_at: null });
     toast(`Released Room ${n}.`);
   } catch (e) { toast("Release failed: " + e.message); }
 }
 
 async function resolve(n) {
-  const name = requireName();
-  if (!name) return;
+  const member = getSelectedMember();
+  const name = member.name;
   const key = roomKey(n);
-  const s = rooms[key]?.sos || {};
-  const member = findMemberByName(name);
   try {
-    const updates = {
-      [`rooms/${key}/sos`]: null,
-      [`rooms/${key}/status`]: "READY",
-      [`rooms/${key}/checked_by`]: name,
-      [`rooms/${key}/updated_at`]: serverTimestamp(),
-      [`rooms/${key}/source`]: "sos-resolved",
-    };
-    if (member) {
-      updates[`team_status/${member.id}/status`] = "STANDBY";
-      updates[`team_status/${member.id}/room`] = null;
-      updates[`team_status/${member.id}/updated_at`] = serverTimestamp();
-    }
-    await update(ref(db), updates);
-    push(ref(db, "sos_log"), {
-      room: n, issue: s.issue || null, note: s.note || null,
-      reported_at: s.created_at || null, claimed_by: s.claimed_by || null,
-      resolved_by: name, resolved_at: serverTimestamp(),
+    await writeData(`rooms/${key}`, {
+      sos: null,
+      status: "READY",
+      checked_by: name,
+      updated_at: Date.now(),
+      source: "sos-resolved",
+    });
+    await writeData(`team_status/${member.id}`, {
+      status: "STANDBY",
+      room: null,
+      updated_at: Date.now(),
     });
     toast(`✅ Room ${n} resolved.`);
   } catch (e) { toast("Resolve failed: " + e.message); }
@@ -887,7 +945,7 @@ async function resolve(n) {
 let lendTargetRoom = null;
 function openLendModal(n) {
   lendTargetRoom = n;
-  $("lendTitle").textContent = `🧰 تسليف ماتيريال إلى Room ${pad2(n)}`;
+  $("lendTitle").textContent = `🧰 Lend Equipment to Room ${pad2(n)}`;
   renderLendModalList();
   $("lendDlg").showModal();
 }
@@ -900,20 +958,20 @@ function renderLendModalList() {
     const inThisRoom = st.room === lendTargetRoom;
     const inOtherRoom = st.room && st.room !== lendTargetRoom;
     const sub = inThisRoom
-      ? `✅ موجود بالفعل في Room ${pad2(lendTargetRoom)}`
+      ? `✅ Currently in Room ${pad2(lendTargetRoom)}`
       : inOtherRoom
-      ? `⚠️ موجود في Room ${pad2(st.room)} (مع ${holderName})`
-      : `🟢 متاح مع ${holderName}`;
+      ? `⚠️ Currently in Room ${pad2(st.room)} (Holder: ${holderName})`
+      : `🟢 Available with ${holderName}`;
 
     return `
       <div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;background:#070b1a;border:1px solid var(--line);padding:.55rem .7rem;border-radius:10px;">
         <div>
-          <div style="font-weight:700;font-size:.9rem;">${it.icon} ${esc(it.ar)}</div>
+          <div style="font-weight:700;font-size:.9rem;">${it.icon} ${esc(it.title)}</div>
           <div style="font-size:.76rem;color:var(--muted);">${esc(sub)}</div>
         </div>
         ${inThisRoom
-          ? `<button type="button" class="btn sm good" data-modal-return="${it.id}">↩️ استلام</button>`
-          : `<button type="button" class="btn sm primary" data-modal-lend="${it.id}">تسليف لـ R${pad2(lendTargetRoom)}</button>`}
+          ? `<button type="button" class="btn sm good" data-modal-return="${it.id}">↩️ Return</button>`
+          : `<button type="button" class="btn sm primary" data-modal-lend="${it.id}">Lend to R${pad2(lendTargetRoom)}</button>`}
       </div>`;
   }).join("");
 }
@@ -922,14 +980,14 @@ $("lendList").addEventListener("click", async (e) => {
   const lb = e.target.closest("[data-modal-lend]");
   if (lb && lendTargetRoom) {
     const eqId = lb.dataset.modalLend;
-    const who = getName() || "Tech Ops";
+    const who = getName();
     try {
-      await update(ref(db, `inventory/${eqId}`), {
+      await writeData(`inventory/${eqId}`, {
         room: lendTargetRoom,
         lent_by: who,
-        updated_at: serverTimestamp(),
+        updated_at: Date.now(),
       });
-      toast(`🔌 تم تسليف القطعة إلى Room ${pad2(lendTargetRoom)}`);
+      toast(`🔌 Lent item to Room ${pad2(lendTargetRoom)}`);
       $("lendDlg").close();
     } catch (err) { toast("Failed: " + err.message); }
     return;
@@ -938,12 +996,12 @@ $("lendList").addEventListener("click", async (e) => {
   if (rb) {
     const eqId = rb.dataset.modalReturn;
     try {
-      await update(ref(db, `inventory/${eqId}`), {
+      await writeData(`inventory/${eqId}`, {
         room: null,
         lent_by: null,
-        updated_at: serverTimestamp(),
+        updated_at: Date.now(),
       });
-      toast("↩️ تم استلام القطعة من القاعة");
+      toast("↩️ Returned item to Team");
       $("lendDlg").close();
     } catch (err) { toast("Failed: " + err.message); }
   }
@@ -954,7 +1012,7 @@ $("lendClose").addEventListener("click", () => $("lendDlg").close());
 let manualRoom = null, manualStatus = null;
 function openManual(n) {
   manualRoom = n; manualStatus = null;
-  $("manualTitle").textContent = `Manual check — Room ${pad2(n)}`;
+  $("manualTitle").textContent = `Manual Check — Room ${pad2(n)}`;
   $("manualNote").value = "";
   $("manualSave").disabled = true;
   document.querySelectorAll("#manualChoice .btn").forEach((b) => b.classList.remove("sel"));
@@ -969,14 +1027,13 @@ $("manualChoice").addEventListener("click", (e) => {
 });
 $("manualCancel").addEventListener("click", () => $("manualDlg").close());
 $("manualSave").addEventListener("click", async () => {
-  const name = requireName();
-  if (!name) return;
+  const name = getName();
   const reset = manualStatus === "UNCHECKED";
   try {
-    await update(ref(db, `rooms/${roomKey(manualRoom)}`), {
+    await writeData(`rooms/${roomKey(manualRoom)}`, {
       status: manualStatus,
       checked_by: reset ? null : name,
-      updated_at: reset ? null : serverTimestamp(),
+      updated_at: reset ? null : Date.now(),
       source: reset ? null : "manual",
       note: reset ? null : ($("manualNote").value.trim() || null),
       ...(reset ? { ping_ms: null, download_mbps: null, datashow: null, wifi_signal: null } : {}),
@@ -991,10 +1048,10 @@ $("grid").addEventListener("click", async (e) => {
   if (retBtn) {
     const eqId = retBtn.dataset.eq;
     try {
-      await update(ref(db, `inventory/${eqId}`), {
-        room: null, lent_by: null, updated_at: serverTimestamp(),
+      await writeData(`inventory/${eqId}`, {
+        room: null, lent_by: null, updated_at: Date.now(),
       });
-      toast("↩️ تم استلام القطعة من القاعة");
+      toast("↩️ Returned item to Team");
     } catch (err) { toast("Error: " + err.message); }
     return;
   }
@@ -1005,23 +1062,7 @@ $("grid").addEventListener("click", async (e) => {
   if (actMap[b.dataset.act]) actMap[b.dataset.act](n);
 });
 
-/* name persistence */
-$("nameInput").value = localStorage.getItem("techops_name") || "";
-function saveName() {
-  const n = getName();
-  localStorage.setItem("techops_name", n);
-  renderIdentityPills();
-  renderTeam();
-  toast(n ? `Saved: ${n}` : "Name cleared");
-}
-$("saveName").addEventListener("click", saveName);
-$("nameInput").addEventListener("keydown", (e) => { if (e.key === "Enter") { saveName(); e.target.blur(); } });
-$("nameInput").addEventListener("change", () => {
-  localStorage.setItem("techops_name", getName());
-  renderIdentityPills();
-  renderTeam();
-});
-
+initMemberControls();
 render();
 </script>
 </body>

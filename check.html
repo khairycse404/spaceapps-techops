@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#04060f">
   <title>Mobile Room Inspector · NASA Space Apps Cairo</title>
-  <link rel="stylesheet" href="theme.css">
+  <link rel="stylesheet" href="theme.css?v=3">
   <style>
     .wrap { max-width: 620px; margin: 0 auto; padding: 1rem 1rem 3rem; }
 
@@ -26,15 +26,37 @@
       background: var(--panel); border: 1px solid var(--line); border-radius: 16px;
       padding: 1.05rem; margin-bottom: .95rem;
     }
-    .section-title { font-size: 0.92rem; font-weight: 700; color: var(--muted); margin-bottom: 0.55rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    .section-title {
+      font-size: 0.88rem; font-weight: 700; color: var(--muted); margin-bottom: 0.55rem;
+      text-transform: uppercase; letter-spacing: 0.05em; display: flex; justify-content: space-between; align-items: center;
+    }
 
-    /* Quick team member buttons */
+    /* Team Member Slider */
+    .slider-wrap { display: flex; flex-direction: column; gap: .45rem; margin-bottom: .6rem; }
+    input[type=range].team-slider {
+      -webkit-appearance: none; appearance: none;
+      width: 100%; height: 10px; border-radius: 999px;
+      background: linear-gradient(90deg, var(--nasa-blue), var(--cyan));
+      outline: none; cursor: pointer; margin: .25rem 0;
+    }
+    input[type=range].team-slider::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none;
+      width: 26px; height: 26px; border-radius: 50%;
+      background: #fff; border: 3px solid var(--cyan);
+      box-shadow: 0 0 12px rgba(56, 189, 248, .85); cursor: pointer;
+    }
+    input[type=range].team-slider::-moz-range-thumb {
+      width: 26px; height: 26px; border-radius: 50%;
+      background: #fff; border: 3px solid var(--cyan);
+      box-shadow: 0 0 12px rgba(56, 189, 248, .85); cursor: pointer;
+    }
+
     .member-pills {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(105px, 1fr)); gap: .4rem; margin-bottom: .6rem;
+      display: grid; grid-template-columns: repeat(5, 1fr); gap: .35rem;
     }
     .mpill {
-      appearance: none; border: 1px solid var(--line); background: #080d20; color: var(--text);
-      padding: .5rem .4rem; border-radius: 10px; font: inherit; font-size: .86rem; font-weight: 700;
+      appearance: none; border: 1px solid var(--line); background: #080d20; color: var(--muted);
+      padding: .48rem .2rem; border-radius: 10px; font: inherit; font-size: .82rem; font-weight: 700;
       cursor: pointer; text-align: center; transition: all .14s ease;
     }
     .mpill.active {
@@ -44,7 +66,7 @@
 
     /* 4 status choices */
     .st-row {
-      display: grid; grid-template-columns: repeat(2, 1fr); gap: .4rem; margin-top: .6rem;
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: .4rem; margin-top: .5rem;
     }
     .st-chip {
       appearance: none; border: 1px solid var(--line); background: #070b1a; color: var(--muted);
@@ -53,8 +75,7 @@
     }
     .st-chip.active { background: #14532d; border-color: var(--ready); color: #fff; }
 
-    /* Name input */
-    .field-row { display: flex; gap: 0.5rem; align-items: center; }
+    /* Form fields */
     input[type=text], select, textarea {
       width: 100%; background: #070b1a; color: var(--text); border: 1px solid var(--line);
       border-radius: 10px; padding: 0.6rem 0.8rem; font: inherit; font-size: .95rem;
@@ -153,33 +174,39 @@
   </div>
 
   <div class="brand">
-    <small>Room Strike Team · كريم · تسبيح · عمر · خيري · لجين</small>
+    <small>Room Strike Team · Karim · Tasbeeh · Omar · Lojine · Khairy</small>
     <h1>📱 Mobile <span>Room Inspector</span></h1>
   </div>
 
-  <!-- Inspector Profile (5 Team Members + 4 Status Choices) -->
+  <!-- Inspector Profile (Slider + 5 Team Members + 4 Status Choices) -->
   <div class="card-panel">
-    <div class="section-title">👤 اختار اسمك (Rooms Team)</div>
-    <div class="member-pills" id="memberPills"></div>
-    <div class="field-row">
-      <input type="text" id="inspectorName" placeholder="Or type name here…" maxlength="30">
+    <div class="section-title">
+      <span>👤 Choose Team Member (Slider)</span>
+      <span id="activeNameLabel" style="color:var(--cyan);">Khairy</span>
     </div>
-    <div id="myStatusWrap" hidden>
-      <div class="section-title" style="margin-top:.75rem;margin-bottom:.3rem;">حالتك دلوقتي (4 Choices):</div>
-      <div class="st-row" id="myStatusBtns"></div>
+    <div class="slider-wrap">
+      <input id="memberSlider" class="team-slider" type="range" min="0" max="4" step="1" value="4">
+      <div class="member-pills" id="memberPills"></div>
     </div>
+    <div style="margin-top:.55rem;">
+      <select id="memberSelect"></select>
+    </div>
+    <div class="section-title" style="margin-top:.85rem;margin-bottom:.3rem;">
+      <span>Your Live Status (4 Choices)</span>
+    </div>
+    <div class="st-row" id="myStatusBtns"></div>
   </div>
 
   <!-- Step 1: Room Selector -->
   <div class="card-panel">
-    <div class="section-title">📍 Select Room (1 to 12)</div>
+    <div class="section-title"><span>📍 Select Room (1 to 12)</span></div>
     <div class="room-grid" id="roomGrid"></div>
     <div id="roomHistory" class="history-card" style="display:none;"></div>
   </div>
 
   <!-- Step 2: Data Show / HDMI Test -->
   <div class="card-panel">
-    <div class="section-title">1. Data Show / Projector Verification</div>
+    <div class="section-title"><span>1. Data Show / Projector Verification</span></div>
     <div class="toggle-row">
       <button class="toggle-btn" id="dsOkBtn" type="button">
         <span class="icon">🟢</span>
@@ -194,7 +221,7 @@
 
   <!-- Step 3: Wi-Fi Speed Test -->
   <div class="card-panel">
-    <div class="section-title">2. In-Room Wi-Fi &amp; Internet Test</div>
+    <div class="section-title"><span>2. In-Room Wi-Fi &amp; Internet Test</span></div>
     <div class="net-box">
       <button id="runSpeedBtn" class="btn primary block">⚡ Run Speed &amp; Ping Test</button>
 
@@ -218,7 +245,7 @@
 
   <!-- Step 4: Notes & Submit -->
   <div class="card-panel">
-    <div class="section-title">3. Optional Notes &amp; Save</div>
+    <div class="section-title"><span>3. Optional Notes &amp; Save</span></div>
     <textarea id="notes" rows="2" maxlength="200" placeholder="e.g. Needs Type-C dongle, HDMI port slightly loose"></textarea>
     <div style="margin-top: 1rem;">
       <button id="submitBtn" class="btn-submit" disabled>💾 Save &amp; Mark Room Ready</button>
@@ -227,7 +254,7 @@
 
   <!-- Backup Equipment Tracker (2 Mac Converters + 4 Power Strips) -->
   <div class="card-panel">
-    <div class="section-title">🧰 الماتيريال الاحتياطي (٢ كونڤرتر ماك + ٤ مشتركات)</div>
+    <div class="section-title"><span>🧰 Backup Equipment (2 Mac Converters + 4 Power Strips)</span></div>
     <div class="eq-mobile-list" id="eqMobileList"></div>
   </div>
 </div>
@@ -236,20 +263,11 @@
 
 <script type="module">
 import {
-  db, CONFIG_OK, ROOM_COUNT, ROOMS_TEAM, MEMBER_STATUSES, EQUIPMENT_ITEMS,
-  roomKey, ref, onValue, update, serverTimestamp, esc, pad2, MISSING_CONFIG_MESSAGE
-} from "./firebase-config.js";
+  db, CONFIG_OK, ROOM_COUNT, ROOMS_TEAM, MEMBER_STATUSES, EQUIPMENT_ITEMS, DEFAULT_HOLDERS,
+  roomKey, ref, onValue, update, restGet, restPatch, esc, pad2, MISSING_CONFIG_MESSAGE
+} from "./firebase-config.js?v=3";
 
 const $ = (id) => document.getElementById(id);
-
-const DEFAULT_HOLDERS = {
-  mac_1: "khairy",
-  mac_2: "karim",
-  strip_1: "tasbeeh",
-  strip_2: "omar",
-  strip_3: "logain",
-  strip_4: "khairy",
-};
 
 let selectedRoom = 1;
 let datashowStatus = null; // "OK" or "Issue"
@@ -267,76 +285,96 @@ function toast(msg) {
   toast._t = setTimeout(() => t.classList.remove("show"), 3000);
 }
 
-function findMember(name) {
-  if (!name) return null;
-  const low = name.trim().toLowerCase();
+function findMember(val) {
+  if (!val) return ROOMS_TEAM[0];
+  const low = String(val).trim().toLowerCase();
+  if (low === "logain") return ROOMS_TEAM.find((m) => m.id === "lojine");
   return ROOMS_TEAM.find(
-    (m) => m.id === low || m.name.toLowerCase() === low || m.short === name.trim() || m.en.toLowerCase() === low
-  ) || null;
+    (m) => m.id === low || m.name.toLowerCase() === low || low.includes(m.id)
+  ) || ROOMS_TEAM[0];
+}
+
+function getSelectedMember() {
+  const saved = localStorage.getItem("techops_name") || "Khairy";
+  return findMember(saved);
 }
 
 function memberLabel(idOrName) {
   const m = findMember(idOrName);
-  return m ? m.name : (idOrName || "الشنطة");
+  return m ? m.name : (idOrName || "Unassigned");
 }
 
-// Load Inspector Name
-const savedName = localStorage.getItem("techops_name") || "";
-$("inspectorName").value = savedName;
-
-function renderMemberPills() {
-  const curName = $("inspectorName").value.trim();
-  const activeM = findMember(curName);
-  $("memberPills").innerHTML = ROOMS_TEAM.map((m) => `
-    <button type="button" class="mpill ${activeM && activeM.id === m.id ? "active" : ""}" data-pick="${m.id}">
-      ${esc(m.short)}<br><small style="font-weight:400;opacity:.8">${esc(m.en)}</small>
-    </button>
-  `).join("");
-
-  if (activeM) {
-    $("myStatusWrap").hidden = false;
-    const curSt = teamStatus[activeM.id]?.status || "STANDBY";
-    $("myStatusBtns").innerHTML = MEMBER_STATUSES.map((s) => `
-      <button type="button" class="st-chip ${s.id === curSt ? "active" : ""}" data-st="${s.id}">
-        ${s.short}
-      </button>
-    `).join("");
-  } else {
-    $("myStatusWrap").hidden = true;
+async function writeData(path, payload) {
+  try {
+    await restPatch(path, payload);
+    await pollRestOnce();
+  } catch {
+    await update(ref(db, path), payload);
   }
 }
 
-$("memberPills").addEventListener("click", (e) => {
-  const b = e.target.closest("[data-pick]");
-  if (!b) return;
-  const m = ROOMS_TEAM.find((x) => x.id === b.dataset.pick);
-  if (!m) return;
-  $("inspectorName").value = m.name;
+function setMemberByIndex(idx, showToastMsg = true) {
+  const i = Math.max(0, Math.min(ROOMS_TEAM.length - 1, Number(idx) || 0));
+  const m = ROOMS_TEAM[i];
   localStorage.setItem("techops_name", m.name);
+  $("memberSlider").value = String(i);
+  $("memberSelect").value = m.id;
+  $("activeNameLabel").textContent = m.name;
   renderMemberPills();
   validateForm();
-  toast(`👋 أهلاً ${m.short}`);
+  if (showToastMsg) toast(`👤 Selected: ${m.name}`);
+}
+
+function initMemberSelector() {
+  $("memberSelect").innerHTML = ROOMS_TEAM.map((m) => `<option value="${m.id}">${esc(m.name)}</option>`).join("");
+  const cur = getSelectedMember();
+  const idx = ROOMS_TEAM.findIndex((m) => m.id === cur.id);
+  setMemberByIndex(idx >= 0 ? idx : 0, false);
+}
+
+function renderMemberPills() {
+  const activeM = getSelectedMember();
+  $("memberPills").innerHTML = ROOMS_TEAM.map((m, i) => `
+    <button type="button" class="mpill ${activeM.id === m.id ? "active" : ""}" data-idx="${i}">
+      ${esc(m.name)}
+    </button>
+  `).join("");
+
+  const curSt = teamStatus[activeM.id]?.status || "STANDBY";
+  $("myStatusBtns").innerHTML = MEMBER_STATUSES.map((s) => `
+    <button type="button" class="st-chip ${s.id === curSt ? "active" : ""}" data-st="${s.id}">
+      ${s.label}
+    </button>
+  `).join("");
+}
+
+$("memberSlider").addEventListener("input", (e) => {
+  setMemberByIndex(Number(e.target.value), true);
+});
+
+$("memberPills").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-idx]");
+  if (!b) return;
+  setMemberByIndex(Number(b.dataset.idx), true);
+});
+
+$("memberSelect").addEventListener("change", (e) => {
+  const idx = ROOMS_TEAM.findIndex((m) => m.id === e.target.value);
+  if (idx >= 0) setMemberByIndex(idx, true);
 });
 
 $("myStatusBtns").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-st]");
   if (!b) return;
-  const m = findMember($("inspectorName").value);
-  if (!m) return;
+  const m = getSelectedMember();
   try {
-    await update(ref(db, `team_status/${m.id}`), {
+    await writeData(`team_status/${m.id}`, {
       status: b.dataset.st,
       room: b.dataset.st === "CHECKING" ? selectedRoom : (teamStatus[m.id]?.room || null),
-      updated_at: serverTimestamp(),
+      updated_at: Date.now(),
     });
-    toast("✔ تم تحديث حالتك");
+    toast(`✔ Status updated: ${b.dataset.st}`);
   } catch (err) { toast("Error: " + err.message); }
-});
-
-$("inspectorName").addEventListener("input", (e) => {
-  localStorage.setItem("techops_name", e.target.value.trim());
-  renderMemberPills();
-  validateForm();
 });
 
 // Render 12 room buttons
@@ -378,26 +416,27 @@ $("roomGrid").addEventListener("click", (e) => {
 function renderMobileEquipment() {
   $("eqMobileList").innerHTML = EQUIPMENT_ITEMS.map((it) => {
     const raw = inventory[it.id] || {};
-    const holder = raw.holder || DEFAULT_HOLDERS[it.id] || "khairy";
+    let holder = raw.holder || DEFAULT_HOLDERS[it.id] || "khairy";
+    if (holder === "logain") holder = "lojine";
     const room = raw.room ? Number(raw.room) : 0;
 
     const holderOpts = ROOMS_TEAM.map((m) => `
-      <option value="${m.id}" ${holder === m.id ? "selected" : ""}>👤 مع ${esc(m.short)}</option>
+      <option value="${m.id}" ${holder === m.id ? "selected" : ""}>👤 Held by: ${esc(m.name)}</option>
     `).join("");
 
-    let roomOpts = `<option value="0" ${!room ? "selected" : ""}>🟢 متاح مع التيم</option>`;
+    let roomOpts = `<option value="0" ${!room ? "selected" : ""}>🟢 Available with Team</option>`;
     for (let r = 1; r <= ROOM_COUNT; r++) {
-      roomOpts += `<option value="${r}" ${room === r ? "selected" : ""}>🏛️ في Room ${pad2(r)}</option>`;
+      roomOpts += `<option value="${r}" ${room === r ? "selected" : ""}>🏛️ Lent to Room ${pad2(r)}</option>`;
     }
 
     const badge = room
-      ? `<span style="color:#fde047;font-size:.78rem;">🏛️ في Room ${pad2(room)}</span>`
-      : `<span style="color:#86efac;font-size:.78rem;">🟢 مع ${esc(memberLabel(holder))}</span>`;
+      ? `<span style="color:#fde047;font-size:.78rem;">🏛️ In Room ${pad2(room)}</span>`
+      : `<span style="color:#86efac;font-size:.78rem;">🟢 With ${esc(memberLabel(holder))}</span>`;
 
     return `
       <div class="eq-row ${room ? "lent" : ""}">
         <div class="eq-row-top">
-          <span>${it.icon} ${esc(it.ar)}</span>
+          <span>${it.icon} ${esc(it.title)}</span>
           ${badge}
         </div>
         <div class="eq-row-controls">
@@ -413,11 +452,11 @@ $("eqMobileList").addEventListener("change", async (e) => {
   if (hSel) {
     const eqId = hSel.dataset.mobHolder;
     try {
-      await update(ref(db, `inventory/${eqId}`), {
+      await writeData(`inventory/${eqId}`, {
         holder: hSel.value,
-        updated_at: serverTimestamp(),
+        updated_at: Date.now(),
       });
-      toast("✔ تم تحديث المسؤول عن القطعة");
+      toast(`✔ Assigned to ${memberLabel(hSel.value)}`);
     } catch (err) { toast("Error: " + err.message); }
     return;
   }
@@ -426,12 +465,12 @@ $("eqMobileList").addEventListener("change", async (e) => {
     const eqId = rSel.dataset.mobRoom;
     const rNum = Number(rSel.value) || null;
     try {
-      await update(ref(db, `inventory/${eqId}`), {
+      await writeData(`inventory/${eqId}`, {
         room: rNum,
-        lent_by: rNum ? ($("inspectorName").value.trim() || "Tech Ops") : null,
-        updated_at: serverTimestamp(),
+        lent_by: rNum ? getSelectedMember().name : null,
+        updated_at: Date.now(),
       });
-      toast(rNum ? `🏛️ تم تسليفها لـ Room ${pad2(rNum)}` : "🟢 رجعت مع التيم");
+      toast(rNum ? `🏛️ Lent to Room ${pad2(rNum)}` : "🟢 Returned to Team");
     } catch (err) { toast("Error: " + err.message); }
   }
 });
@@ -494,20 +533,19 @@ $("runSpeedBtn").addEventListener("click", async () => {
 });
 
 function validateForm() {
-  const name = $("inspectorName").value.trim();
-  const valid = name.length > 0 && datashowStatus !== null;
+  const valid = datashowStatus !== null;
   $("submitBtn").disabled = !valid;
   if (valid) {
-    $("submitBtn").textContent = `💾 Save Room ${selectedRoom < 10 ? '0' + selectedRoom : selectedRoom} -> ${datashowStatus === 'OK' ? 'READY 🟢' : 'WARNING 🟡'}`;
+    $("submitBtn").textContent = `💾 Save Room ${selectedRoom < 10 ? '0' + selectedRoom : selectedRoom} (${getSelectedMember().name}) -> ${datashowStatus === 'OK' ? 'READY 🟢' : 'WARNING 🟡'}`;
   } else {
-    $("submitBtn").textContent = `💾 Select Name & Projector Status`;
+    $("submitBtn").textContent = `💾 Select Projector Status (Step 1)`;
   }
 }
 
 // Submit Check to Firebase
 $("submitBtn").addEventListener("click", async () => {
-  const name = $("inspectorName").value.trim();
-  if (!name) { toast("Please select your name"); return; }
+  const m = getSelectedMember();
+  const name = m.name;
   if (!datashowStatus) { toast("Please verify Data Show (OK / Issue)"); return; }
 
   const btn = $("submitBtn");
@@ -531,21 +569,18 @@ $("submitBtn").addEventListener("click", async () => {
     ping_ms: pingMs !== null ? pingMs : null,
     download_mbps: downloadMbps !== null ? downloadMbps : null,
     checked_by: `${name} 📱`,
-    updated_at: serverTimestamp(),
+    updated_at: Date.now(),
     source: "mobile-check",
     note: issues.join(" | ") || null
   };
 
   try {
-    await update(ref(db, `rooms/${key}`), payload);
-    const m = findMember(name);
-    if (m) {
-      update(ref(db, `team_status/${m.id}`), {
-        status: "CHECKING",
-        room: selectedRoom,
-        updated_at: serverTimestamp(),
-      });
-    }
+    await writeData(`rooms/${key}`, payload);
+    await writeData(`team_status/${m.id}`, {
+      status: "CHECKING",
+      room: selectedRoom,
+      updated_at: Date.now(),
+    });
     toast(`🎉 Room ${selectedRoom} updated to ${status}!`);
     if (selectedRoom < ROOM_COUNT) selectedRoom++;
     datashowStatus = null;
@@ -561,18 +596,44 @@ $("submitBtn").addEventListener("click", async () => {
   }
 });
 
-// Firebase listeners
+/* ------------------------------------------- Firebase + Instant REST Sync */
+function setOnlineState(on) {
+  $("conn").className = "pill " + (on ? "online" : "offline");
+  $("connText").textContent = on ? "Live Cloud" : "Reconnecting…";
+}
+
+async function pollRestOnce() {
+  if (!CONFIG_OK) return;
+  try {
+    const data = await restGet("");
+    setOnlineState(true);
+    if (data && typeof data === "object") {
+      roomsData = data.rooms || {};
+      teamStatus = data.team_status || {};
+      inventory = data.inventory || {};
+      renderMemberPills();
+      renderRooms();
+      renderMobileEquipment();
+    }
+  } catch {
+    // Let WebSocket or next poll handle it
+  }
+}
+
 if (!CONFIG_OK) {
   $("configBanner").innerHTML = MISSING_CONFIG_MESSAGE;
   $("configBanner").hidden = false;
 } else {
+  // Immediate REST fetch so mobile devices connect in <300ms
+  pollRestOnce();
+  setInterval(pollRestOnce, 4000);
+
   onValue(ref(db, ".info/connected"), (snap) => {
-    const on = snap.val() === true;
-    $("conn").className = "pill " + (on ? "online" : "offline");
-    $("connText").textContent = on ? "Live Cloud" : "Offline";
+    if (snap.val() === true) setOnlineState(true);
   });
 
   onValue(ref(db, "rooms"), (snap) => {
+    setOnlineState(true);
     roomsData = snap.val() || {};
     renderRooms();
   });
@@ -588,7 +649,7 @@ if (!CONFIG_OK) {
   });
 }
 
-renderMemberPills();
+initMemberSelector();
 renderRooms();
 renderMobileEquipment();
 validateForm();

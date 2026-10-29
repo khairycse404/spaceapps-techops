@@ -74,7 +74,7 @@
       <button class="opt" data-issue="datashow"><span class="ico">🔴</span><span>Data Show / Projector Issue<small>No image, wrong colours, flicker…</small></span></button>
       <button class="opt" data-issue="wifi"><span class="ico">📶</span><span>Wi-Fi / Internet Down<small>Can’t connect or very slow</small></span></button>
       <button class="opt" data-issue="audio"><span class="ico">🔊</span><span>Audio / Sound Issue<small>No sound, mic or speakers</small></span></button>
-      <button class="opt" data-issue="cable"><span class="ico">🔌</span><span>Need Mac Converter / Power Strip<small>Type-C adapter, HDMI cable, or مشترك كهرباء</small></span></button>
+      <button class="opt" data-issue="cable"><span class="ico">🔌</span><span>Need Mac Converter / Power Strip<small>Type-C adapter, HDMI cable, or extension cord</small></span></button>
     </div>
     <label class="note" for="note">Optional note for the team</label>
     <textarea id="note" maxlength="200" placeholder="e.g. Laptop is a MacBook, needs USB-C"></textarea>
@@ -117,8 +117,8 @@
 
 <script type="module">
 import {
-  db, CONFIG_OK, ROOM_COUNT, roomKey, ref, onValue, update, serverTimestamp, esc, pad2, MISSING_CONFIG_MESSAGE,
-} from "./firebase-config.js";
+  db, CONFIG_OK, ROOM_COUNT, roomKey, ref, onValue, update, serverTimestamp, restGet, restPatch, esc, pad2, MISSING_CONFIG_MESSAGE,
+} from "./firebase-config.js?v=3";
 
 const $ = (id) => document.getElementById(id);
 const ISSUES = {
@@ -190,13 +190,27 @@ if (!validRoom) {
     }
   }
 
-  onValue(ref(db, ".info/connected"), (snap) => {
-    const on = snap.val() === true;
+  function setOnline(on) {
     $("conn").className = "pill " + (on ? "online" : "offline");
     $("connText").textContent = on ? "Connected to Tech Ops" : "Reconnecting…";
+  }
+
+  async function pollRoomRest() {
+    try {
+      const data = await restGet(`rooms/${key}`);
+      setOnline(true);
+      latest = data || {};
+      render();
+    } catch { /* ignore */ }
+  }
+  pollRoomRest();
+  setInterval(pollRoomRest, 3000);
+
+  onValue(ref(db, ".info/connected"), (snap) => {
+    if (snap.val() === true) setOnline(true);
   });
 
-  onValue(roomRef, (snap) => { latest = snap.val() || {}; render(); });
+  onValue(roomRef, (snap) => { setOnline(true); latest = snap.val() || {}; render(); });
 
   async function send(code) {
     if (!CONFIG_OK) { alert("Tech Ops system is not configured yet."); return; }
@@ -211,10 +225,12 @@ if (!validRoom) {
       ? (note && !cur.note.includes(note) ? `${cur.note} | ${note}` : cur.note)
       : (note || null);
 
-    const upd = { status: "SOS", "sos/issue": issue, "sos/note": mergedNote };
-    if (!cur || !cur.created_at) upd["sos/created_at"] = serverTimestamp();
-    // Reset any stale resolution fields
-    upd.updated_at = serverTimestamp();
+    const sosObj = {
+      ...(cur || {}),
+      issue,
+      note: mergedNote,
+      created_at: (cur && cur.created_at) ? cur.created_at : Date.now(),
+    };
 
     addingMore = false;
     sentLocally = true;
@@ -226,7 +242,12 @@ if (!validRoom) {
     render();
 
     try {
-      await update(roomRef, upd);
+      try {
+        await restPatch(`rooms/${key}`, { status: "SOS", sos: sosObj, updated_at: Date.now() });
+        await pollRoomRest();
+      } catch {
+        await update(roomRef, { status: "SOS", sos: sosObj, updated_at: serverTimestamp() });
+      }
       pendingAck = false;
       clearTimeout(slowTimer);
       $("slowWarn").hidden = true;

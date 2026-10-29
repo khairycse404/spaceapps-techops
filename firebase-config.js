@@ -1,12 +1,5 @@
 // ============================================================================
-//  NASA Space Apps Cairo – Tech Ops | Firebase configuration
-//  >>> The ONLY thing you must edit is FIREBASE_DATABASE_URL below. <<<
-//
-//  Firebase Console → Build → Realtime Database → copy the URL at the top of
-//  the "Data" tab. It looks like one of:
-//     https://my-project-default-rtdb.firebaseio.com
-//     https://my-project-default-rtdb.europe-west1.firebasedatabase.app
-//  (no trailing slash, no ".json")
+//  NASA Space Apps Cairo – Tech Ops | Firebase Configuration & Shared Helpers
 // ============================================================================
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -18,35 +11,43 @@ export const FIREBASE_DATABASE_URL = "https://spaceapps-cairo-techops-default-rt
 export const ROOM_COUNT = 12;
 
 // Optional friendly names shown next to "Room 05" (leave empty if not needed).
-// Example: { 5: "Data Science", 9: "Rocketry" }
 export const ROOM_NAMES = {};
 
-// The 5 Rooms Strike Team members (كريم . تسبيح . عمر . خيري . لجين)
+// The 5 Rooms Strike Team members (Karim - Tasbeeh - Omar - Lojine - Khairy)
 export const ROOMS_TEAM = [
-  { id: "karim",   name: "كريم · Karim",    short: "كريم",   en: "Karim" },
-  { id: "tasbeeh", name: "تسبيح · Tasbeeh", short: "تسبيح",  en: "Tasbeeh" },
-  { id: "omar",    name: "عمر · Omar",      short: "عمر",    en: "Omar" },
-  { id: "khairy",  name: "خيري · Khairy",   short: "خيري",   en: "Khairy" },
-  { id: "logain",  name: "لجين · Logain",   short: "لجين",   en: "Logain" },
+  { id: "karim",   name: "Karim",   short: "Karim",   en: "Karim" },
+  { id: "tasbeeh", name: "Tasbeeh", short: "Tasbeeh", en: "Tasbeeh" },
+  { id: "omar",    name: "Omar",    short: "Omar",    en: "Omar" },
+  { id: "lojine",  name: "Lojine",  short: "Lojine",  en: "Lojine" },
+  { id: "khairy",  name: "Khairy",  short: "Khairy",  en: "Khairy" },
 ];
 
 // 4 live status choices for each of the 5 Rooms Team members
 export const MEMBER_STATUSES = [
-  { id: "STANDBY",  label: "🟢 متاح · Standby",    short: "🟢 متاح",    cls: "st-standby" },
-  { id: "CHECKING", label: "🔍 بيفحص · Checking",  short: "🔍 بيفحص",   cls: "st-checking" },
-  { id: "SOS",      label: "🚨 طوارئ · In SOS",    short: "🚨 طوارئ",   cls: "st-sos" },
-  { id: "HALL",     label: "⏸️ القاعة الرئيسية / Break", short: "⏸️ استراحة", cls: "st-hall" },
+  { id: "STANDBY",  label: "🟢 Standby",     short: "🟢 Standby",  cls: "st-standby" },
+  { id: "CHECKING", label: "🔍 Inspecting",  short: "🔍 Checking", cls: "st-checking" },
+  { id: "SOS",      label: "🚨 In SOS",      short: "🚨 In SOS",   cls: "st-sos" },
+  { id: "HALL",     label: "⏸️ On Break",    short: "⏸️ Break",    cls: "st-hall" },
 ];
 
-// Backup Material Inventory: 2 Mac Converters + 4 Power Strips (المشتركات)
+// Backup Material Inventory: 2 Mac Converters + 4 Power Strips
 export const EQUIPMENT_ITEMS = [
-  { id: "mac_1",   type: "mac",   icon: "💻🔌", title: "Mac Converter #1", ar: "كونڤرتر ماك ١" },
-  { id: "mac_2",   type: "mac",   icon: "💻🔌", title: "Mac Converter #2", ar: "كونڤرتر ماك ٢" },
-  { id: "strip_1", type: "strip", icon: "⚡🔌", title: "Power Strip #1",   ar: "مشترك كهرباء ١" },
-  { id: "strip_2", type: "strip", icon: "⚡🔌", title: "Power Strip #2",   ar: "مشترك كهرباء ٢" },
-  { id: "strip_3", type: "strip", icon: "⚡🔌", title: "Power Strip #3",   ar: "مشترك كهرباء ٣" },
-  { id: "strip_4", type: "strip", icon: "⚡🔌", title: "Power Strip #4",   ar: "مشترك كهرباء ٤" },
+  { id: "mac_1",   type: "mac",   icon: "💻🔌", title: "Mac Converter #1", sub: "USB-C to HDMI Adapter #1" },
+  { id: "mac_2",   type: "mac",   icon: "💻🔌", title: "Mac Converter #2", sub: "USB-C to HDMI Adapter #2" },
+  { id: "strip_1", type: "strip", icon: "⚡🔌", title: "Power Strip #1",   sub: "Extension Cord #1" },
+  { id: "strip_2", type: "strip", icon: "⚡🔌", title: "Power Strip #2",   sub: "Extension Cord #2" },
+  { id: "strip_3", type: "strip", icon: "⚡🔌", title: "Power Strip #3",   sub: "Extension Cord #3" },
+  { id: "strip_4", type: "strip", icon: "⚡🔌", title: "Power Strip #4",   sub: "Extension Cord #4" },
 ];
+
+export const DEFAULT_HOLDERS = {
+  mac_1: "khairy",
+  mac_2: "karim",
+  strip_1: "tasbeeh",
+  strip_2: "omar",
+  strip_3: "lojine",
+  strip_4: "khairy",
+};
 
 // Database key for a room — MUST match what check_room.py writes (rooms/room_<id>).
 export const roomKey = (n) => `room_${n}`;
@@ -60,6 +61,27 @@ export const db = getDatabase(app);
 export {
   ref, onValue, update, set, push, runTransaction, serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+// REST helpers so mobile browsers connect instantly even if carrier blocks WebSockets
+export async function restGet(path = "") {
+  const clean = path.replace(/^\/+|\/+$/g, "");
+  const url = `${FIREBASE_DATABASE_URL}/${clean ? clean + ".json" : ".json"}?_t=${Date.now()}`;
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+export async function restPatch(path, data) {
+  const clean = path.replace(/^\/+|\/+$/g, "");
+  const url = `${FIREBASE_DATABASE_URL}/${clean ? clean + ".json" : ".json"}`;
+  const res = await fetch(url, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
 
 // Shared helpers -------------------------------------------------------------
 export function esc(value) {
