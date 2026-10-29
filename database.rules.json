@@ -11,6 +11,14 @@
         }
       }
     },
+    "inventory": {
+      ".read": true,
+      ".write": true
+    },
+    "team_status": {
+      ".read": true,
+      ".write": true
+    },
     "sos_log": {
       ".read": true,
       ".write": true

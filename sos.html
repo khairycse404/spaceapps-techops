@@ -74,7 +74,7 @@
       <button class="opt" data-issue="datashow"><span class="ico">🔴</span><span>Data Show / Projector Issue<small>No image, wrong colours, flicker…</small></span></button>
       <button class="opt" data-issue="wifi"><span class="ico">📶</span><span>Wi-Fi / Internet Down<small>Can’t connect or very slow</small></span></button>
       <button class="opt" data-issue="audio"><span class="ico">🔊</span><span>Audio / Sound Issue<small>No sound, mic or speakers</small></span></button>
-      <button class="opt" data-issue="cable"><span class="ico">🔌</span><span>Need HDMI Cable / Type-C Adapter<small>We’ll bring one to you</small></span></button>
+      <button class="opt" data-issue="cable"><span class="ico">🔌</span><span>Need Mac Converter / Power Strip<small>Type-C adapter, HDMI cable, or مشترك كهرباء</small></span></button>
     </div>
     <label class="note" for="note">Optional note for the team</label>
     <textarea id="note" maxlength="200" placeholder="e.g. Laptop is a MacBook, needs USB-C"></textarea>
@@ -125,7 +125,7 @@ const ISSUES = {
   datashow: "🔴 Data Show / HDMI Issue",
   wifi: "📶 Wi-Fi / Internet Down",
   audio: "🔊 Audio / Sound Issue",
-  cable: "🔌 Need HDMI Cable / Type-C Adapter",
+  cable: "🔌 Need Mac Converter / Power Strip / HDMI",
 };
 const VIEWS = ["viewPicker", "viewForm", "viewWait", "viewClaimed", "viewDone"];
 function show(id) { VIEWS.forEach((v) => { $(v).hidden = v !== id; }); }

@@ -7,7 +7,7 @@
   <title>Tech Ops Mission Control · NASA Space Apps Cairo</title>
   <link rel="stylesheet" href="theme.css">
   <style>
-    .wrap { max-width: 1500px; margin: 0 auto; padding: 1rem; }
+    .wrap { max-width: 1520px; margin: 0 auto; padding: 1rem; }
 
     header.top {
       display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
@@ -21,36 +21,159 @@
 
     /* ---- status bar ---- */
     .statusbar {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .7rem;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .65rem;
       margin-bottom: .8rem;
     }
     .stat {
       background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
-      padding: .8rem 1rem; display: flex; align-items: center; justify-content: space-between; gap: .6rem;
+      padding: .75rem .95rem; display: flex; align-items: center; justify-content: space-between; gap: .5rem;
     }
-    .stat .label { color: var(--muted); font-size: .85rem; }
-    .stat .num { font-size: 2rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .stat .label { color: var(--muted); font-size: .82rem; line-height: 1.25; }
+    .stat .num { font-size: 1.75rem; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
     .stat.ready .num { color: var(--ready); }
     .stat.unchecked .num { color: #cbd5e1; }
     .stat.warning .num { color: var(--warning); }
     .stat.sos .num { color: var(--sos); }
+    .stat.gear .num { color: var(--cyan); font-size: 1.45rem; }
     .stat.sos.active { animation: statflash 1s infinite; border-color: var(--sos); }
     @keyframes statflash { 50% { background: rgba(239, 68, 68, .35); } }
 
+    /* ---- identity & controls bar ---- */
     .controls {
-      display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; margin-bottom: 1.1rem;
-      background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: .7rem;
+      display: flex; flex-direction: column; gap: .65rem; margin-bottom: 1.1rem;
+      background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: .85rem;
     }
-    .controls .name-box { display: flex; gap: .4rem; flex: 1 1 280px; }
+    .team-QuickPick {
+      display: flex; flex-wrap: wrap; align-items: center; gap: .45rem;
+    }
+    .team-QuickPick .pick-label {
+      font-size: .82rem; font-weight: 700; color: var(--cyan); margin-right: .25rem;
+    }
+    .member-pill {
+      appearance: none; border: 1px solid var(--line); background: #080d1f; color: var(--text);
+      padding: .45rem .8rem; border-radius: 999px; font: inherit; font-size: .88rem; font-weight: 700;
+      cursor: pointer; transition: all .15s ease;
+    }
+    .member-pill:hover { border-color: var(--cyan); }
+    .member-pill.active {
+      background: var(--nasa-blue); border-color: var(--cyan); color: #fff;
+      box-shadow: 0 0 12px rgba(56, 189, 248, .45);
+    }
+    .controls-bottom {
+      display: flex; flex-wrap: wrap; gap: .6rem; align-items: center;
+    }
+    .controls .name-box { display: flex; gap: .4rem; flex: 1 1 260px; }
     .controls input[type=text] {
       flex: 1; min-width: 0; background: #070b1a; color: var(--text); border: 1px solid var(--line);
-      border-radius: 10px; padding: .65rem .8rem; font: inherit;
+      border-radius: 10px; padding: .6rem .8rem; font: inherit;
     }
-    .controls input:focus, dialog textarea:focus { outline: 2px solid var(--cyan); }
+    .controls input:focus, dialog textarea:focus, select:focus { outline: 2px solid var(--cyan); }
     #audioBtn.on { background: #14532d; border-color: #16a34a; }
 
-    /* ---- room grid ---- */
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: .9rem; }
+    /* ---- collapsible section headers ---- */
+    .sec-head {
+      display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
+      gap: .5rem; margin: 1.2rem 0 .65rem;
+    }
+    .sec-head h2 {
+      font-size: 1.08rem; letter-spacing: .03em; display: flex; align-items: center; gap: .45rem;
+    }
+    .sec-head small { color: var(--muted); font-size: .8rem; font-weight: 500; }
+
+    /* ---- 5-Member Strike Team Grid (4 choices each) ---- */
+    .team-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(245px, 1fr)); gap: .75rem;
+      margin-bottom: 1.1rem;
+    }
+    .mcard {
+      background: linear-gradient(180deg, var(--panel-2), var(--panel));
+      border: 1px solid var(--line); border-radius: 14px; padding: .8rem;
+      display: flex; flex-direction: column; gap: .55rem;
+    }
+    .mcard.is-me { border-color: var(--cyan); box-shadow: 0 0 0 1px rgba(56, 189, 248, .3); }
+    .mcard-top { display: flex; justify-content: space-between; align-items: center; gap: .4rem; }
+    .mcard-name { font-weight: 800; font-size: 1.05rem; }
+    .mcard-badge {
+      font-size: .72rem; font-weight: 700; padding: .2rem .55rem; border-radius: 999px;
+      background: rgba(255,255,255,.07); border: 1px solid var(--line);
+    }
+    .mcard-badge.st-standby  { background: rgba(34, 197, 94, .16); border-color: #16a34a; color: #86efac; }
+    .mcard-badge.st-checking { background: rgba(56, 189, 248, .16); border-color: #0284c7; color: #7dd3fc; }
+    .mcard-badge.st-sos      { background: rgba(239, 68, 68, .22); border-color: #dc2626; color: #fca5a5; }
+    .mcard-badge.st-hall     { background: rgba(250, 204, 21, .15); border-color: #ca8a04; color: #fde047; }
+
+    .status-choices {
+      display: grid; grid-template-columns: 1fr 1fr; gap: .35rem;
+    }
+    .st-btn {
+      appearance: none; border: 1px solid var(--line); background: #070b1a; color: var(--muted);
+      border-radius: 8px; padding: .38rem .45rem; font: inherit; font-size: .76rem; font-weight: 700;
+      cursor: pointer; text-align: center; transition: all .12s ease;
+    }
+    .st-btn:hover { color: var(--text); border-color: #3b4d80; }
+    .st-btn.active.st-standby  { background: #14532d; border-color: #22c55e; color: #fff; }
+    .st-btn.active.st-checking { background: #0c4a6e; border-color: #38bdf8; color: #fff; }
+    .st-btn.active.st-sos      { background: #7f1d1d; border-color: #ef4444; color: #fff; }
+    .st-btn.active.st-hall     { background: #713f12; border-color: #facc15; color: #fff; }
+
+    .mcard-room {
+      display: flex; align-items: center; gap: .4rem; font-size: .8rem; color: var(--muted);
+    }
+    .mcard-room select, .eq-select {
+      flex: 1; background: #070b1a; color: var(--text); border: 1px solid var(--line);
+      border-radius: 8px; padding: .35rem .5rem; font: inherit; font-size: .8rem;
+    }
+    .mcard-gear {
+      display: flex; flex-wrap: wrap; gap: .3rem; font-size: .75rem;
+    }
+    .gear-chip {
+      background: rgba(56, 189, 248, .12); border: 1px solid rgba(56, 189, 248, .4);
+      color: #bae6fd; border-radius: 6px; padding: .15rem .45rem; font-weight: 600;
+    }
+
+    /* ---- Equipment & Material Grid (2 Mac Converters + 4 Power Strips) ---- */
+    .eq-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: .8rem;
+      margin-bottom: 1.2rem;
+    }
+    .eq-card {
+      background: linear-gradient(180deg, var(--panel-2), var(--panel));
+      border: 1px solid var(--line); border-left: 5px solid var(--ready);
+      border-radius: 14px; padding: .85rem; display: flex; flex-direction: column; gap: .55rem;
+    }
+    .eq-card.lent {
+      border-left-color: var(--warning);
+      background: linear-gradient(180deg, #231d0c, var(--panel));
+    }
+    .eq-head { display: flex; justify-content: space-between; align-items: flex-start; gap: .5rem; }
+    .eq-title { font-weight: 800; font-size: 1rem; }
+    .eq-title small { display: block; color: var(--muted); font-weight: 500; font-size: .78rem; }
+    .eq-state {
+      font-size: .72rem; font-weight: 800; padding: .22rem .55rem; border-radius: 999px;
+      white-space: nowrap;
+    }
+    .eq-state.with-team { background: rgba(34, 197, 94, .2); color: #86efac; border: 1px solid #16a34a; }
+    .eq-state.in-room   { background: rgba(250, 204, 21, .22); color: #fde047; border: 1px solid #ca8a04; }
+
+    .eq-status-line {
+      font-size: .86rem; font-weight: 700; padding: .45rem .6rem; border-radius: 9px;
+      background: rgba(0, 0, 0, .28); border: 1px solid rgba(255, 255, 255, .06);
+    }
+    .eq-holder-Group { display: flex; flex-direction: column; gap: .3rem; }
+    .eq-holder-Group .lbl { font-size: .75rem; color: var(--muted); }
+    .holder-btns { display: flex; flex-wrap: wrap; gap: .3rem; }
+    .h-btn {
+      appearance: none; border: 1px solid var(--line); background: #070b1a; color: var(--muted);
+      border-radius: 7px; padding: .28rem .5rem; font: inherit; font-size: .76rem; font-weight: 700;
+      cursor: pointer;
+    }
+    .h-btn:hover { color: var(--text); border-color: var(--cyan); }
+    .h-btn.active { background: var(--nasa-blue); border-color: var(--cyan); color: #fff; }
+
+    .eq-actions { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; margin-top: .1rem; }
+
+    /* ---- 12-Room Grid ---- */
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(275px, 1fr)); gap: .9rem; }
 
     .card {
       --c: var(--unchecked);
@@ -81,6 +204,17 @@
     .ok { color: var(--ready); } .bad { color: var(--sos); } .mid { color: var(--warning); }
     .note { font-size: .82rem; color: #cbd5e1; background: rgba(255, 255, 255, .05); border-radius: 8px; padding: .4rem .6rem; }
 
+    .room-gear-box {
+      background: rgba(250, 204, 21, .1); border: 1px solid rgba(250, 204, 21, .45);
+      border-radius: 10px; padding: .5rem .65rem; display: flex; flex-direction: column; gap: .35rem;
+    }
+    .room-gear-title { font-size: .76rem; font-weight: 800; color: #fde047; }
+    .room-gear-item {
+      display: flex; justify-content: space-between; align-items: center; gap: .4rem;
+      font-size: .82rem; font-weight: 700; color: #fef08a;
+    }
+    .btn.xs { padding: .22rem .5rem; font-size: .74rem; border-radius: 7px; }
+
     .sos-box { background: rgba(0, 0, 0, .35); border: 1px solid rgba(239, 68, 68, .6); border-radius: 12px; padding: .7rem; display: flex; flex-direction: column; gap: .5rem; }
     .sos-issue { font-weight: 800; font-size: 1.05rem; white-space: pre-line; }
     .sos-meta { font-size: .78rem; color: #fca5a5; }
@@ -89,13 +223,14 @@
     .row .btn { flex: 1 1 auto; }
     .btn.sm { padding: .45rem .7rem; font-size: .85rem; }
 
-    /* ---- manual check dialog ---- */
-    dialog { background: var(--panel); color: var(--text); border: 1px solid var(--cyan); border-radius: 16px; padding: 1.1rem; width: min(92vw, 420px); }
+    /* ---- dialogs ---- */
+    dialog { background: var(--panel); color: var(--text); border: 1px solid var(--cyan); border-radius: 16px; padding: 1.1rem; width: min(92vw, 430px); }
     dialog::backdrop { background: rgba(0, 0, 0, .7); }
     dialog h3 { margin-bottom: .8rem; }
     dialog textarea { width: 100%; min-height: 70px; margin: .8rem 0; background: #070b1a; color: var(--text); border: 1px solid var(--line); border-radius: 10px; padding: .6rem; font: inherit; resize: vertical; }
     .choice { display: grid; grid-template-columns: repeat(3, 1fr); gap: .5rem; }
     .choice .btn.sel { outline: 3px solid var(--cyan); }
+    .lend-list { display: flex; flex-direction: column; gap: .45rem; margin: .8rem 0; }
     .foot { text-align: center; color: var(--muted); font-size: .75rem; margin-top: 1.4rem; }
   </style>
 </head>
@@ -118,22 +253,50 @@
 
   <section class="statusbar" aria-label="Status summary">
     <div class="stat ready"><span class="label">🟢 Ready Rooms</span><span class="num" id="cReady">0</span></div>
-    <div class="stat unchecked"><span class="label">⚪ Unchecked Rooms</span><span class="num" id="cUnchecked">12</span></div>
+    <div class="stat unchecked"><span class="label">⚪ Unchecked</span><span class="num" id="cUnchecked">12</span></div>
     <div class="stat warning"><span class="label">🟡 Warnings</span><span class="num" id="cWarning">0</span></div>
-    <div class="stat sos" id="sosStat"><span class="label">🚨 Active SOS Alerts</span><span class="num" id="cSos">0</span></div>
+    <div class="stat sos" id="sosStat"><span class="label">🚨 Active SOS</span><span class="num" id="cSos">0</span></div>
+    <div class="stat gear"><span class="label">💻 Mac Converters<br><small>Available w/ Team</small></span><span class="num" id="cMac">2/2</span></div>
+    <div class="stat gear"><span class="label">⚡ Power Strips<br><small>Available w/ Team</small></span><span class="num" id="cStrip">4/4</span></div>
   </section>
 
+  <!-- Quick Identity Selection for the 5 Rooms Team Members -->
   <section class="controls">
-    <div class="name-box">
-      <input id="nameInput" type="text" maxlength="30" placeholder="Your name (Tech Ops member)" autocomplete="off">
-      <button id="saveName" class="btn primary">Save</button>
+    <div class="team-QuickPick">
+      <span class="pick-label">👤 اختار اسمك (Rooms Team):</span>
+      <div id="memberPills" style="display:flex;flex-wrap:wrap;gap:.4rem;"></div>
     </div>
-    <button id="audioBtn" class="btn">🔊 Enable Audio &amp; Vibration Alerts</button>
+    <div class="controls-bottom">
+      <div class="name-box">
+        <input id="nameInput" type="text" maxlength="30" placeholder="Tap your name above or type here…" autocomplete="off">
+        <button id="saveName" class="btn primary">Save</button>
+      </div>
+      <button id="audioBtn" class="btn">🔊 Enable Audio &amp; Vibration Alerts</button>
+    </div>
   </section>
 
+  <!-- Section 1: 5 Rooms Team Members × 4 Status Choices -->
+  <div class="sec-head">
+    <h2>👥 فريق القاعات · Rooms Strike Team (5 Members × 4 Statuses)</h2>
+    <small>كريم · تسبيح · عمر · خيري · لجين — اضغط على حالتك أو القاعة اللي انت فيها</small>
+  </div>
+  <section id="teamGrid" class="team-grid" aria-label="Rooms Strike Team"></section>
+
+  <!-- Section 2: Equipment & Backup Material Tracker (2 Mac Converters + 4 Power Strips) -->
+  <div class="sec-head">
+    <h2>🧰 الماتيريال الاحتياطي · Backup Gear (2 Mac Converters + 4 Power Strips)</h2>
+    <small>حدد كل قطعة مع مين من التيم، أو لو اتسلفت لقاعة من الـ 12 قاعة</small>
+  </div>
+  <section id="eqGrid" class="eq-grid" aria-label="Equipment Tracker"></section>
+
+  <!-- Section 3: 12 Workshop Rooms Grid -->
+  <div class="sec-head">
+    <h2>🏛️ القاعات · Live 12 Workshop Rooms</h2>
+    <small>تحديث لحظي لحالة كل قاعة + الماتيريال المتسلف ليها</small>
+  </div>
   <main id="grid" class="grid" aria-live="polite"></main>
 
-  <p class="foot">Live data · Firebase Realtime Database · Rooms checked via <code>check_room.py</code>, SOS via QR codes</p>
+  <p class="foot">Live data · Firebase Realtime Database · Rooms checked via <code>check_room.py</code> or <code>check.html</code>, SOS via QR codes</p>
 </div>
 
 <!-- Manual check dialog -->
@@ -151,18 +314,40 @@
   </div>
 </dialog>
 
+<!-- Lend gear to room dialog -->
+<dialog id="lendDlg">
+  <h3 id="lendTitle">🧰 تسليف ماتيريال للقاعة</h3>
+  <p style="color:var(--muted);font-size:.86rem;margin:0;">اختار الكونڤرتر أو المشترك اللي هيتسلف للقاعة دي:</p>
+  <div id="lendList" class="lend-list"></div>
+  <div class="row">
+    <button class="btn block" id="lendClose">إغلاق · Close</button>
+  </div>
+</dialog>
+
 <div id="toast" class="toast" role="status"></div>
 
 <script type="module">
 import {
-  db, CONFIG_OK, ROOM_COUNT, ROOM_NAMES, roomKey, ref, onValue, update, push,
-  runTransaction, serverTimestamp, esc, pad2, MISSING_CONFIG_MESSAGE,
+  db, CONFIG_OK, ROOM_COUNT, ROOM_NAMES, ROOMS_TEAM, MEMBER_STATUSES, EQUIPMENT_ITEMS,
+  roomKey, ref, onValue, update, push, runTransaction, serverTimestamp, esc, pad2, MISSING_CONFIG_MESSAGE,
 } from "./firebase-config.js";
 
 const $ = (id) => document.getElementById(id);
 const STATUS_LABEL = { UNCHECKED: "UNCHECKED", READY: "READY", WARNING: "WARNING", SOS: "SOS" };
 
+// Default initial holders distributed across the 5 team members if DB node is empty
+const DEFAULT_HOLDERS = {
+  mac_1: "khairy",
+  mac_2: "karim",
+  strip_1: "tasbeeh",
+  strip_2: "omar",
+  strip_3: "logain",
+  strip_4: "khairy",
+};
+
 let rooms = {};
+let teamStatus = {};
+let inventory = {};
 let firstSnapshot = true;
 let knownSos = new Set();
 let audioOn = false;
@@ -179,10 +364,25 @@ function toast(msg) {
 }
 
 const getName = () => ($("nameInput").value || "").trim();
+
+function findMemberByName(n) {
+  if (!n) return null;
+  const low = n.toLowerCase();
+  return ROOMS_TEAM.find(
+    (m) => m.id === low || m.name.toLowerCase() === low || m.short === n || m.en.toLowerCase() === low
+  ) || null;
+}
+
+function memberLabel(idOrName) {
+  if (!idOrName) return "الشنطة · Bag";
+  const m = findMemberByName(idOrName);
+  return m ? m.name : idOrName;
+}
+
 function requireName() {
   const n = getName();
   if (!n) {
-    toast("✋ Enter your name at the top first, then tap Save.");
+    toast("✋ اختار اسمك فوق الأول (كريم / تسبيح / عمر / خيري / لجين)");
     $("nameInput").focus();
     $("nameInput").scrollIntoView({ behavior: "smooth", block: "center" });
     return null;
@@ -206,7 +406,219 @@ function fmtTime(ms) {
   return `${clock} · ${rel}`;
 }
 
-/* ------------------------------------------------------------------- render */
+function itemState(item) {
+  const raw = inventory[item.id] || {};
+  const holder = raw.holder || DEFAULT_HOLDERS[item.id] || "khairy";
+  const room = raw.room ? Number(raw.room) : null;
+  return {
+    holder,
+    room,
+    lent_by: raw.lent_by || null,
+    updated_at: raw.updated_at || null,
+  };
+}
+
+/* --------------------------------------------------- render identity pills */
+function renderIdentityPills() {
+  const cur = getName();
+  const activeMember = findMemberByName(cur);
+  $("memberPills").innerHTML = ROOMS_TEAM.map((m) => {
+    const isAct = activeMember && activeMember.id === m.id;
+    return `<button type="button" class="member-pill ${isAct ? "active" : ""}" data-pick-member="${m.id}">${esc(m.name)}</button>`;
+  }).join("");
+}
+
+$("memberPills").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-pick-member]");
+  if (!b) return;
+  const m = ROOMS_TEAM.find((x) => x.id === b.dataset.pickMember);
+  if (!m) return;
+  $("nameInput").value = m.name;
+  localStorage.setItem("techops_name", m.name);
+  renderIdentityPills();
+  renderTeam();
+  toast(`👋 أهلاً ${m.short}! تم تسجيل الدخول باسم ${m.name}`);
+});
+
+/* ------------------------------------------- render 5-member team & 4 choices */
+function renderTeam() {
+  const curMember = findMemberByName(getName());
+  $("teamGrid").innerHTML = ROOMS_TEAM.map((m) => {
+    const stObj = teamStatus[m.id] || {};
+    const curStatusId = stObj.status || "STANDBY";
+    const statusMeta = MEMBER_STATUSES.find((s) => s.id === curStatusId) || MEMBER_STATUSES[0];
+    const curRoom = stObj.room ? Number(stObj.room) : 0;
+    const isMe = curMember && curMember.id === m.id;
+
+    // Find equipment currently carried by this member (and not lent to a room)
+    const carriedGear = EQUIPMENT_ITEMS.filter((it) => {
+      const s = itemState(it);
+      return s.holder === m.id && !s.room;
+    });
+
+    const gearHtml = carriedGear.length
+      ? `<div class="mcard-gear">${carriedGear.map((it) => `<span class="gear-chip">${it.icon} ${esc(it.ar)}</span>`).join("")}</div>`
+      : `<div class="mcard-gear"><span style="font-size:.73rem;color:var(--muted);">لا يحمل ماتيريال متاح حالياً</span></div>`;
+
+    let roomOpts = `<option value="0">— القاعة الحالية: غير محدد —</option>`;
+    for (let r = 1; r <= ROOM_COUNT; r++) {
+      roomOpts += `<option value="${r}" ${curRoom === r ? "selected" : ""}>📍 في Room ${pad2(r)}</option>`;
+    }
+
+    const choicesHtml = MEMBER_STATUSES.map((s) => `
+      <button type="button" class="st-btn ${s.cls} ${s.id === curStatusId ? "active" : ""}"
+        data-member-status="${m.id}" data-st="${s.id}">${s.short}</button>
+    `).join("");
+
+    return `
+      <article class="mcard ${isMe ? "is-me" : ""}">
+        <div class="mcard-top">
+          <span class="mcard-name">👤 ${esc(m.name)} ${isMe ? "<small style='color:var(--cyan)'>(أنت)</small>" : ""}</span>
+          <span class="mcard-badge ${statusMeta.cls}">${statusMeta.short}</span>
+        </div>
+        <div class="status-choices">${choicesHtml}</div>
+        <div class="mcard-room">
+          <select data-member-room="${m.id}">${roomOpts}</select>
+        </div>
+        ${gearHtml}
+      </article>`;
+  }).join("");
+}
+
+$("teamGrid").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-member-status]");
+  if (!b) return;
+  const memberId = b.dataset.memberStatus;
+  const st = b.dataset.st;
+  try {
+    await update(ref(db, `team_status/${memberId}`), {
+      status: st,
+      updated_at: serverTimestamp(),
+    });
+  } catch (err) { toast("Error updating status: " + err.message); }
+});
+
+$("teamGrid").addEventListener("change", async (e) => {
+  const sel = e.target.closest("[data-member-room]");
+  if (!sel) return;
+  const memberId = sel.dataset.memberRoom;
+  const roomNum = Number(sel.value) || null;
+  try {
+    await update(ref(db, `team_status/${memberId}`), {
+      room: roomNum,
+      ...(roomNum ? { status: "CHECKING" } : {}),
+      updated_at: serverTimestamp(),
+    });
+  } catch (err) { toast("Error updating member room: " + err.message); }
+});
+
+/* ------------------------------------------- render 6 equipment items */
+function renderEquipment() {
+  let macAvail = 0, stripAvail = 0;
+
+  const html = EQUIPMENT_ITEMS.map((it) => {
+    const st = itemState(it);
+    const inRoom = Boolean(st.room);
+    if (!inRoom) {
+      if (it.type === "mac") macAvail++;
+      else stripAvail++;
+    }
+
+    const holderName = memberLabel(st.holder);
+    const stateBadge = inRoom
+      ? `<span class="eq-state in-room">🏛️ في Room ${pad2(st.room)}</span>`
+      : `<span class="eq-state with-team">🟢 متاح مع التيم</span>`;
+
+    const statusLine = inRoom
+      ? `📍 موجود حالياً في <strong>Room ${pad2(st.room)}</strong> <small style="color:var(--muted)">(مسؤول عنه: ${esc(holderName)} · ${esc(fmtTime(st.updated_at))})</small>`
+      : `🎒 موجود مع: <strong>${esc(holderName)}</strong> <small style="color:var(--muted)">(جاهز للتسليف)</small>`;
+
+    const holderBtns = ROOMS_TEAM.map((m) => `
+      <button type="button" class="h-btn ${st.holder === m.id ? "active" : ""}"
+        data-eq-holder="${it.id}" data-holder="${m.id}">${esc(m.short)}</button>
+    `).join("");
+
+    let roomOptions = `<option value="0" ${!inRoom ? "selected" : ""}>🟢 مع التيم (غير متسلف لقاعة)</option>`;
+    for (let r = 1; r <= ROOM_COUNT; r++) {
+      roomOptions += `<option value="${r}" ${st.room === r ? "selected" : ""}>🏛️ متسلف لـ Room ${pad2(r)}</option>`;
+    }
+
+    return `
+      <article class="eq-card ${inRoom ? "lent" : ""}">
+        <div class="eq-head">
+          <div class="eq-title">${it.icon} ${esc(it.ar)}<small>${esc(it.title)}</small></div>
+          ${stateBadge}
+        </div>
+        <div class="eq-status-line">${statusLine}</div>
+        <div class="eq-holder-Group">
+          <span class="lbl">👤 مع مين من الـ 5؟ (اضغط لتحديد المسؤول عنها):</span>
+          <div class="holder-btns">${holderBtns}</div>
+        </div>
+        <div class="eq-actions">
+          <select class="eq-select" data-eq-room="${it.id}">${roomOptions}</select>
+          ${inRoom ? `<button type="button" class="btn sm good" data-eq-return="${it.id}">↩️ استلام</button>` : ""}
+        </div>
+      </article>`;
+  }).join("");
+
+  $("eqGrid").innerHTML = html;
+  $("cMac").textContent = `${macAvail}/2`;
+  $("cStrip").textContent = `${stripAvail}/4`;
+}
+
+$("eqGrid").addEventListener("click", async (e) => {
+  const hb = e.target.closest("[data-eq-holder]");
+  if (hb) {
+    const eqId = hb.dataset.eqHolder;
+    const holderId = hb.dataset.holder;
+    try {
+      await update(ref(db, `inventory/${eqId}`), {
+        holder: holderId,
+        updated_at: serverTimestamp(),
+      });
+      toast(`✔ تم التحديث: ${memberLabel(holderId)}`);
+    } catch (err) { toast("Update failed: " + err.message); }
+    return;
+  }
+
+  const rb = e.target.closest("[data-eq-return]");
+  if (rb) {
+    const eqId = rb.dataset.eqReturn;
+    const curM = findMemberByName(getName());
+    const st = itemState(EQUIPMENT_ITEMS.find((x) => x.id === eqId));
+    const newHolder = curM ? curM.id : st.holder;
+    try {
+      await update(ref(db, `inventory/${eqId}`), {
+        room: null,
+        lent_by: null,
+        holder: newHolder,
+        updated_at: serverTimestamp(),
+      });
+      toast(`↩️ تم استلام القطعة من القاعة (مع ${memberLabel(newHolder)})`);
+    } catch (err) { toast("Return failed: " + err.message); }
+  }
+});
+
+$("eqGrid").addEventListener("change", async (e) => {
+  const sel = e.target.closest("[data-eq-room]");
+  if (!sel) return;
+  const eqId = sel.dataset.eqRoom;
+  const roomNum = Number(sel.value) || null;
+  const who = getName() || "Tech Ops";
+  const curM = findMemberByName(who);
+  const st = itemState(EQUIPMENT_ITEMS.find((x) => x.id === eqId));
+  try {
+    await update(ref(db, `inventory/${eqId}`), {
+      room: roomNum,
+      holder: st.holder || (curM ? curM.id : "khairy"),
+      lent_by: roomNum ? who : null,
+      updated_at: serverTimestamp(),
+    });
+    toast(roomNum ? `🏛️ تم تسليف القطعة إلى Room ${pad2(roomNum)}` : "🟢 تم إرجاع القطعة مع التيم");
+  } catch (err) { toast("Update failed: " + err.message); }
+});
+
+/* ------------------------------------------------------------------- render rooms */
 function metric(label, valueHtml) { return `<dt>${label}</dt><dd>${valueHtml}</dd>`; }
 
 function cardHTML(n) {
@@ -223,8 +635,31 @@ function cardHTML(n) {
   const wifi = typeof r.wifi_signal === "number"
     ? `<span class="${r.wifi_signal >= 60 ? "ok" : r.wifi_signal >= 40 ? "mid" : "bad"}">${r.wifi_signal}%</span>` : "—";
 
+  // Equipment lent to this room
+  const roomGear = EQUIPMENT_ITEMS.filter((it) => itemState(it).room === n);
+  const gearBoxHtml = roomGear.length
+    ? `<div class="room-gear-box">
+        <div class="room-gear-title">🧰 ماتيريال متسلف في القاعة دي (${roomGear.length}):</div>
+        ${roomGear.map((it) => {
+          const ist = itemState(it);
+          return `<div class="room-gear-item">
+            <span>${it.icon} ${esc(it.ar)} <small style="color:var(--muted)">(${esc(memberLabel(ist.holder))})</small></span>
+            <button type="button" class="btn xs good" data-act="return-eq" data-eq="${it.id}">↩️ استلام</button>
+          </div>`;
+        }).join("")}
+      </div>`
+    : "";
+
+  // Team members currently located in this room
+  const membersHere = ROOMS_TEAM.filter((m) => Number(teamStatus[m.id]?.room) === n);
+  const membersHereHtml = membersHere.length
+    ? `<div class="note" style="border-left:3px solid var(--cyan)">👥 متواجد هنا: <strong>${membersHere.map((m) => esc(m.short)).join(" ، ")}</strong></div>`
+    : "";
+
   const name = ROOM_NAMES[n] ? ` <small>· ${esc(ROOM_NAMES[n])}</small>` : "";
   let body = `
+    ${gearBoxHtml}
+    ${membersHereHtml}
     <dl class="metrics">
       ${metric("Ping", ping)}
       ${metric("Download", dl)}
@@ -241,10 +676,12 @@ function cardHTML(n) {
       ? `<div class="claimed">⚙️ ${esc(s.claimed_by)} is heading to Room ${n}</div>
          <div class="row">
            <button class="btn good" data-act="resolve" data-room="${n}">✅ Mark Resolved</button>
+           <button class="btn sm" data-act="lend" data-room="${n}">🔌 تسليف كونڤرتر/مشترك</button>
            <button class="btn sm" data-act="release" data-room="${n}">↩ Release</button>
          </div>`
       : `<div class="row">
            <button class="btn primary" data-act="claim" data-room="${n}">🏃‍♂️ Claim Task</button>
+           <button class="btn sm" data-act="lend" data-room="${n}">🔌 تسليف كونڤرتر/مشترك</button>
            <button class="btn good" data-act="resolve" data-room="${n}">✅ Mark Resolved</button>
          </div>`;
     body = `
@@ -263,11 +700,19 @@ function cardHTML(n) {
         <span class="badge">${STATUS_LABEL[st]}</span>
       </div>
       ${body}
-      ${st === "SOS" ? "" : `<button class="btn sm" data-act="manual" data-room="${n}">✍️ Quick Manual Check</button>`}
+      ${st === "SOS" ? "" : `
+        <div class="row">
+          <button class="btn sm" data-act="manual" data-room="${n}">✍️ Manual Check</button>
+          <button class="btn sm" data-act="lend" data-room="${n}">🔌 تسليف ماتيريال</button>
+        </div>`}
     </article>`;
 }
 
 function render() {
+  renderIdentityPills();
+  renderTeam();
+  renderEquipment();
+
   let ready = 0, unchecked = 0, warning = 0, sos = 0, html = "";
   for (let n = 1; n <= ROOM_COUNT; n++) {
     const st = stateOf(rooms[roomKey(n)]);
@@ -307,7 +752,6 @@ function beepSiren() {
 const unclaimedSosCount = () => Object.values(rooms)
   .filter((r) => stateOf(r) === "SOS" && !(r.sos && r.sos.claimed_by)).length;
 
-// Keep nagging every 4 s until every SOS has been claimed.
 setInterval(() => { if (audioOn && unclaimedSosCount() > 0) beepSiren(); }, 4000);
 
 async function requestWakeLock() {
@@ -363,9 +807,18 @@ if (!CONFIG_OK) {
     firstSnapshot = false;
     render();
   }, (err) => toast("Database error: " + err.message));
+
+  onValue(ref(db, "team_status"), (snap) => {
+    teamStatus = snap.val() || {};
+    render();
+  });
+
+  onValue(ref(db, "inventory"), (snap) => {
+    inventory = snap.val() || {};
+    render();
+  });
 }
 
-// Refresh "x min ago" labels.
 setInterval(render, 30000);
 setInterval(() => { $("clock").textContent = new Date().toLocaleTimeString([], { hour12: false }); }, 1000);
 
@@ -374,13 +827,20 @@ async function claim(n) {
   const name = requireName();
   if (!name) return;
   const key = roomKey(n);
+  const member = findMemberByName(name);
   try {
     const res = await runTransaction(ref(db, `rooms/${key}/sos`), (cur) => {
-      if (!cur || cur.claimed_by) return; // abort: nothing to claim / already taken
+      if (!cur || cur.claimed_by) return;
       return { ...cur, claimed_by: name, claimed_at: Date.now() };
     });
-    if (res.committed) toast(`🏃‍♂️ You claimed Room ${n}. Go go go!`);
-    else {
+    if (res.committed) {
+      if (member) {
+        update(ref(db, `team_status/${member.id}`), {
+          status: "SOS", room: n, updated_at: serverTimestamp(),
+        });
+      }
+      toast(`🏃‍♂️ You claimed Room ${n}. Go go go!`);
+    } else {
       const who = rooms[key]?.sos?.claimed_by;
       toast(who ? `Already claimed by ${who}` : "Nothing to claim (already resolved?)");
     }
@@ -399,15 +859,21 @@ async function resolve(n) {
   if (!name) return;
   const key = roomKey(n);
   const s = rooms[key]?.sos || {};
+  const member = findMemberByName(name);
   try {
-    await update(ref(db), {
+    const updates = {
       [`rooms/${key}/sos`]: null,
       [`rooms/${key}/status`]: "READY",
       [`rooms/${key}/checked_by`]: name,
       [`rooms/${key}/updated_at`]: serverTimestamp(),
       [`rooms/${key}/source`]: "sos-resolved",
-    });
-    // Audit trail for the post-event report.
+    };
+    if (member) {
+      updates[`team_status/${member.id}/status`] = "STANDBY";
+      updates[`team_status/${member.id}/room`] = null;
+      updates[`team_status/${member.id}/updated_at`] = serverTimestamp();
+    }
+    await update(ref(db), updates);
     push(ref(db, "sos_log"), {
       room: n, issue: s.issue || null, note: s.note || null,
       reported_at: s.created_at || null, claimed_by: s.claimed_by || null,
@@ -416,6 +882,73 @@ async function resolve(n) {
     toast(`✅ Room ${n} resolved.`);
   } catch (e) { toast("Resolve failed: " + e.message); }
 }
+
+/* Lend gear modal from a room card */
+let lendTargetRoom = null;
+function openLendModal(n) {
+  lendTargetRoom = n;
+  $("lendTitle").textContent = `🧰 تسليف ماتيريال إلى Room ${pad2(n)}`;
+  renderLendModalList();
+  $("lendDlg").showModal();
+}
+
+function renderLendModalList() {
+  if (!lendTargetRoom) return;
+  $("lendList").innerHTML = EQUIPMENT_ITEMS.map((it) => {
+    const st = itemState(it);
+    const holderName = memberLabel(st.holder);
+    const inThisRoom = st.room === lendTargetRoom;
+    const inOtherRoom = st.room && st.room !== lendTargetRoom;
+    const sub = inThisRoom
+      ? `✅ موجود بالفعل في Room ${pad2(lendTargetRoom)}`
+      : inOtherRoom
+      ? `⚠️ موجود في Room ${pad2(st.room)} (مع ${holderName})`
+      : `🟢 متاح مع ${holderName}`;
+
+    return `
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;background:#070b1a;border:1px solid var(--line);padding:.55rem .7rem;border-radius:10px;">
+        <div>
+          <div style="font-weight:700;font-size:.9rem;">${it.icon} ${esc(it.ar)}</div>
+          <div style="font-size:.76rem;color:var(--muted);">${esc(sub)}</div>
+        </div>
+        ${inThisRoom
+          ? `<button type="button" class="btn sm good" data-modal-return="${it.id}">↩️ استلام</button>`
+          : `<button type="button" class="btn sm primary" data-modal-lend="${it.id}">تسليف لـ R${pad2(lendTargetRoom)}</button>`}
+      </div>`;
+  }).join("");
+}
+
+$("lendList").addEventListener("click", async (e) => {
+  const lb = e.target.closest("[data-modal-lend]");
+  if (lb && lendTargetRoom) {
+    const eqId = lb.dataset.modalLend;
+    const who = getName() || "Tech Ops";
+    try {
+      await update(ref(db, `inventory/${eqId}`), {
+        room: lendTargetRoom,
+        lent_by: who,
+        updated_at: serverTimestamp(),
+      });
+      toast(`🔌 تم تسليف القطعة إلى Room ${pad2(lendTargetRoom)}`);
+      $("lendDlg").close();
+    } catch (err) { toast("Failed: " + err.message); }
+    return;
+  }
+  const rb = e.target.closest("[data-modal-return]");
+  if (rb) {
+    const eqId = rb.dataset.modalReturn;
+    try {
+      await update(ref(db, `inventory/${eqId}`), {
+        room: null,
+        lent_by: null,
+        updated_at: serverTimestamp(),
+      });
+      toast("↩️ تم استلام القطعة من القاعة");
+      $("lendDlg").close();
+    } catch (err) { toast("Failed: " + err.message); }
+  }
+});
+$("lendClose").addEventListener("click", () => $("lendDlg").close());
 
 /* manual check dialog */
 let manualRoom = null, manualStatus = null;
@@ -453,11 +986,23 @@ $("manualSave").addEventListener("click", async () => {
   } catch (e) { toast("Save failed: " + e.message); }
 });
 
-$("grid").addEventListener("click", (e) => {
+$("grid").addEventListener("click", async (e) => {
+  const retBtn = e.target.closest("[data-act='return-eq']");
+  if (retBtn) {
+    const eqId = retBtn.dataset.eq;
+    try {
+      await update(ref(db, `inventory/${eqId}`), {
+        room: null, lent_by: null, updated_at: serverTimestamp(),
+      });
+      toast("↩️ تم استلام القطعة من القاعة");
+    } catch (err) { toast("Error: " + err.message); }
+    return;
+  }
   const b = e.target.closest("[data-act]");
   if (!b) return;
   const n = Number(b.dataset.room);
-  ({ claim, release, resolve, manual: openManual }[b.dataset.act])(n);
+  const actMap = { claim, release, resolve, manual: openManual, lend: openLendModal };
+  if (actMap[b.dataset.act]) actMap[b.dataset.act](n);
 });
 
 /* name persistence */
@@ -465,11 +1010,17 @@ $("nameInput").value = localStorage.getItem("techops_name") || "";
 function saveName() {
   const n = getName();
   localStorage.setItem("techops_name", n);
+  renderIdentityPills();
+  renderTeam();
   toast(n ? `Saved: ${n}` : "Name cleared");
 }
 $("saveName").addEventListener("click", saveName);
 $("nameInput").addEventListener("keydown", (e) => { if (e.key === "Enter") { saveName(); e.target.blur(); } });
-$("nameInput").addEventListener("change", () => localStorage.setItem("techops_name", getName()));
+$("nameInput").addEventListener("change", () => {
+  localStorage.setItem("techops_name", getName());
+  renderIdentityPills();
+  renderTeam();
+});
 
 render();
 </script>

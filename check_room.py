@@ -344,10 +344,16 @@ class TechOpsInspectorApp(tk.Tk):
         # Config row
         cfg_bar = tk.Frame(self, bg="#080c1c", padx=14, pady=8)
         cfg_bar.pack(fill="x", padx=14, pady=4)
-        tk.Label(cfg_bar, text="Inspector Name:", font=("Segoe UI", 10), fg="#94a3b8", bg="#080c1c").pack(side="left")
-        self.entry_name = tk.Entry(cfg_bar, font=("Segoe UI", 10), bg="#04060f", fg="#ffffff", insertbackground="white", width=18)
-        self.entry_name.insert(0, self.cfg.get("checker_name", "Mohamed"))
+        tk.Label(cfg_bar, text="Inspector (Rooms Team):", font=("Segoe UI", 10), fg="#94a3b8", bg="#080c1c").pack(side="left")
+        self.entry_name = ttk.Combobox(
+            cfg_bar,
+            values=["خيري · Khairy", "كريم · Karim", "تسبيح · Tasbeeh", "عمر · Omar", "لجين · Logain"],
+            font=("Segoe UI", 10),
+            width=20
+        )
+        self.entry_name.set(self.cfg.get("checker_name", "خيري · Khairy"))
         self.entry_name.pack(side="left", padx=(8, 20))
+        self.entry_name.bind("<<ComboboxSelected>>", self._on_name_change)
         self.entry_name.bind("<KeyRelease>", self._on_name_change)
 
         tk.Label(cfg_bar, text="Display Output:", font=("Segoe UI", 10), fg="#94a3b8", bg="#080c1c").pack(side="left")

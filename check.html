@@ -7,8 +7,8 @@
   <title>Mobile Room Inspector · NASA Space Apps Cairo</title>
   <link rel="stylesheet" href="theme.css">
   <style>
-    .wrap { max-width: 600px; margin: 0 auto; padding: 1rem 1rem 3rem; }
-    
+    .wrap { max-width: 620px; margin: 0 auto; padding: 1rem 1rem 3rem; }
+
     .nav-top {
       display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;
     }
@@ -17,22 +17,47 @@
       display: inline-flex; align-items: center; gap: 0.3rem;
     }
 
-    .brand { text-align: center; margin-bottom: 1.2rem; }
+    .brand { text-align: center; margin-bottom: 1.1rem; }
     .brand small { color: var(--muted); letter-spacing: .12em; text-transform: uppercase; font-size: .75rem; }
-    .brand h1 { font-size: 1.6rem; margin-top: .2rem; }
+    .brand h1 { font-size: 1.55rem; margin-top: .2rem; }
     .brand h1 span { color: var(--cyan); }
 
     .card-panel {
       background: var(--panel); border: 1px solid var(--line); border-radius: 16px;
-      padding: 1.1rem; margin-bottom: 1rem;
+      padding: 1.05rem; margin-bottom: .95rem;
     }
-    .section-title { font-size: 0.95rem; font-weight: 700; color: var(--muted); margin-bottom: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .section-title { font-size: 0.92rem; font-weight: 700; color: var(--muted); margin-bottom: 0.55rem; text-transform: uppercase; letter-spacing: 0.04em; }
+
+    /* Quick team member buttons */
+    .member-pills {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(105px, 1fr)); gap: .4rem; margin-bottom: .6rem;
+    }
+    .mpill {
+      appearance: none; border: 1px solid var(--line); background: #080d20; color: var(--text);
+      padding: .5rem .4rem; border-radius: 10px; font: inherit; font-size: .86rem; font-weight: 700;
+      cursor: pointer; text-align: center; transition: all .14s ease;
+    }
+    .mpill.active {
+      background: var(--nasa-blue); border-color: var(--cyan); color: #fff;
+      box-shadow: 0 0 10px rgba(56, 189, 248, .4);
+    }
+
+    /* 4 status choices */
+    .st-row {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: .4rem; margin-top: .6rem;
+    }
+    .st-chip {
+      appearance: none; border: 1px solid var(--line); background: #070b1a; color: var(--muted);
+      padding: .45rem .5rem; border-radius: 9px; font: inherit; font-size: .8rem; font-weight: 700;
+      cursor: pointer;
+    }
+    .st-chip.active { background: #14532d; border-color: var(--ready); color: #fff; }
 
     /* Name input */
     .field-row { display: flex; gap: 0.5rem; align-items: center; }
     input[type=text], select, textarea {
       width: 100%; background: #070b1a; color: var(--text); border: 1px solid var(--line);
-      border-radius: 10px; padding: 0.65rem 0.8rem; font: inherit; font-size: 1rem;
+      border-radius: 10px; padding: 0.6rem 0.8rem; font: inherit; font-size: .95rem;
     }
     input:focus, select:focus, textarea:focus { outline: 2px solid var(--cyan); }
 
@@ -42,7 +67,7 @@
     }
     .room-btn {
       appearance: none; border: 1px solid var(--line); background: #0a0f24; color: var(--text);
-      font-weight: 800; font-size: 1.05rem; padding: 0.75rem 0.2rem; border-radius: 12px;
+      font-weight: 800; font-size: 1.02rem; padding: 0.72rem 0.2rem; border-radius: 12px;
       cursor: pointer; text-align: center; transition: all 0.15s ease;
     }
     .room-btn:active { transform: scale(0.95); }
@@ -91,6 +116,17 @@
       transition: width 0.2s ease;
     }
 
+    /* Equipment quick list on mobile */
+    .eq-mobile-list { display: flex; flex-direction: column; gap: .5rem; }
+    .eq-row {
+      background: #070b1a; border: 1px solid var(--line); border-radius: 11px; padding: .6rem .75rem;
+      display: flex; flex-direction: column; gap: .4rem;
+    }
+    .eq-row.lent { border-color: var(--warning); background: rgba(250, 204, 21, .07); }
+    .eq-row-top { display: flex; justify-content: space-between; align-items: center; gap: .4rem; font-weight: 700; font-size: .88rem; }
+    .eq-row-controls { display: grid; grid-template-columns: 1fr 1fr; gap: .4rem; }
+    .eq-row-controls select { padding: .38rem .5rem; font-size: .8rem; }
+
     /* Submit button */
     .btn-submit {
       width: 100%; padding: 1rem; font-size: 1.15rem; font-weight: 800; border-radius: 14px;
@@ -117,21 +153,26 @@
   </div>
 
   <div class="brand">
-    <small>Room Strike Team · Rapid Deployment</small>
+    <small>Room Strike Team · كريم · تسبيح · عمر · خيري · لجين</small>
     <h1>📱 Mobile <span>Room Inspector</span></h1>
   </div>
 
-  <!-- Inspector Profile -->
+  <!-- Inspector Profile (5 Team Members + 4 Status Choices) -->
   <div class="card-panel">
-    <div class="section-title">Inspector Name</div>
+    <div class="section-title">👤 اختار اسمك (Rooms Team)</div>
+    <div class="member-pills" id="memberPills"></div>
     <div class="field-row">
-      <input type="text" id="inspectorName" placeholder="Your name (e.g. Mohamed)" maxlength="30">
+      <input type="text" id="inspectorName" placeholder="Or type name here…" maxlength="30">
+    </div>
+    <div id="myStatusWrap" hidden>
+      <div class="section-title" style="margin-top:.75rem;margin-bottom:.3rem;">حالتك دلوقتي (4 Choices):</div>
+      <div class="st-row" id="myStatusBtns"></div>
     </div>
   </div>
 
   <!-- Step 1: Room Selector -->
   <div class="card-panel">
-    <div class="section-title">Select Room (1 to 12)</div>
+    <div class="section-title">📍 Select Room (1 to 12)</div>
     <div class="room-grid" id="roomGrid"></div>
     <div id="roomHistory" class="history-card" style="display:none;"></div>
   </div>
@@ -156,7 +197,7 @@
     <div class="section-title">2. In-Room Wi-Fi &amp; Internet Test</div>
     <div class="net-box">
       <button id="runSpeedBtn" class="btn primary block">⚡ Run Speed &amp; Ping Test</button>
-      
+
       <div class="progress-bar" id="pBarWrap" style="display:none;">
         <div class="progress-bar-fill" id="pBar"></div>
       </div>
@@ -177,11 +218,17 @@
 
   <!-- Step 4: Notes & Submit -->
   <div class="card-panel">
-    <div class="section-title">3. Optional Notes</div>
+    <div class="section-title">3. Optional Notes &amp; Save</div>
     <textarea id="notes" rows="2" maxlength="200" placeholder="e.g. Needs Type-C dongle, HDMI port slightly loose"></textarea>
     <div style="margin-top: 1rem;">
       <button id="submitBtn" class="btn-submit" disabled>💾 Save &amp; Mark Room Ready</button>
     </div>
+  </div>
+
+  <!-- Backup Equipment Tracker (2 Mac Converters + 4 Power Strips) -->
+  <div class="card-panel">
+    <div class="section-title">🧰 الماتيريال الاحتياطي (٢ كونڤرتر ماك + ٤ مشتركات)</div>
+    <div class="eq-mobile-list" id="eqMobileList"></div>
   </div>
 </div>
 
@@ -189,16 +236,28 @@
 
 <script type="module">
 import {
-  db, CONFIG_OK, ROOM_COUNT, roomKey, ref, onValue, update, serverTimestamp, MISSING_CONFIG_MESSAGE
+  db, CONFIG_OK, ROOM_COUNT, ROOMS_TEAM, MEMBER_STATUSES, EQUIPMENT_ITEMS,
+  roomKey, ref, onValue, update, serverTimestamp, esc, pad2, MISSING_CONFIG_MESSAGE
 } from "./firebase-config.js";
 
 const $ = (id) => document.getElementById(id);
+
+const DEFAULT_HOLDERS = {
+  mac_1: "khairy",
+  mac_2: "karim",
+  strip_1: "tasbeeh",
+  strip_2: "omar",
+  strip_3: "logain",
+  strip_4: "khairy",
+};
 
 let selectedRoom = 1;
 let datashowStatus = null; // "OK" or "Issue"
 let pingMs = null;
 let downloadMbps = null;
 let roomsData = {};
+let teamStatus = {};
+let inventory = {};
 
 function toast(msg) {
   const t = $("toast");
@@ -208,11 +267,75 @@ function toast(msg) {
   toast._t = setTimeout(() => t.classList.remove("show"), 3000);
 }
 
+function findMember(name) {
+  if (!name) return null;
+  const low = name.trim().toLowerCase();
+  return ROOMS_TEAM.find(
+    (m) => m.id === low || m.name.toLowerCase() === low || m.short === name.trim() || m.en.toLowerCase() === low
+  ) || null;
+}
+
+function memberLabel(idOrName) {
+  const m = findMember(idOrName);
+  return m ? m.name : (idOrName || "الشنطة");
+}
+
 // Load Inspector Name
 const savedName = localStorage.getItem("techops_name") || "";
 $("inspectorName").value = savedName;
+
+function renderMemberPills() {
+  const curName = $("inspectorName").value.trim();
+  const activeM = findMember(curName);
+  $("memberPills").innerHTML = ROOMS_TEAM.map((m) => `
+    <button type="button" class="mpill ${activeM && activeM.id === m.id ? "active" : ""}" data-pick="${m.id}">
+      ${esc(m.short)}<br><small style="font-weight:400;opacity:.8">${esc(m.en)}</small>
+    </button>
+  `).join("");
+
+  if (activeM) {
+    $("myStatusWrap").hidden = false;
+    const curSt = teamStatus[activeM.id]?.status || "STANDBY";
+    $("myStatusBtns").innerHTML = MEMBER_STATUSES.map((s) => `
+      <button type="button" class="st-chip ${s.id === curSt ? "active" : ""}" data-st="${s.id}">
+        ${s.short}
+      </button>
+    `).join("");
+  } else {
+    $("myStatusWrap").hidden = true;
+  }
+}
+
+$("memberPills").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-pick]");
+  if (!b) return;
+  const m = ROOMS_TEAM.find((x) => x.id === b.dataset.pick);
+  if (!m) return;
+  $("inspectorName").value = m.name;
+  localStorage.setItem("techops_name", m.name);
+  renderMemberPills();
+  validateForm();
+  toast(`👋 أهلاً ${m.short}`);
+});
+
+$("myStatusBtns").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-st]");
+  if (!b) return;
+  const m = findMember($("inspectorName").value);
+  if (!m) return;
+  try {
+    await update(ref(db, `team_status/${m.id}`), {
+      status: b.dataset.st,
+      room: b.dataset.st === "CHECKING" ? selectedRoom : (teamStatus[m.id]?.room || null),
+      updated_at: serverTimestamp(),
+    });
+    toast("✔ تم تحديث حالتك");
+  } catch (err) { toast("Error: " + err.message); }
+});
+
 $("inspectorName").addEventListener("input", (e) => {
   localStorage.setItem("techops_name", e.target.value.trim());
+  renderMemberPills();
   validateForm();
 });
 
@@ -236,7 +359,7 @@ function updateRoomHistory() {
   const box = $("roomHistory");
   if (r && r.status) {
     box.style.display = "flex";
-    box.innerHTML = `<span>Current: <strong>${r.status}</strong></span><span>Checked by: <strong>${r.checked_by || 'Unknown'}</strong></span>`;
+    box.innerHTML = `<span>Current: <strong>${r.status}</strong></span><span>Checked by: <strong>${esc(r.checked_by || 'Unknown')}</strong></span>`;
   } else {
     box.style.display = "flex";
     box.innerHTML = `<span>Current: <strong>UNCHECKED</strong></span><span>No tests recorded</span>`;
@@ -249,6 +372,68 @@ $("roomGrid").addEventListener("click", (e) => {
   selectedRoom = Number(b.dataset.room);
   renderRooms();
   validateForm();
+});
+
+// Render Equipment list on mobile
+function renderMobileEquipment() {
+  $("eqMobileList").innerHTML = EQUIPMENT_ITEMS.map((it) => {
+    const raw = inventory[it.id] || {};
+    const holder = raw.holder || DEFAULT_HOLDERS[it.id] || "khairy";
+    const room = raw.room ? Number(raw.room) : 0;
+
+    const holderOpts = ROOMS_TEAM.map((m) => `
+      <option value="${m.id}" ${holder === m.id ? "selected" : ""}>👤 مع ${esc(m.short)}</option>
+    `).join("");
+
+    let roomOpts = `<option value="0" ${!room ? "selected" : ""}>🟢 متاح مع التيم</option>`;
+    for (let r = 1; r <= ROOM_COUNT; r++) {
+      roomOpts += `<option value="${r}" ${room === r ? "selected" : ""}>🏛️ في Room ${pad2(r)}</option>`;
+    }
+
+    const badge = room
+      ? `<span style="color:#fde047;font-size:.78rem;">🏛️ في Room ${pad2(room)}</span>`
+      : `<span style="color:#86efac;font-size:.78rem;">🟢 مع ${esc(memberLabel(holder))}</span>`;
+
+    return `
+      <div class="eq-row ${room ? "lent" : ""}">
+        <div class="eq-row-top">
+          <span>${it.icon} ${esc(it.ar)}</span>
+          ${badge}
+        </div>
+        <div class="eq-row-controls">
+          <select data-mob-holder="${it.id}">${holderOpts}</select>
+          <select data-mob-room="${it.id}">${roomOpts}</select>
+        </div>
+      </div>`;
+  }).join("");
+}
+
+$("eqMobileList").addEventListener("change", async (e) => {
+  const hSel = e.target.closest("[data-mob-holder]");
+  if (hSel) {
+    const eqId = hSel.dataset.mobHolder;
+    try {
+      await update(ref(db, `inventory/${eqId}`), {
+        holder: hSel.value,
+        updated_at: serverTimestamp(),
+      });
+      toast("✔ تم تحديث المسؤول عن القطعة");
+    } catch (err) { toast("Error: " + err.message); }
+    return;
+  }
+  const rSel = e.target.closest("[data-mob-room]");
+  if (rSel) {
+    const eqId = rSel.dataset.mobRoom;
+    const rNum = Number(rSel.value) || null;
+    try {
+      await update(ref(db, `inventory/${eqId}`), {
+        room: rNum,
+        lent_by: rNum ? ($("inspectorName").value.trim() || "Tech Ops") : null,
+        updated_at: serverTimestamp(),
+      });
+      toast(rNum ? `🏛️ تم تسليفها لـ Room ${pad2(rNum)}` : "🟢 رجعت مع التيم");
+    } catch (err) { toast("Error: " + err.message); }
+  }
 });
 
 // Projector toggle
@@ -275,7 +460,6 @@ $("runSpeedBtn").addEventListener("click", async () => {
   $("netStatus").textContent = "Pinging Google DNS / Gateway...";
 
   try {
-    // 1. Measure Ping (via 3 lightweight HEAD/fetch requests to prevent cache)
     const pingSamples = [];
     for (let i = 0; i < 3; i++) {
       const t0 = performance.now();
@@ -287,13 +471,12 @@ $("runSpeedBtn").addEventListener("click", async () => {
     $("pBar").style.width = "40%";
     $("netStatus").textContent = "Measuring download throughput (2.5MB payload)...";
 
-    // 2. Measure Download Speed
     const tStart = performance.now();
     const speedUrl = `https://speed.cloudflare.com/__down?bytes=2500000&_t=${Date.now()}`;
     const resp = await fetch(speedUrl, { cache: "no-store" });
     const blob = await resp.blob();
     const tEnd = performance.now();
-    
+
     $("pBar").style.width = "100%";
     const durationSeconds = (tEnd - tStart) / 1000;
     const bitsLoaded = blob.size * 8;
@@ -302,7 +485,7 @@ $("runSpeedBtn").addEventListener("click", async () => {
     $("netStatus").textContent = `✔ Test complete: ${downloadMbps} Mbps (${pingMs} ms)`;
   } catch (err) {
     $("netStatus").textContent = "⚠️ Speed test warning (check connection)";
-    if (pingMs === null) pingMs = 50; // fallback default
+    if (pingMs === null) pingMs = 50;
     if (downloadMbps === null) downloadMbps = 10;
   } finally {
     btn.disabled = false;
@@ -317,14 +500,14 @@ function validateForm() {
   if (valid) {
     $("submitBtn").textContent = `💾 Save Room ${selectedRoom < 10 ? '0' + selectedRoom : selectedRoom} -> ${datashowStatus === 'OK' ? 'READY 🟢' : 'WARNING 🟡'}`;
   } else {
-    $("submitBtn").textContent = `💾 Select Projector Status (Step 1)`;
+    $("submitBtn").textContent = `💾 Select Name & Projector Status`;
   }
 }
 
 // Submit Check to Firebase
 $("submitBtn").addEventListener("click", async () => {
   const name = $("inspectorName").value.trim();
-  if (!name) { toast("Please enter your name"); return; }
+  if (!name) { toast("Please select your name"); return; }
   if (!datashowStatus) { toast("Please verify Data Show (OK / Issue)"); return; }
 
   const btn = $("submitBtn");
@@ -333,14 +516,14 @@ $("submitBtn").addEventListener("click", async () => {
 
   const key = roomKey(selectedRoom);
   const issues = [];
-  if (datashowStatus === "Issue") issues.append ? issues.append("Data Show Issue") : issues.push("Data Show Issue");
+  if (datashowStatus === "Issue") issues.push("Data Show Issue");
   if (pingMs !== null && pingMs > 150) issues.push(`High Ping (${pingMs}ms)`);
   if (downloadMbps !== null && downloadMbps < 5.0) issues.push(`Slow Speed (${downloadMbps}Mbps)`);
 
   const manualNotes = $("notes").value.trim();
   if (manualNotes) issues.push(manualNotes);
 
-  const status = issues.length > 0 && datashowStatus === "Issue" ? "WARNING" : (issues.length > 0 ? "WARNING" : "READY");
+  const status = issues.length > 0 ? "WARNING" : "READY";
 
   const payload = {
     status: status,
@@ -355,12 +538,16 @@ $("submitBtn").addEventListener("click", async () => {
 
   try {
     await update(ref(db, `rooms/${key}`), payload);
-    toast(`🎉 Room ${selectedRoom} successfully updated to ${status}!`);
-    // auto-advance to next room!
-    if (selectedRoom < ROOM_COUNT) {
-      selectedRoom++;
+    const m = findMember(name);
+    if (m) {
+      update(ref(db, `team_status/${m.id}`), {
+        status: "CHECKING",
+        room: selectedRoom,
+        updated_at: serverTimestamp(),
+      });
     }
-    // reset form fields
+    toast(`🎉 Room ${selectedRoom} updated to ${status}!`);
+    if (selectedRoom < ROOM_COUNT) selectedRoom++;
     datashowStatus = null;
     $("dsOkBtn").classList.remove("sel-ok");
     $("dsBadBtn").classList.remove("sel-bad");
@@ -389,9 +576,21 @@ if (!CONFIG_OK) {
     roomsData = snap.val() || {};
     renderRooms();
   });
+
+  onValue(ref(db, "team_status"), (snap) => {
+    teamStatus = snap.val() || {};
+    renderMemberPills();
+  });
+
+  onValue(ref(db, "inventory"), (snap) => {
+    inventory = snap.val() || {};
+    renderMobileEquipment();
+  });
 }
 
+renderMemberPills();
 renderRooms();
+renderMobileEquipment();
 validateForm();
 </script>
 </body>
