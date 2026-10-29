@@ -22,6 +22,16 @@ export const ROOMS_TEAM = [
   { id: "khairy",  name: "Khairy",  short: "Khairy",  en: "Khairy" },
 ];
 
+// Holder options for equipment: Materials Room + the 5 Team Members
+export const EQUIPMENT_HOLDERS = [
+  { id: "materials_room", name: "Materials Room", icon: "📦", isPerson: false },
+  { id: "karim",          name: "Karim",          icon: "👤", isPerson: true },
+  { id: "tasbeeh",        name: "Tasbeeh",        icon: "👤", isPerson: true },
+  { id: "omar",           name: "Omar",           icon: "👤", isPerson: true },
+  { id: "lojine",         name: "Lojine",         icon: "👤", isPerson: true },
+  { id: "khairy",         name: "Khairy",         icon: "👤", isPerson: true },
+];
+
 // 4 live status choices for each of the 5 Rooms Team members
 export const MEMBER_STATUSES = [
   { id: "STANDBY",  label: "🟢 Standby",     short: "🟢 Standby",  cls: "st-standby" },
@@ -41,12 +51,12 @@ export const EQUIPMENT_ITEMS = [
 ];
 
 export const DEFAULT_HOLDERS = {
-  mac_1: "khairy",
-  mac_2: "karim",
-  strip_1: "tasbeeh",
-  strip_2: "omar",
-  strip_3: "lojine",
-  strip_4: "khairy",
+  mac_1: "materials_room",
+  mac_2: "materials_room",
+  strip_1: "materials_room",
+  strip_2: "materials_room",
+  strip_3: "materials_room",
+  strip_4: "materials_room",
 };
 
 // Database key for a room — MUST match what check_room.py writes (rooms/room_<id>).
@@ -81,6 +91,14 @@ export async function restPatch(path, data) {
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
+}
+
+export async function restDelete(path) {
+  const clean = path.replace(/^\/+|\/+$/g, "");
+  const url = `${FIREBASE_DATABASE_URL}/${clean}.json`;
+  const res = await fetch(url, { method: "DELETE" });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return true;
 }
 
 // Shared helpers -------------------------------------------------------------

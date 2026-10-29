@@ -19,6 +19,10 @@
       ".read": true,
       ".write": true
     },
+    "gear_requests": {
+      ".read": true,
+      ".write": true
+    },
     "sos_log": {
       ".read": true,
       ".write": true

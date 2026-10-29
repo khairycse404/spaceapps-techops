@@ -5,71 +5,89 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#04060f">
   <title>Tech Ops Mission Control · NASA Space Apps Cairo</title>
-  <link rel="stylesheet" href="theme.css?v=3">
+  <link rel="stylesheet" href="theme.css?v=4">
   <style>
-    .wrap { max-width: 1520px; margin: 0 auto; padding: 1rem; }
+    .wrap { max-width: 1520px; margin: 0 auto; padding: .9rem 1rem 2.5rem; }
 
     header.top {
       display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
-      gap: .6rem 1rem; margin-bottom: 1rem;
+      gap: .6rem 1rem; margin-bottom: .85rem;
     }
-    .brand h1 { font-size: clamp(1.1rem, 2.6vw, 1.7rem); letter-spacing: .04em; }
+    .brand h1 { font-size: clamp(1.1rem, 2.6vw, 1.65rem); letter-spacing: .04em; }
     .brand h1 span { color: var(--nasa-red); }
     .brand small { color: var(--muted); letter-spacing: .12em; text-transform: uppercase; font-size: .7rem; }
-    .header-right { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+    .header-right { display: flex; gap: .45rem; align-items: center; flex-wrap: wrap; }
     #clock { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--cyan); }
 
     /* ---- status bar ---- */
     .statusbar {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .65rem;
-      margin-bottom: .8rem;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: .6rem;
+      margin-bottom: .75rem;
     }
     .stat {
       background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
-      padding: .75rem .95rem; display: flex; align-items: center; justify-content: space-between; gap: .5rem;
+      padding: .65rem .9rem; display: flex; align-items: center; justify-content: space-between; gap: .45rem;
     }
-    .stat .label { color: var(--muted); font-size: .82rem; line-height: 1.25; }
-    .stat .num { font-size: 1.75rem; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .stat .label { color: var(--muted); font-size: .78rem; line-height: 1.25; }
+    .stat .num { font-size: 1.65rem; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
     .stat.ready .num { color: var(--ready); }
     .stat.unchecked .num { color: #cbd5e1; }
     .stat.warning .num { color: var(--warning); }
     .stat.sos .num { color: var(--sos); }
-    .stat.gear .num { color: var(--cyan); font-size: 1.45rem; }
+    .stat.gear .num { color: var(--cyan); font-size: 1.35rem; }
     .stat.sos.active { animation: statflash 1s infinite; border-color: var(--sos); }
     @keyframes statflash { 50% { background: rgba(239, 68, 68, .35); } }
 
-    /* ---- Team Member Slider & Controls Bar ---- */
+    /* ---- Personal Targeted Gear Alarm Banner ---- */
+    .personal-alarm {
+      background: linear-gradient(135deg, #451a03, #78350f);
+      border: 2px solid #facc15; border-radius: 16px; padding: .9rem 1.1rem;
+      margin-bottom: .85rem; display: flex; flex-direction: column; gap: .65rem;
+      animation: alarmPulse 1s infinite;
+    }
+    @keyframes alarmPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(250, 204, 21, .7); }
+      50%      { box-shadow: 0 0 24px 4px rgba(250, 204, 21, .75); }
+    }
+    .personal-alarm-title { font-size: 1.1rem; font-weight: 800; color: #fef08a; }
+    .personal-alarm-sub { font-size: .88rem; color: #fde68a; }
+
+    .outgoing-req-bar {
+      background: rgba(56, 189, 248, .12); border: 1px solid var(--cyan); border-radius: 12px;
+      padding: .65rem .9rem; margin-bottom: .8rem; display: flex; justify-content: space-between;
+      align-items: center; gap: .6rem; flex-wrap: wrap; font-size: .88rem; font-weight: 700;
+    }
+
+    /* ---- Team Member Slider & Action Bar ---- */
     .controls {
-      display: flex; flex-direction: column; gap: .8rem; margin-bottom: 1.1rem;
-      background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: .95rem 1.1rem;
+      display: flex; flex-direction: column; gap: .75rem; margin-bottom: 1rem;
+      background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: .85rem 1rem;
     }
     .slider-header {
       display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .5rem;
     }
     .slider-title {
-      font-size: .85rem; font-weight: 700; color: var(--cyan); text-transform: uppercase; letter-spacing: .05em;
+      font-size: .82rem; font-weight: 700; color: var(--cyan); text-transform: uppercase; letter-spacing: .05em;
     }
     .active-member-badge {
       background: rgba(56, 189, 248, .15); border: 1px solid var(--cyan); color: #fff;
-      padding: .25rem .75rem; border-radius: 999px; font-size: .85rem; font-weight: 800;
+      padding: .22rem .75rem; border-radius: 999px; font-size: .84rem; font-weight: 800;
     }
     .member-slider-wrap {
-      display: flex; flex-direction: column; gap: .45rem; padding: .2rem .2rem 0;
+      display: flex; flex-direction: column; gap: .4rem;
     }
     input[type=range].team-slider {
       -webkit-appearance: none; appearance: none;
       width: 100%; height: 10px; border-radius: 999px;
       background: linear-gradient(90deg, var(--nasa-blue), var(--cyan));
-      outline: none; cursor: pointer; margin: .25rem 0;
+      outline: none; cursor: pointer; margin: .2rem 0;
     }
     input[type=range].team-slider::-webkit-slider-thumb {
       -webkit-appearance: none; appearance: none;
       width: 26px; height: 26px; border-radius: 50%;
       background: #fff; border: 3px solid var(--cyan);
       box-shadow: 0 0 12px rgba(56, 189, 248, .85); cursor: pointer;
-      transition: transform .1s ease;
     }
-    input[type=range].team-slider::-webkit-slider-thumb:active { transform: scale(1.15); }
     input[type=range].team-slider::-moz-range-thumb {
       width: 26px; height: 26px; border-radius: 50%;
       background: #fff; border: 3px solid var(--cyan);
@@ -80,7 +98,7 @@
     }
     .tick-btn {
       appearance: none; border: 1px solid var(--line); background: #070b1a; color: var(--muted);
-      padding: .45rem .3rem; border-radius: 10px; font: inherit; font-size: .86rem; font-weight: 700;
+      padding: .42rem .25rem; border-radius: 10px; font: inherit; font-size: .84rem; font-weight: 700;
       cursor: pointer; transition: all .15s ease;
     }
     .tick-btn:hover { color: var(--text); border-color: var(--cyan); }
@@ -89,35 +107,52 @@
       box-shadow: 0 0 12px rgba(56, 189, 248, .4);
     }
 
-    .controls-bottom {
-      display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; justify-content: space-between;
+    /* Quick Sidebar Launchers + Smart Gear Request Bar */
+    .quick-bar {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(175px, 1fr)); gap: .5rem;
       border-top: 1px solid var(--line); padding-top: .7rem;
     }
-    .controls-bottom .select-box {
-      display: flex; align-items: center; gap: .5rem; flex: 1 1 240px;
+    .btn.drawer-trigger {
+      display: flex; align-items: center; justify-content: center; gap: .45rem;
+      background: #101938; border-color: #2b3d75; font-size: .88rem; padding: .6rem .75rem;
     }
-    .controls-bottom select {
-      flex: 1; background: #070b1a; color: var(--text); border: 1px solid var(--line);
-      border-radius: 10px; padding: .58rem .8rem; font: inherit; font-weight: 700;
+    .btn.req-trigger {
+      display: flex; align-items: center; justify-content: center; gap: .4rem;
+      background: #3b1d0a; border-color: #d97706; color: #fde68a; font-size: .86rem; padding: .6rem .75rem;
     }
-    select:focus, dialog textarea:focus { outline: 2px solid var(--cyan); }
     #audioBtn.on { background: #14532d; border-color: #16a34a; }
 
-    /* ---- section headers ---- */
-    .sec-head {
-      display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
-      gap: .5rem; margin: 1.2rem 0 .65rem;
+    /* ---- Slide-out Sidebars (Drawers) ---- */
+    .drawer-backdrop {
+      position: fixed; inset: 0; background: rgba(0, 0, 0, .68);
+      backdrop-filter: blur(2px); z-index: 80; opacity: 0; pointer-events: none;
+      transition: opacity .22s ease;
     }
-    .sec-head h2 {
-      font-size: 1.08rem; letter-spacing: .03em; display: flex; align-items: center; gap: .45rem;
-    }
-    .sec-head small { color: var(--muted); font-size: .8rem; font-weight: 500; }
+    .drawer-backdrop.open { opacity: 1; pointer-events: auto; }
 
-    /* ---- 5-Member Strike Team Grid (4 status choices each) ---- */
-    .team-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(245px, 1fr)); gap: .75rem;
-      margin-bottom: 1.1rem;
+    aside.drawer {
+      position: fixed; top: 0; bottom: 0; width: min(92vw, 430px);
+      background: #080d1e; border-right: 1px solid var(--cyan);
+      z-index: 90; display: flex; flex-direction: column;
+      transform: translateX(-104%); transition: transform .25s cubic-bezier(.2,.8,.2,1);
+      box-shadow: 0 0 40px rgba(0, 0, 0, .85);
     }
+    aside.drawer.right {
+      right: 0; left: auto; border-right: none; border-left: 1px solid var(--cyan);
+      transform: translateX(104%);
+    }
+    aside.drawer.open { transform: translateX(0); }
+
+    .drawer-head {
+      padding: .95rem 1.1rem; background: var(--panel); border-bottom: 1px solid var(--line);
+      display: flex; justify-content: space-between; align-items: center; gap: .5rem;
+    }
+    .drawer-head h2 { font-size: 1.05rem; display: flex; align-items: center; gap: .4rem; }
+    .drawer-body {
+      padding: .95rem; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: .8rem;
+    }
+
+    /* ---- Team cards inside Left Drawer ---- */
     .mcard {
       background: linear-gradient(180deg, var(--panel-2), var(--panel));
       border: 1px solid var(--line); border-radius: 14px; padding: .8rem;
@@ -125,7 +160,7 @@
     }
     .mcard.is-me { border-color: var(--cyan); box-shadow: 0 0 0 1px rgba(56, 189, 248, .3); }
     .mcard-top { display: flex; justify-content: space-between; align-items: center; gap: .4rem; }
-    .mcard-name { font-weight: 800; font-size: 1.05rem; }
+    .mcard-name { font-weight: 800; font-size: 1rem; }
     .mcard-badge {
       font-size: .72rem; font-weight: 700; padding: .2rem .55rem; border-radius: 999px;
       background: rgba(255,255,255,.07); border: 1px solid var(--line);
@@ -135,78 +170,75 @@
     .mcard-badge.st-sos      { background: rgba(239, 68, 68, .22); border-color: #dc2626; color: #fca5a5; }
     .mcard-badge.st-hall     { background: rgba(250, 204, 21, .15); border-color: #ca8a04; color: #fde047; }
 
-    .status-choices {
-      display: grid; grid-template-columns: 1fr 1fr; gap: .35rem;
-    }
+    .status-choices { display: grid; grid-template-columns: 1fr 1fr; gap: .35rem; }
     .st-btn {
       appearance: none; border: 1px solid var(--line); background: #070b1a; color: var(--muted);
-      border-radius: 8px; padding: .38rem .45rem; font: inherit; font-size: .76rem; font-weight: 700;
-      cursor: pointer; text-align: center; transition: all .12s ease;
+      border-radius: 8px; padding: .42rem .45rem; font: inherit; font-size: .78rem; font-weight: 700;
+      cursor: pointer; text-align: center;
     }
-    .st-btn:hover { color: var(--text); border-color: #3b4d80; }
     .st-btn.active.st-standby  { background: #14532d; border-color: #22c55e; color: #fff; }
     .st-btn.active.st-checking { background: #0c4a6e; border-color: #38bdf8; color: #fff; }
     .st-btn.active.st-sos      { background: #7f1d1d; border-color: #ef4444; color: #fff; }
     .st-btn.active.st-hall     { background: #713f12; border-color: #facc15; color: #fff; }
 
-    .mcard-room {
-      display: flex; align-items: center; gap: .4rem; font-size: .8rem; color: var(--muted);
-    }
     .mcard-room select, .eq-select {
-      flex: 1; background: #070b1a; color: var(--text); border: 1px solid var(--line);
-      border-radius: 8px; padding: .35rem .5rem; font: inherit; font-size: .8rem;
+      width: 100%; background: #070b1a; color: var(--text); border: 1px solid var(--line);
+      border-radius: 8px; padding: .42rem .55rem; font: inherit; font-size: .82rem;
     }
-    .mcard-gear {
-      display: flex; flex-wrap: wrap; gap: .3rem; font-size: .75rem;
-    }
+    .mcard-gear { display: flex; flex-wrap: wrap; gap: .3rem; font-size: .75rem; }
     .gear-chip {
       background: rgba(56, 189, 248, .12); border: 1px solid rgba(56, 189, 248, .4);
       color: #bae6fd; border-radius: 6px; padding: .15rem .45rem; font-weight: 600;
     }
 
-    /* ---- Equipment & Material Grid (2 Mac Converters + 4 Power Strips) ---- */
-    .eq-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: .8rem;
-      margin-bottom: 1.2rem;
-    }
+    /* ---- Equipment cards inside Right Drawer ---- */
     .eq-card {
       background: linear-gradient(180deg, var(--panel-2), var(--panel));
       border: 1px solid var(--line); border-left: 5px solid var(--ready);
       border-radius: 14px; padding: .85rem; display: flex; flex-direction: column; gap: .55rem;
     }
+    .eq-card.in-storage { border-left-color: var(--cyan); }
     .eq-card.lent {
       border-left-color: var(--warning);
       background: linear-gradient(180deg, #231d0c, var(--panel));
     }
     .eq-head { display: flex; justify-content: space-between; align-items: flex-start; gap: .5rem; }
-    .eq-title { font-weight: 800; font-size: 1rem; }
-    .eq-title small { display: block; color: var(--muted); font-weight: 500; font-size: .78rem; }
+    .eq-title { font-weight: 800; font-size: .98rem; }
+    .eq-title small { display: block; color: var(--muted); font-weight: 500; font-size: .76rem; }
     .eq-state {
-      font-size: .72rem; font-weight: 800; padding: .22rem .55rem; border-radius: 999px;
-      white-space: nowrap;
+      font-size: .72rem; font-weight: 800; padding: .2rem .55rem; border-radius: 999px; white-space: nowrap;
     }
-    .eq-state.with-team { background: rgba(34, 197, 94, .2); color: #86efac; border: 1px solid #16a34a; }
-    .eq-state.in-room   { background: rgba(250, 204, 21, .22); color: #fde047; border: 1px solid #ca8a04; }
+    .eq-state.with-team  { background: rgba(34, 197, 94, .2); color: #86efac; border: 1px solid #16a34a; }
+    .eq-state.in-storage { background: rgba(56, 189, 248, .18); color: #7dd3fc; border: 1px solid #0284c7; }
+    .eq-state.in-room    { background: rgba(250, 204, 21, .22); color: #fde047; border: 1px solid #ca8a04; }
 
     .eq-status-line {
-      font-size: .85rem; font-weight: 600; padding: .45rem .6rem; border-radius: 9px;
+      font-size: .83rem; font-weight: 600; padding: .42rem .6rem; border-radius: 9px;
       background: rgba(0, 0, 0, .28); border: 1px solid rgba(255, 255, 255, .06);
+      display: flex; justify-content: space-between; align-items: center; gap: .4rem; flex-wrap: wrap;
     }
     .eq-holder-Group { display: flex; flex-direction: column; gap: .3rem; }
-    .eq-holder-Group .lbl { font-size: .75rem; color: var(--muted); }
-    .holder-btns { display: grid; grid-template-columns: repeat(5, 1fr); gap: .3rem; }
+    .eq-holder-Group .lbl { font-size: .74rem; color: var(--muted); }
+    .holder-btns { display: grid; grid-template-columns: repeat(3, 1fr); gap: .3rem; }
     .h-btn {
       appearance: none; border: 1px solid var(--line); background: #070b1a; color: var(--muted);
-      border-radius: 7px; padding: .3rem .25rem; font: inherit; font-size: .75rem; font-weight: 700;
+      border-radius: 7px; padding: .35rem .25rem; font: inherit; font-size: .75rem; font-weight: 700;
       cursor: pointer; text-align: center;
     }
     .h-btn:hover { color: var(--text); border-color: var(--cyan); }
     .h-btn.active { background: var(--nasa-blue); border-color: var(--cyan); color: #fff; }
 
-    .eq-actions { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; margin-top: .1rem; }
+    .eq-actions { display: flex; gap: .4rem; align-items: center; margin-top: .1rem; }
 
-    /* ---- 12-Room Grid ---- */
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(275px, 1fr)); gap: .9rem; }
+    /* ---- 12-Room Grid (Immediately Visible on Main Page) ---- */
+    .sec-head {
+      display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
+      gap: .5rem; margin: .4rem 0 .65rem;
+    }
+    .sec-head h2 { font-size: 1.08rem; letter-spacing: .03em; }
+    .sec-head small { color: var(--muted); font-size: .8rem; }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(275px, 1fr)); gap: .85rem; }
 
     .card {
       --c: var(--unchecked);
@@ -259,7 +291,7 @@
     /* ---- dialogs ---- */
     dialog { background: var(--panel); color: var(--text); border: 1px solid var(--cyan); border-radius: 16px; padding: 1.1rem; width: min(92vw, 430px); }
     dialog::backdrop { background: rgba(0, 0, 0, .7); }
-    dialog h3 { margin-bottom: .8rem; }
+    dialog h3 { margin-bottom: .6rem; }
     dialog textarea { width: 100%; min-height: 70px; margin: .8rem 0; background: #070b1a; color: var(--text); border: 1px solid var(--line); border-radius: 10px; padding: .6rem; font: inherit; resize: vertical; }
     .choice { display: grid; grid-template-columns: repeat(3, 1fr); gap: .5rem; }
     .choice .btn.sel { outline: 3px solid var(--cyan); }
@@ -284,57 +316,77 @@
     </div>
   </header>
 
+  <!-- Personal Targeted Gear Request Alarm (Shows ONLY to the targeted team member!) -->
+  <div id="personalAlarmBox" hidden></div>
+
+  <!-- Outgoing Gear Request Status (Shows to the requester) -->
+  <div id="outgoingReqBox" hidden></div>
+
   <section class="statusbar" aria-label="Status summary">
     <div class="stat ready"><span class="label">🟢 Ready Rooms</span><span class="num" id="cReady">0</span></div>
     <div class="stat unchecked"><span class="label">⚪ Unchecked</span><span class="num" id="cUnchecked">12</span></div>
     <div class="stat warning"><span class="label">🟡 Warnings</span><span class="num" id="cWarning">0</span></div>
     <div class="stat sos" id="sosStat"><span class="label">🚨 Active SOS</span><span class="num" id="cSos">0</span></div>
-    <div class="stat gear"><span class="label">💻 Mac Converters<br><small>Available w/ Team</small></span><span class="num" id="cMac">2/2</span></div>
-    <div class="stat gear"><span class="label">⚡ Power Strips<br><small>Available w/ Team</small></span><span class="num" id="cStrip">4/4</span></div>
+    <div class="stat gear"><span class="label">💻 Mac Converters<br><small>Available</small></span><span class="num" id="cMac">2/2</span></div>
+    <div class="stat gear"><span class="label">⚡ Power Strips<br><small>Available</small></span><span class="num" id="cStrip">4/4</span></div>
   </section>
 
-  <!-- Team Member Slider (Karim - Tasbeeh - Omar - Lojine - Khairy) -->
+  <!-- Team Member Slider + Sidebar Triggers + Smart Request Buttons -->
   <section class="controls">
     <div class="slider-header">
-      <span class="slider-title">👤 Slide or Tap to Choose Team Member (Rooms Team):</span>
+      <span class="slider-title">👤 Team Member Slider (Karim - Tasbeeh - Omar - Lojine - Khairy):</span>
       <span class="active-member-badge" id="activeMemberBadge">Active: Khairy</span>
     </div>
     <div class="member-slider-wrap">
       <input id="memberSlider" class="team-slider" type="range" min="0" max="4" step="1" value="4">
       <div class="slider-ticks" id="sliderTicks"></div>
     </div>
-    <div class="controls-bottom">
-      <div class="select-box">
-        <label for="memberSelect" style="font-size:.82rem;color:var(--muted);font-weight:700;">Selected Member:</label>
-        <select id="memberSelect"></select>
-      </div>
-      <button id="audioBtn" class="btn">🔊 Enable Audio &amp; Vibration Alerts</button>
+
+    <div class="quick-bar">
+      <button type="button" class="btn drawer-trigger" id="openTeamDrawerBtn">👥 Team Status Sidebar (5)</button>
+      <button type="button" class="btn drawer-trigger" id="openEqDrawerBtn">🧰 Materials Sidebar (6)</button>
+      <button type="button" class="btn req-trigger" id="reqMacBtn">🔔 Need Mac Converter</button>
+      <button type="button" class="btn req-trigger" id="reqStripBtn">🔔 Need Power Strip</button>
+      <button type="button" id="audioBtn" class="btn">🔊 Enable Audio &amp; Vibration</button>
     </div>
   </section>
 
-  <!-- Section 1: 5 Rooms Team Members × 4 Status Choices -->
-  <div class="sec-head">
-    <h2>👥 Rooms Strike Team · Live Status (5 Members × 4 Choices)</h2>
-    <small>Karim · Tasbeeh · Omar · Lojine · Khairy — Set member status &amp; current room</small>
-  </div>
-  <section id="teamGrid" class="team-grid" aria-label="Rooms Strike Team"></section>
-
-  <!-- Section 2: Equipment & Backup Material Tracker (2 Mac Converters + 4 Power Strips) -->
-  <div class="sec-head">
-    <h2>🧰 Backup Equipment Tracker (2 Mac Converters + 4 Power Strips)</h2>
-    <small>Track who holds each item and which workshop room borrowed it</small>
-  </div>
-  <section id="eqGrid" class="eq-grid" aria-label="Equipment Tracker"></section>
-
-  <!-- Section 3: 12 Workshop Rooms Grid -->
+  <!-- Live 12 Workshop Rooms Grid (Immediately at the top — no scrolling needed!) -->
   <div class="sec-head">
     <h2>🏛️ Live 12 Workshop Rooms</h2>
-    <small>Real-time room diagnostics, SOS dispatch, and borrowed equipment</small>
+    <small>Real-time diagnostics, SOS dispatch, and borrowed materials</small>
   </div>
   <main id="grid" class="grid" aria-live="polite"></main>
 
-  <p class="foot">Live data · Firebase Realtime Database · Rooms checked via <code>TechOps_RoomInspector.exe</code> or <code>check.html</code>, SOS via QR codes</p>
+  <p class="foot">Live data · Firebase Realtime Database · Use Sidebars for Team Status &amp; Materials to prevent accidental edits</p>
 </div>
+
+<!-- Backdrop for Slide-Out Sidebars -->
+<div id="drawerBackdrop" class="drawer-backdrop"></div>
+
+<!-- LEFT SIDEBAR: 5 Team Members × 4 Status Choices -->
+<aside id="teamDrawer" class="drawer" aria-label="Team Status Sidebar">
+  <div class="drawer-head">
+    <h2>👥 Team Member Status (5)</h2>
+    <button type="button" class="btn sm" id="closeTeamDrawerBtn">✕ Close</button>
+  </div>
+  <div class="drawer-body" id="teamGrid"></div>
+</aside>
+
+<!-- RIGHT SIDEBAR: Materials & Backup Gear (2 Mac Converters + 4 Power Strips) -->
+<aside id="eqDrawer" class="drawer right" aria-label="Materials Sidebar">
+  <div class="drawer-head">
+    <h2>🧰 Materials &amp; Gear (6)</h2>
+    <button type="button" class="btn sm" id="closeEqDrawerBtn">✕ Close</button>
+  </div>
+  <div class="drawer-body">
+    <div class="row">
+      <button type="button" class="btn sm req-trigger" id="reqMacBtn2">🔔 Need Mac Converter</button>
+      <button type="button" class="btn sm req-trigger" id="reqStripBtn2">🔔 Need Power Strip</button>
+    </div>
+    <div id="eqGrid" style="display:flex;flex-direction:column;gap:.75rem;"></div>
+  </div>
+</aside>
 
 <!-- Manual check dialog -->
 <dialog id="manualDlg">
@@ -353,7 +405,7 @@
 
 <!-- Lend gear to room dialog -->
 <dialog id="lendDlg">
-  <h3 id="lendTitle">🧰 Lend Equipment to Room</h3>
+  <h3 id="lendTitle">🧰 Lend Material to Room</h3>
   <p style="color:var(--muted);font-size:.86rem;margin:0;">Select a Mac Converter or Power Strip to lend to this room:</p>
   <div id="lendList" class="lend-list"></div>
   <div class="row">
@@ -361,14 +413,24 @@
   </div>
 </dialog>
 
+<!-- Smart Gear Request Chooser Dialog (shown only when multiple members hold the item) -->
+<dialog id="reqChooserDlg">
+  <h3 id="reqChooserTitle">🔔 Choose Who to Ring</h3>
+  <p id="reqChooserSub" style="color:var(--muted);font-size:.86rem;margin:0;"></p>
+  <div id="reqChooserList" class="lend-list"></div>
+  <div class="row">
+    <button class="btn block" id="reqChooserClose">Cancel</button>
+  </div>
+</dialog>
+
 <div id="toast" class="toast" role="status"></div>
 
 <script type="module">
 import {
-  db, CONFIG_OK, ROOM_COUNT, ROOM_NAMES, ROOMS_TEAM, MEMBER_STATUSES, EQUIPMENT_ITEMS, DEFAULT_HOLDERS,
-  roomKey, ref, onValue, update, push, runTransaction, serverTimestamp, restGet, restPatch,
+  db, CONFIG_OK, ROOM_COUNT, ROOM_NAMES, ROOMS_TEAM, EQUIPMENT_HOLDERS, MEMBER_STATUSES,
+  EQUIPMENT_ITEMS, DEFAULT_HOLDERS, roomKey, ref, onValue, update, restGet, restPatch, restDelete,
   esc, pad2, MISSING_CONFIG_MESSAGE,
-} from "./firebase-config.js?v=3";
+} from "./firebase-config.js?v=4";
 
 const $ = (id) => document.getElementById(id);
 const STATUS_LABEL = { UNCHECKED: "UNCHECKED", READY: "READY", WARNING: "WARNING", SOS: "SOS" };
@@ -376,8 +438,10 @@ const STATUS_LABEL = { UNCHECKED: "UNCHECKED", READY: "READY", WARNING: "WARNING
 let rooms = {};
 let teamStatus = {};
 let inventory = {};
+let gearRequests = {};
 let firstSnapshot = true;
 let knownSos = new Set();
+let knownMyReqs = new Set();
 let audioOn = false;
 let audioCtx = null;
 let wakeLock = null;
@@ -388,7 +452,7 @@ function toast(msg) {
   t.textContent = msg;
   t.classList.add("show");
   clearTimeout(toast._t);
-  toast._t = setTimeout(() => t.classList.remove("show"), 3200);
+  toast._t = setTimeout(() => t.classList.remove("show"), 3400);
 }
 
 function findMember(val) {
@@ -410,19 +474,28 @@ function setSelectedMemberByIndex(idx, showToastMsg = true) {
   const m = ROOMS_TEAM[i];
   localStorage.setItem("techops_name", m.name);
   $("memberSlider").value = String(i);
-  $("memberSelect").value = m.id;
   $("activeMemberBadge").textContent = `Active: ${m.name}`;
   renderSliderTicks();
   renderTeam();
+  renderEquipment();
+  renderPersonalAlarms();
   if (showToastMsg) toast(`👤 Active Member: ${m.name}`);
 }
 
 const getName = () => getSelectedMember().name;
 
-function memberLabel(idOrName) {
-  if (!idOrName) return "Unassigned";
-  const m = findMember(idOrName);
-  return m ? m.name : idOrName;
+function holderLabel(holderId) {
+  if (!holderId || holderId === "materials_room") return "📦 Materials Room";
+  if (holderId === "logain") holderId = "lojine";
+  const h = EQUIPMENT_HOLDERS.find((x) => x.id === holderId);
+  return h ? `${h.icon} ${h.name}` : holderId;
+}
+
+function holderNameOnly(holderId) {
+  if (!holderId || holderId === "materials_room") return "Materials Room";
+  if (holderId === "logain") holderId = "lojine";
+  const h = EQUIPMENT_HOLDERS.find((x) => x.id === holderId);
+  return h ? h.name : holderId;
 }
 
 function stateOf(r) {
@@ -442,7 +515,7 @@ function fmtTime(ms) {
 
 function itemState(item) {
   const raw = inventory[item.id] || {};
-  let holder = raw.holder || DEFAULT_HOLDERS[item.id] || "khairy";
+  let holder = raw.holder || DEFAULT_HOLDERS[item.id] || "materials_room";
   if (holder === "logain") holder = "lojine";
   const room = raw.room ? Number(raw.room) : null;
   return {
@@ -453,9 +526,31 @@ function itemState(item) {
   };
 }
 
-/* --------------------------------------------------- init slider & select */
+async function writeData(path, payload) {
+  try {
+    await restPatch(path, payload);
+    await pollRestOnce();
+  } catch {
+    await update(ref(db, path), payload);
+  }
+}
+
+/* --------------------------------------------------- Sidebars (Drawers) */
+function openDrawer(which) {
+  $("teamDrawer").classList.toggle("open", which === "team");
+  $("eqDrawer").classList.toggle("open", which === "eq");
+  $("drawerBackdrop").classList.toggle("open", Boolean(which));
+}
+
+$("openTeamDrawerBtn").addEventListener("click", () => openDrawer("team"));
+$("openEqDrawerBtn").addEventListener("click", () => openDrawer("eq"));
+$("closeTeamDrawerBtn").addEventListener("click", () => openDrawer(null));
+$("closeEqDrawerBtn").addEventListener("click", () => openDrawer(null));
+$("drawerBackdrop").addEventListener("click", () => openDrawer(null));
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") openDrawer(null); });
+
+/* --------------------------------------------------- init slider */
 function initMemberControls() {
-  $("memberSelect").innerHTML = ROOMS_TEAM.map((m) => `<option value="${m.id}">${esc(m.name)}</option>`).join("");
   const cur = getSelectedMember();
   const idx = ROOMS_TEAM.findIndex((m) => m.id === cur.id);
   setSelectedMemberByIndex(idx >= 0 ? idx : 0, false);
@@ -480,12 +575,7 @@ $("sliderTicks").addEventListener("click", (e) => {
   setSelectedMemberByIndex(Number(b.dataset.idx), true);
 });
 
-$("memberSelect").addEventListener("change", (e) => {
-  const idx = ROOMS_TEAM.findIndex((m) => m.id === e.target.value);
-  if (idx >= 0) setSelectedMemberByIndex(idx, true);
-});
-
-/* ------------------------------------------- render 5-member team & 4 choices */
+/* ------------------------------------------- Left Sidebar: 5-member team & 4 choices */
 function renderTeam() {
   const curMember = getSelectedMember();
   $("teamGrid").innerHTML = ROOMS_TEAM.map((m) => {
@@ -495,7 +585,6 @@ function renderTeam() {
     const curRoom = stObj.room ? Number(stObj.room) : 0;
     const isMe = curMember && curMember.id === m.id;
 
-    // Equipment carried by this member (and not currently lent to a room)
     const carriedGear = EQUIPMENT_ITEMS.filter((it) => {
       const s = itemState(it);
       return s.holder === m.id && !s.room;
@@ -530,15 +619,6 @@ function renderTeam() {
   }).join("");
 }
 
-async function writeData(path, payload) {
-  try {
-    await restPatch(path, payload);
-    await pollRestOnce();
-  } catch {
-    await update(ref(db, path), payload);
-  }
-}
-
 $("teamGrid").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-member-status]");
   if (!b) return;
@@ -546,7 +626,7 @@ $("teamGrid").addEventListener("click", async (e) => {
   const st = b.dataset.st;
   try {
     await writeData(`team_status/${memberId}`, { status: st, updated_at: Date.now() });
-    toast(`✔ Updated ${memberLabel(memberId)} -> ${st}`);
+    toast(`✔ Updated ${holderNameOnly(memberId)} -> ${st}`);
   } catch (err) { toast("Error updating status: " + err.message); }
 });
 
@@ -564,46 +644,58 @@ $("teamGrid").addEventListener("change", async (e) => {
   } catch (err) { toast("Error updating member room: " + err.message); }
 });
 
-/* ------------------------------------------- render 6 equipment items */
+/* ------------------------------------------- Right Sidebar: 6 Equipment Items */
 function renderEquipment() {
   let macAvail = 0, stripAvail = 0;
+  const me = getSelectedMember();
 
   const html = EQUIPMENT_ITEMS.map((it) => {
     const st = itemState(it);
     const inRoom = Boolean(st.room);
+    const inStorage = !inRoom && st.holder === "materials_room";
+    const heldByOtherPerson = !inRoom && !inStorage && st.holder !== me.id;
+
     if (!inRoom) {
       if (it.type === "mac") macAvail++;
       else stripAvail++;
     }
 
-    const holderName = memberLabel(st.holder);
+    const holderText = holderLabel(st.holder);
     const stateBadge = inRoom
       ? `<span class="eq-state in-room">🏛️ In Room ${pad2(st.room)}</span>`
-      : `<span class="eq-state with-team">🟢 Available w/ Team</span>`;
+      : inStorage
+      ? `<span class="eq-state in-storage">📦 Materials Room</span>`
+      : `<span class="eq-state with-team">🟢 With ${esc(holderNameOnly(st.holder))}</span>`;
+
+    const ringBtnHtml = heldByOtherPerson
+      ? `<button type="button" class="btn xs warn" data-ring-item="${it.id}" data-target="${st.holder}">🔔 Ring ${esc(holderNameOnly(st.holder))}</button>`
+      : "";
 
     const statusLine = inRoom
-      ? `📍 Lent to <strong>Room ${pad2(st.room)}</strong> <small style="color:var(--muted)">(Holder: ${esc(holderName)} · ${esc(fmtTime(st.updated_at))})</small>`
-      : `🎒 Held by: <strong>${esc(holderName)}</strong> <small style="color:var(--muted)">(Available to lend)</small>`;
+      ? `<span>📍 Lent to <strong>Room ${pad2(st.room)}</strong> <small style="color:var(--muted)">(via ${esc(holderNameOnly(st.holder))})</small></span>`
+      : inStorage
+      ? `<span>📦 Stored in <strong>Materials Room</strong></span>`
+      : `<span>🎒 Held by <strong>${esc(holderNameOnly(st.holder))}</strong></span>${ringBtnHtml}`;
 
-    const holderBtns = ROOMS_TEAM.map((m) => `
-      <button type="button" class="h-btn ${st.holder === m.id ? "active" : ""}"
-        data-eq-holder="${it.id}" data-holder="${m.id}">${esc(m.name)}</button>
+    const holderBtns = EQUIPMENT_HOLDERS.map((h) => `
+      <button type="button" class="h-btn ${st.holder === h.id ? "active" : ""}"
+        data-eq-holder="${it.id}" data-holder="${h.id}">${h.icon} ${esc(h.name)}</button>
     `).join("");
 
-    let roomOptions = `<option value="0" ${!inRoom ? "selected" : ""}>🟢 Available with Team (Not in a room)</option>`;
+    let roomOptions = `<option value="0" ${!inRoom ? "selected" : ""}>🟢 Not in a Workshop Room (${esc(holderNameOnly(st.holder))})</option>`;
     for (let r = 1; r <= ROOM_COUNT; r++) {
       roomOptions += `<option value="${r}" ${st.room === r ? "selected" : ""}>🏛️ Lent to Room ${pad2(r)}</option>`;
     }
 
     return `
-      <article class="eq-card ${inRoom ? "lent" : ""}">
+      <article class="eq-card ${inRoom ? "lent" : inStorage ? "in-storage" : ""}">
         <div class="eq-head">
           <div class="eq-title">${it.icon} ${esc(it.title)}<small>${esc(it.sub)}</small></div>
           ${stateBadge}
         </div>
         <div class="eq-status-line">${statusLine}</div>
         <div class="eq-holder-Group">
-          <span class="lbl">👤 Held by Team Member (Tap to assign holder):</span>
+          <span class="lbl">Location / Holder (Materials Room or Team Member):</span>
           <div class="holder-btns">${holderBtns}</div>
         </div>
         <div class="eq-actions">
@@ -619,13 +711,21 @@ function renderEquipment() {
 }
 
 $("eqGrid").addEventListener("click", async (e) => {
+  const ringBtn = e.target.closest("[data-ring-item]");
+  if (ringBtn) {
+    const item = EQUIPMENT_ITEMS.find((x) => x.id === ringBtn.dataset.ringItem);
+    const targetId = ringBtn.dataset.target;
+    if (item && targetId) await sendTargetedGearAlarm(item, targetId);
+    return;
+  }
+
   const hb = e.target.closest("[data-eq-holder]");
   if (hb) {
     const eqId = hb.dataset.eqHolder;
     const holderId = hb.dataset.holder;
     try {
       await writeData(`inventory/${eqId}`, { holder: holderId, updated_at: Date.now() });
-      toast(`✔ Assigned to ${memberLabel(holderId)}`);
+      toast(`✔ Assigned to ${holderNameOnly(holderId)}`);
     } catch (err) { toast("Update failed: " + err.message); }
     return;
   }
@@ -660,8 +760,206 @@ $("eqGrid").addEventListener("change", async (e) => {
       lent_by: roomNum ? curM.name : null,
       updated_at: Date.now(),
     });
-    toast(roomNum ? `🏛️ Lent to Room ${pad2(roomNum)}` : "🟢 Returned to Team");
+    toast(roomNum ? `🏛️ Lent to Room ${pad2(roomNum)}` : "🟢 Returned from Room");
   } catch (err) { toast("Update failed: " + err.message); }
+});
+
+/* ------------------------------------------- Smart Targeted Gear Request Alarm */
+async function sendTargetedGearAlarm(item, targetMemberId) {
+  const me = getSelectedMember();
+  if (targetMemberId === me.id) {
+    toast(`You (${me.name}) already hold ${item.title}!`);
+    return;
+  }
+  const targetName = holderNameOnly(targetMemberId);
+  const myRoom = teamStatus[me.id]?.room || null;
+  const reqId = `req_${item.id}`;
+  try {
+    await writeData(`gear_requests/${reqId}`, {
+      id: reqId,
+      item_id: item.id,
+      item_title: item.title,
+      item_icon: item.icon,
+      from_id: me.id,
+      from_name: me.name,
+      from_room: myRoom,
+      target_id: targetMemberId,
+      target_name: targetName,
+      status: "RINGING",
+      created_at: Date.now(),
+    });
+    toast(`🔔 Sent targeted alarm to ${targetName} for ${item.title}!`);
+  } catch (err) {
+    toast("Failed to send alarm: " + err.message);
+  }
+}
+
+function triggerSmartGearRequest(type) {
+  const me = getSelectedMember();
+  const typeLabel = type === "mac" ? "Mac Converter" : "Power Strip";
+  const allOfType = EQUIPMENT_ITEMS.filter((it) => it.type === type);
+
+  // Find items available (not lent to a room)
+  const availWithOthers = [];
+  const availWithMe = [];
+  const availInMaterialsRoom = [];
+  const lentToRooms = [];
+
+  for (const it of allOfType) {
+    const st = itemState(it);
+    if (st.room) {
+      lentToRooms.push({ item: it, room: st.room });
+    } else if (st.holder === "materials_room") {
+      availInMaterialsRoom.push({ item: it });
+    } else if (st.holder === me.id) {
+      availWithMe.push({ item: it });
+    } else {
+      availWithOthers.push({ item: it, holder: st.holder, holderName: holderNameOnly(st.holder) });
+    }
+  }
+
+  // Case 1: Only ONE team member (other than me) has an available item -> Auto-ring immediately!
+  const uniqueHolders = [...new Set(availWithOthers.map((x) => x.holder))];
+  if (uniqueHolders.length === 1) {
+    const targetEntry = availWithOthers[0];
+    sendTargetedGearAlarm(targetEntry.item, targetEntry.holder);
+    return;
+  }
+
+  // Case 2: Multiple different team members have available items -> Let user pick which member to ring!
+  if (uniqueHolders.length > 1) {
+    $("reqChooserTitle").textContent = `🔔 Request ${typeLabel}`;
+    $("reqChooserSub").textContent = `Multiple team members have an available ${typeLabel}. Choose who to ring:`;
+    $("reqChooserList").innerHTML = availWithOthers.map((entry) => `
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;background:#070b1a;border:1px solid var(--line);padding:.6rem .75rem;border-radius:10px;">
+        <div>
+          <div style="font-weight:800;font-size:.92rem;">👤 ${esc(entry.holderName)}</div>
+          <div style="font-size:.78rem;color:var(--muted);">${entry.item.icon} ${esc(entry.item.title)}</div>
+        </div>
+        <button type="button" class="btn sm warn" data-choose-ring="${entry.item.id}" data-holder="${entry.holder}">
+          🔔 Ring ${esc(entry.holderName)}
+        </button>
+      </div>
+    `).join("");
+    $("reqChooserDlg").showModal();
+    return;
+  }
+
+  // Case 3: No other team member holds one right now
+  if (availWithMe.length > 0) {
+    toast(`🎒 You (${me.name}) already have ${availWithMe[0].item.title} with you!`);
+  } else if (availInMaterialsRoom.length > 0) {
+    toast(`📦 ${availInMaterialsRoom.map((x) => x.item.title).join(" & ")} is in the Materials Room.`);
+  } else if (lentToRooms.length > 0) {
+    toast(`⚠️ All ${typeLabel}s are currently lent to rooms: ${lentToRooms.map((x) => `Room ${pad2(x.room)}`).join(", ")}`);
+  }
+}
+
+$("reqMacBtn").addEventListener("click", () => triggerSmartGearRequest("mac"));
+$("reqStripBtn").addEventListener("click", () => triggerSmartGearRequest("strip"));
+$("reqMacBtn2").addEventListener("click", () => triggerSmartGearRequest("mac"));
+$("reqStripBtn2").addEventListener("click", () => triggerSmartGearRequest("strip"));
+
+$("reqChooserList").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-choose-ring]");
+  if (!b) return;
+  const item = EQUIPMENT_ITEMS.find((x) => x.id === b.dataset.chooseRing);
+  const holder = b.dataset.holder;
+  $("reqChooserDlg").close();
+  if (item && holder) await sendTargetedGearAlarm(item, holder);
+});
+$("reqChooserClose").addEventListener("click", () => $("reqChooserDlg").close());
+
+function renderPersonalAlarms() {
+  const me = getSelectedMember();
+  const allReqs = Object.values(gearRequests || {}).filter((r) => r && r.id);
+
+  // 1. Incoming requests targeting ME
+  const myIncoming = allReqs.filter((r) => r.target_id === me.id && (r.status === "RINGING" || r.status === "ACK"));
+  const pBox = $("personalAlarmBox");
+  if (myIncoming.length === 0) {
+    pBox.hidden = true;
+    pBox.innerHTML = "";
+  } else {
+    pBox.hidden = false;
+    pBox.innerHTML = myIncoming.map((r) => {
+      const roomTxt = r.from_room ? ` (in Room ${pad2(r.from_room)})` : "";
+      const isAck = r.status === "ACK";
+      return `
+        <div class="personal-alarm">
+          <div class="personal-alarm-title">
+            🔔 HEY ${esc(me.name.toUpperCase())}! ${esc(r.from_name.toUpperCase())} NEEDS ${r.item_icon || "🧰"} ${esc(r.item_title)}!
+          </div>
+          <div class="personal-alarm-sub">
+            Requested by <strong>${esc(r.from_name)}</strong>${esc(roomTxt)} · ${esc(fmtTime(r.created_at))}
+            ${isAck ? " · <strong>(You marked On My Way)</strong>" : ""}
+          </div>
+          <div class="row">
+            ${!isAck ? `<button type="button" class="btn primary" data-req-ack="${esc(r.id)}">🏃 On My Way!</button>` : ""}
+            <button type="button" class="btn good" data-req-handover="${esc(r.id)}" data-item="${esc(r.item_id)}" data-to="${esc(r.from_id)}">
+              ✅ Handed Over to ${esc(r.from_name)}
+            </button>
+            <button type="button" class="btn danger" data-req-dismiss="${esc(r.id)}">✕ Dismiss</button>
+          </div>
+        </div>`;
+    }).join("");
+  }
+
+  // 2. Outgoing requests sent BY ME
+  const myOutgoing = allReqs.filter((r) => r.from_id === me.id);
+  const oBox = $("outgoingReqBox");
+  if (myOutgoing.length === 0) {
+    oBox.hidden = true;
+    oBox.innerHTML = "";
+  } else {
+    oBox.hidden = false;
+    oBox.innerHTML = myOutgoing.map((r) => {
+      const stTxt = r.status === "ACK"
+        ? `🏃 ${esc(r.target_name)} acknowledged and is bringing ${esc(r.item_title)}!`
+        : `📡 Ringing ${esc(r.target_name)} for ${esc(r.item_title)}…`;
+      return `
+        <div class="outgoing-req-bar">
+          <span>${stTxt}</span>
+          <button type="button" class="btn xs danger" data-req-dismiss="${esc(r.id)}">Cancel Request</button>
+        </div>`;
+    }).join("");
+  }
+}
+
+document.addEventListener("click", async (e) => {
+  const ackBtn = e.target.closest("[data-req-ack]");
+  if (ackBtn) {
+    const reqId = ackBtn.dataset.reqAck;
+    try {
+      await writeData(`gear_requests/${reqId}`, { status: "ACK", ack_at: Date.now() });
+      toast("🏃 Marked On My Way!");
+    } catch (err) { toast("Error: " + err.message); }
+    return;
+  }
+
+  const hoBtn = e.target.closest("[data-req-handover]");
+  if (hoBtn) {
+    const reqId = hoBtn.dataset.reqHandover;
+    const itemId = hoBtn.dataset.item;
+    const toMemberId = hoBtn.dataset.to;
+    try {
+      await writeData(`inventory/${itemId}`, { holder: toMemberId, room: null, updated_at: Date.now() });
+      await restDelete(`gear_requests/${reqId}`);
+      await pollRestOnce();
+      toast(`✅ Handed over to ${holderNameOnly(toMemberId)}!`);
+    } catch (err) { toast("Error: " + err.message); }
+    return;
+  }
+
+  const disBtn = e.target.closest("[data-req-dismiss]");
+  if (disBtn) {
+    const reqId = disBtn.dataset.reqDismiss;
+    try {
+      await restDelete(`gear_requests/${reqId}`);
+      await pollRestOnce();
+      toast("Request dismissed.");
+    } catch (err) { toast("Error: " + err.message); }
+  }
 });
 
 /* ------------------------------------------------------------------- render rooms */
@@ -681,7 +979,6 @@ function cardHTML(n) {
   const wifi = typeof r.wifi_signal === "number"
     ? `<span class="${r.wifi_signal >= 60 ? "ok" : r.wifi_signal >= 40 ? "mid" : "bad"}">${r.wifi_signal}%</span>` : "—";
 
-  // Equipment lent to this room
   const roomGear = EQUIPMENT_ITEMS.filter((it) => itemState(it).room === n);
   const gearBoxHtml = roomGear.length
     ? `<div class="room-gear-box">
@@ -689,14 +986,13 @@ function cardHTML(n) {
         ${roomGear.map((it) => {
           const ist = itemState(it);
           return `<div class="room-gear-item">
-            <span>${it.icon} ${esc(it.title)} <small style="color:var(--muted)">(via ${esc(memberLabel(ist.holder))})</small></span>
+            <span>${it.icon} ${esc(it.title)} <small style="color:var(--muted)">(via ${esc(holderNameOnly(ist.holder))})</small></span>
             <button type="button" class="btn xs good" data-act="return-eq" data-eq="${it.id}">↩️ Return</button>
           </div>`;
         }).join("")}
       </div>`
     : "";
 
-  // Team members currently located in this room
   const membersHere = ROOMS_TEAM.filter((m) => Number(teamStatus[m.id]?.room) === n);
   const membersHereHtml = membersHere.length
     ? `<div class="note" style="border-left:3px solid var(--cyan)">👥 In Room: <strong>${membersHere.map((m) => esc(m.name)).join(", ")}</strong></div>`
@@ -758,6 +1054,7 @@ function render() {
   renderSliderTicks();
   renderTeam();
   renderEquipment();
+  renderPersonalAlarms();
 
   let ready = 0, unchecked = 0, warning = 0, sos = 0, html = "";
   for (let n = 1; n <= ROOM_COUNT; n++) {
@@ -776,6 +1073,13 @@ function render() {
 }
 
 /* ------------------------------------------------------------------- alerts */
+function ensureAudio() {
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+  } catch { /* ignore */ }
+}
+
 function beepSiren() {
   if (!audioOn || !audioCtx) return;
   const t0 = audioCtx.currentTime;
@@ -795,10 +1099,41 @@ function beepSiren() {
   if (navigator.vibrate) navigator.vibrate([400, 150, 400, 150, 400]);
 }
 
+// Distinct chime/pager ringtone when someone requests material from YOU specifically
+function beepPersonalGearAlarm() {
+  ensureAudio();
+  if (!audioCtx) return;
+  const t0 = audioCtx.currentTime;
+  const notes = [880, 1174, 880, 1318];
+  notes.forEach((freq, i) => {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = "triangle";
+    osc.frequency.value = freq;
+    const s = t0 + i * 0.16;
+    gain.gain.setValueAtTime(0.0001, s);
+    gain.gain.exponentialRampToValueAtTime(0.7, s + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, s + 0.14);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(s);
+    osc.stop(s + 0.15);
+  });
+  if (navigator.vibrate) navigator.vibrate([300, 120, 300, 120, 500]);
+}
+
 const unclaimedSosCount = () => Object.values(rooms)
   .filter((r) => stateOf(r) === "SOS" && !(r.sos && r.sos.claimed_by)).length;
 
-setInterval(() => { if (audioOn && unclaimedSosCount() > 0) beepSiren(); }, 4000);
+const ringingMyGearCount = () => {
+  const me = getSelectedMember();
+  return Object.values(gearRequests || {})
+    .filter((r) => r && r.target_id === me.id && r.status === "RINGING").length;
+};
+
+setInterval(() => {
+  if (audioOn && unclaimedSosCount() > 0) beepSiren();
+  if (ringingMyGearCount() > 0) beepPersonalGearAlarm();
+}, 3800);
 
 async function requestWakeLock() {
   try { if ("wakeLock" in navigator) wakeLock = await navigator.wakeLock.request("screen"); } catch { /* ignore */ }
@@ -807,8 +1142,7 @@ document.addEventListener("visibilitychange", () => { if (audioOn && document.vi
 
 $("audioBtn").addEventListener("click", () => {
   if (!audioOn) {
-    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-    audioCtx.resume();
+    ensureAudio();
     audioOn = true;
     requestWakeLock();
     $("audioBtn").textContent = "🔔 Alerts ON — tap to mute";
@@ -818,7 +1152,7 @@ $("audioBtn").addEventListener("click", () => {
     toast("🔊 Alerts enabled (screen will stay awake).");
   } else {
     audioOn = false;
-    $("audioBtn").textContent = "🔊 Enable Audio & Vibration Alerts";
+    $("audioBtn").textContent = "🔊 Enable Audio & Vibration";
     $("audioBtn").classList.remove("on");
     if (wakeLock) { wakeLock.release().catch(() => {}); wakeLock = null; }
     toast("🔇 Alerts muted.");
@@ -847,6 +1181,21 @@ function handleIncomingRooms(newRooms) {
   firstSnapshot = false;
 }
 
+function handleIncomingGearRequests(newReqs) {
+  gearRequests = newReqs || {};
+  const me = getSelectedMember();
+  const nowMine = new Set(
+    Object.values(gearRequests)
+      .filter((r) => r && r.target_id === me.id && r.status === "RINGING")
+      .map((r) => `${r.id}_${r.created_at}`)
+  );
+  const freshMine = [...nowMine].filter((k) => !knownMyReqs.has(k));
+  if (freshMine.length > 0) {
+    beepPersonalGearAlarm();
+  }
+  knownMyReqs = nowMine;
+}
+
 async function pollRestOnce() {
   if (!CONFIG_OK) return;
   try {
@@ -856,11 +1205,10 @@ async function pollRestOnce() {
       handleIncomingRooms(data.rooms || {});
       teamStatus = data.team_status || {};
       inventory = data.inventory || {};
+      handleIncomingGearRequests(data.gear_requests || {});
       render();
     }
-  } catch {
-    // Let WebSocket or next poll handle it
-  }
+  } catch { /* ignore */ }
 }
 
 if (!CONFIG_OK) {
@@ -868,9 +1216,8 @@ if (!CONFIG_OK) {
   $("configBanner").hidden = false;
   render();
 } else {
-  // Immediate REST fetch so mobile devices connect in <300ms
   pollRestOnce();
-  setInterval(pollRestOnce, 4000);
+  setInterval(pollRestOnce, 3500);
 
   onValue(ref(db, ".info/connected"), (snap) => {
     if (snap.val() === true) setOnlineState(true);
@@ -889,6 +1236,11 @@ if (!CONFIG_OK) {
 
   onValue(ref(db, "inventory"), (snap) => {
     inventory = snap.val() || {};
+    render();
+  });
+
+  onValue(ref(db, "gear_requests"), (snap) => {
+    handleIncomingGearRequests(snap.val() || {});
     render();
   });
 }
@@ -945,7 +1297,7 @@ async function resolve(n) {
 let lendTargetRoom = null;
 function openLendModal(n) {
   lendTargetRoom = n;
-  $("lendTitle").textContent = `🧰 Lend Equipment to Room ${pad2(n)}`;
+  $("lendTitle").textContent = `🧰 Lend Material to Room ${pad2(n)}`;
   renderLendModalList();
   $("lendDlg").showModal();
 }
@@ -954,14 +1306,14 @@ function renderLendModalList() {
   if (!lendTargetRoom) return;
   $("lendList").innerHTML = EQUIPMENT_ITEMS.map((it) => {
     const st = itemState(it);
-    const holderName = memberLabel(st.holder);
+    const holderName = holderNameOnly(st.holder);
     const inThisRoom = st.room === lendTargetRoom;
     const inOtherRoom = st.room && st.room !== lendTargetRoom;
     const sub = inThisRoom
       ? `✅ Currently in Room ${pad2(lendTargetRoom)}`
       : inOtherRoom
       ? `⚠️ Currently in Room ${pad2(st.room)} (Holder: ${holderName})`
-      : `🟢 Available with ${holderName}`;
+      : `🟢 Available (${holderName})`;
 
     return `
       <div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;background:#070b1a;border:1px solid var(--line);padding:.55rem .7rem;border-radius:10px;">
@@ -1001,7 +1353,7 @@ $("lendList").addEventListener("click", async (e) => {
         lent_by: null,
         updated_at: Date.now(),
       });
-      toast("↩️ Returned item to Team");
+      toast("↩️ Returned item");
       $("lendDlg").close();
     } catch (err) { toast("Failed: " + err.message); }
   }
@@ -1051,7 +1403,7 @@ $("grid").addEventListener("click", async (e) => {
       await writeData(`inventory/${eqId}`, {
         room: null, lent_by: null, updated_at: Date.now(),
       });
-      toast("↩️ Returned item to Team");
+      toast("↩️ Returned item");
     } catch (err) { toast("Error: " + err.message); }
     return;
   }

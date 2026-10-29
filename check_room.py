@@ -3,7 +3,8 @@
 NASA Space Apps Cairo - Tech Ops | Room Inspector Desktop GUI
 =============================================================
 Desktop GUI for Strike Team members (Karim, Tasbeeh, Omar, Lojine, Khairy)
-to rapidly verify all 12 rooms and track backup equipment (2 Mac Converters + 4 Power Strips).
+to rapidly verify all 12 rooms, track backup equipment (Materials Room + 5 Members + 12 Rooms),
+and send/receive targeted personal material alarms.
 Can be run directly via `python check_room.py` or compiled to `TechOps_RoomInspector.exe`.
 """
 
@@ -16,7 +17,12 @@ import threading
 import time
 from pathlib import Path
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
+
+try:
+    import winsound
+except ImportError:
+    winsound = None
 
 try:
     import requests
@@ -42,6 +48,15 @@ TEAM_MEMBERS = [
     ("khairy", "Khairy"),
 ]
 
+EQUIPMENT_HOLDERS = [
+    ("materials_room", "Materials Room"),
+    ("karim", "Karim"),
+    ("tasbeeh", "Tasbeeh"),
+    ("omar", "Omar"),
+    ("lojine", "Lojine"),
+    ("khairy", "Khairy"),
+]
+
 MEMBER_STATUSES = [
     ("STANDBY", "Standby"),
     ("CHECKING", "Checking"),
@@ -50,21 +65,21 @@ MEMBER_STATUSES = [
 ]
 
 EQUIPMENT_ITEMS = [
-    ("mac_1", "Mac Converter #1"),
-    ("mac_2", "Mac Converter #2"),
-    ("strip_1", "Power Strip #1"),
-    ("strip_2", "Power Strip #2"),
-    ("strip_3", "Power Strip #3"),
-    ("strip_4", "Power Strip #4"),
+    ("mac_1", "Mac Converter #1", "mac"),
+    ("mac_2", "Mac Converter #2", "mac"),
+    ("strip_1", "Power Strip #1", "strip"),
+    ("strip_2", "Power Strip #2", "strip"),
+    ("strip_3", "Power Strip #3", "strip"),
+    ("strip_4", "Power Strip #4", "strip"),
 ]
 
 DEFAULT_HOLDERS = {
-    "mac_1": "khairy",
-    "mac_2": "karim",
-    "strip_1": "tasbeeh",
-    "strip_2": "omar",
-    "strip_3": "lojine",
-    "strip_4": "khairy",
+    "mac_1": "materials_room",
+    "mac_2": "materials_room",
+    "strip_1": "materials_room",
+    "strip_2": "materials_room",
+    "strip_3": "materials_room",
+    "strip_4": "materials_room",
 }
 
 DEFAULTS = {
@@ -84,7 +99,6 @@ def load_config() -> dict:
             cfg.update(json.loads(CONFIG_PATH.read_text(encoding="utf-8")))
         except Exception:
             pass
-    # Normalize checker_name to one of the 5 English names
     low = str(cfg.get("checker_name", "Khairy")).lower()
     matched = "Khairy"
     for mid, mname in TEAM_MEMBERS:
@@ -335,7 +349,6 @@ def upload_room_data(cfg, room: int, choice: str, ping: float, dl: float, wifi: 
     if not sos:
         payload["status"] = "WARNING" if problems else "READY"
 
-    # Also update team member status
     member_id = next((mid for mid, mname in TEAM_MEMBERS if mname.lower() == checker.lower()), None)
     if member_id:
         try:
@@ -362,8 +375,8 @@ class TechOpsInspectorApp(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("NASA Space Apps Cairo — Room Inspector & Equipment Tracker")
-        self.geometry("1040x730")
-        self.minsize(920, 650)
+        self.geometry("1060x760")
+        self.minsize(940, 680)
         self.configure(bg="#04060f")
 
         try:
@@ -382,6 +395,8 @@ class TechOpsInspectorApp(tk.Tk):
         self.rooms_cache = {}
         self.inventory_cache = {}
         self.team_cache = {}
+        self.gear_requests_cache = {}
+        self.last_beep_ts = 0.0
 
         self._init_styles()
         self._build_ui()
@@ -392,10 +407,14 @@ class TechOpsInspectorApp(tk.Tk):
         self.style.theme_use("clam")
         self.style.configure(".", background="#04060f", foreground="#e2e8f0")
 
+    def _get_active_member(self):
+        idx = self.slider_var.get()
+        return TEAM_MEMBERS[idx]  # (id, name)
+
     def _build_ui(self):
         # Header Frame
-        hdr = tk.Frame(self, bg="#0c1226", padx=16, pady=10, highlightthickness=1, highlightbackground="#1b2545")
-        hdr.pack(fill="x", padx=14, pady=(10, 4))
+        hdr = tk.Frame(self, bg="#0c1226", padx=16, pady=8, highlightthickness=1, highlightbackground="#1b2545")
+        hdr.pack(fill="x", padx=14, pady=(8, 4))
 
         title_box = tk.Frame(hdr, bg="#0c1226")
         title_box.pack(side="left")
@@ -406,7 +425,7 @@ class TechOpsInspectorApp(tk.Tk):
         ).pack(anchor="w")
         tk.Label(
             title_box, text="Room Inspector & Backup Gear Tracker",
-            font=("Segoe UI", 15, "bold"), fg="#ffffff", bg="#0c1226",
+            font=("Segoe UI", 14, "bold"), fg="#ffffff", bg="#0c1226",
         ).pack(anchor="w")
 
         right_box = tk.Frame(hdr, bg="#0c1226")
@@ -414,9 +433,27 @@ class TechOpsInspectorApp(tk.Tk):
         self.lbl_cloud = tk.Label(right_box, text="● Cloud Sync Active", font=("Segoe UI", 9, "bold"), fg="#22c55e", bg="#0c1226")
         self.lbl_cloud.pack(anchor="e")
 
+        # Personal Incoming Alarm Banner (Hidden unless ringing for active member)
+        self.alarm_frame = tk.Frame(self, bg="#4c0519", padx=14, pady=8, highlightthickness=2, highlightbackground="#f43f5e")
+        self.lbl_alarm_text = tk.Label(
+            self.alarm_frame, text="🔔 INCOMING MATERIAL ALARM!",
+            font=("Segoe UI", 10, "bold"), fg="#ffffff", bg="#4c0519", anchor="w",
+        )
+        self.lbl_alarm_text.pack(side="left", fill="x", expand=True)
+        self.btn_alarm_handover = tk.Button(
+            self.alarm_frame, text="✅ Handed Over (Give to Requester)", font=("Segoe UI", 9, "bold"),
+            bg="#16a34a", fg="#ffffff", relief="flat", padx=10, pady=4, cursor="hand2",
+        )
+        self.btn_alarm_handover.pack(side="right", padx=4)
+        self.btn_alarm_dismiss = tk.Button(
+            self.alarm_frame, text="✖ Dismiss Alarm", font=("Segoe UI", 9, "bold"),
+            bg="#be123c", fg="#ffffff", relief="flat", padx=10, pady=4, cursor="hand2",
+        )
+        self.btn_alarm_dismiss.pack(side="right", padx=4)
+
         # Team Member Slider Bar
-        cfg_bar = tk.Frame(self, bg="#080c1c", padx=14, pady=8, highlightthickness=1, highlightbackground="#1b2545")
-        cfg_bar.pack(fill="x", padx=14, pady=4)
+        cfg_bar = tk.Frame(self, bg="#080c1c", padx=14, pady=6, highlightthickness=1, highlightbackground="#1b2545")
+        cfg_bar.pack(fill="x", padx=14, pady=3)
 
         tk.Label(cfg_bar, text="Team Member (Slider):", font=("Segoe UI", 9, "bold"), fg="#38bdf8", bg="#080c1c").pack(side="left")
 
@@ -424,10 +461,10 @@ class TechOpsInspectorApp(tk.Tk):
         self.slider_var = tk.IntVar(value=init_idx)
         self.member_scale = tk.Scale(
             cfg_bar, from_=0, to=4, orient="horizontal", variable=self.slider_var,
-            showvalue=False, length=180, bg="#080c1c", fg="#38bdf8", highlightthickness=0,
+            showvalue=False, length=160, bg="#080c1c", fg="#38bdf8", highlightthickness=0,
             troughcolor="#121a36", activebackground="#38bdf8", command=self._on_slider_move,
         )
-        self.member_scale.pack(side="left", padx=8)
+        self.member_scale.pack(side="left", padx=6)
 
         self.member_btns = {}
         for idx, (_, mname) in enumerate(TEAM_MEMBERS):
@@ -440,20 +477,20 @@ class TechOpsInspectorApp(tk.Tk):
             b.pack(side="left", padx=2)
             self.member_btns[idx] = b
 
-        tk.Label(cfg_bar, text="   Status:", font=("Segoe UI", 9, "bold"), fg="#94a3b8", bg="#080c1c").pack(side="left")
+        tk.Label(cfg_bar, text="  Status:", font=("Segoe UI", 9, "bold"), fg="#94a3b8", bg="#080c1c").pack(side="left")
         self.status_var = tk.StringVar(value="STANDBY")
         st_combo = ttk.Combobox(
             cfg_bar, textvariable=self.status_var,
-            values=[s[0] for s in MEMBER_STATUSES], width=11, state="readonly",
+            values=[s[0] for s in MEMBER_STATUSES], width=10, state="readonly",
         )
-        st_combo.pack(side="left", padx=6)
+        st_combo.pack(side="left", padx=4)
         st_combo.bind("<<ComboboxSelected>>", self._on_status_change)
 
-        tk.Label(cfg_bar, text="Display:", font=("Segoe UI", 9), fg="#94a3b8", bg="#080c1c").pack(side="left", padx=(8, 2))
+        tk.Label(cfg_bar, text="Display:", font=("Segoe UI", 9), fg="#94a3b8", bg="#080c1c").pack(side="left", padx=(6, 2))
         self.disp_var = tk.StringVar(value="Primary Screen")
         disp_opts = ttk.Combobox(
             cfg_bar, textvariable=self.disp_var,
-            values=["Primary Screen", "Secondary (1920,0)", "Secondary (2560,0)"], width=16, state="readonly",
+            values=["Primary Screen", "Secondary (1920,0)", "Secondary (2560,0)"], width=15, state="readonly",
         )
         disp_opts.pack(side="left", padx=4)
         disp_opts.bind("<<ComboboxSelected>>", self._on_disp_change)
@@ -486,105 +523,119 @@ class TechOpsInspectorApp(tk.Tk):
             self.room_buttons[rn] = btn
 
         # Right Column: Room Action Panel + Backup Equipment Panel
-        right_col = tk.Frame(content, bg="#0c1226", padx=14, pady=10, highlightthickness=1, highlightbackground="#1b2545", width=430)
+        right_col = tk.Frame(content, bg="#0c1226", padx=14, pady=8, highlightthickness=1, highlightbackground="#1b2545", width=450)
         right_col.pack(side="right", fill="both", expand=False, padx=(6, 0))
         right_col.pack_propagate(False)
 
-        self.lbl_selected_room = tk.Label(right_col, text="ROOM 01 INSPECTION", font=("Segoe UI", 13, "bold"), fg="#38bdf8", bg="#0c1226")
-        self.lbl_selected_room.pack(anchor="w", pady=(0, 6))
+        self.lbl_selected_room = tk.Label(right_col, text="ROOM 01 INSPECTION", font=("Segoe UI", 12, "bold"), fg="#38bdf8", bg="#0c1226")
+        self.lbl_selected_room.pack(anchor="w", pady=(0, 4))
 
         # Big 1-Click Fast Check
         btn_fast = tk.Button(
             right_col, text="🚀 Rapid Check (Projector + Speed + Upload)", font=("Segoe UI", 10, "bold"),
-            bg="#0b3d91", fg="#ffffff", activebackground="#1e40af", relief="flat", cursor="hand2", pady=6,
+            bg="#0b3d91", fg="#ffffff", activebackground="#1e40af", relief="flat", cursor="hand2", pady=5,
             command=self._start_rapid_check,
         )
-        btn_fast.pack(fill="x", pady=(0, 6))
+        btn_fast.pack(fill="x", pady=(0, 4))
 
         # Projector verification frame
-        ds_frame = tk.LabelFrame(right_col, text=" 1. Projector / Data Show ", font=("Segoe UI", 9, "bold"), bg="#0c1226", fg="#94a3b8", padx=8, pady=6)
-        ds_frame.pack(fill="x", pady=4)
+        ds_frame = tk.LabelFrame(right_col, text=" 1. Projector / Data Show ", font=("Segoe UI", 9, "bold"), bg="#0c1226", fg="#94a3b8", padx=8, pady=4)
+        ds_frame.pack(fill="x", pady=3)
 
         btn_row = tk.Frame(ds_frame, bg="#0c1226")
         btn_row.pack(fill="x")
         self.btn_ds_ok = tk.Button(
             btn_row, text="🟢 GOOD / OK", font=("Segoe UI", 9, "bold"),
-            bg="#14532d", fg="#86efac", relief="flat", padx=8, pady=4, cursor="hand2",
+            bg="#14532d", fg="#86efac", relief="flat", padx=8, pady=3, cursor="hand2",
             command=lambda: self._set_ds("OK"),
         )
         self.btn_ds_ok.pack(side="left", fill="x", expand=True, padx=(0, 4))
         self.btn_ds_bad = tk.Button(
             btn_row, text="🔴 ISSUE / BROKEN", font=("Segoe UI", 9, "bold"),
-            bg="#222", fg="#888", relief="flat", padx=8, pady=4, cursor="hand2",
+            bg="#222", fg="#888", relief="flat", padx=8, pady=3, cursor="hand2",
             command=lambda: self._set_ds("Issue"),
         )
         self.btn_ds_bad.pack(side="right", fill="x", expand=True, padx=(4, 0))
 
         btn_pattern = tk.Button(
             ds_frame, text="🖥️ Open Calibration Pattern on Projector", font=("Segoe UI", 8),
-            bg="#1e293b", fg="#e2e8f0", relief="flat", pady=3, cursor="hand2",
+            bg="#1e293b", fg="#e2e8f0", relief="flat", pady=2, cursor="hand2",
             command=self._open_pattern_only,
         )
-        btn_pattern.pack(fill="x", pady=(5, 0))
+        btn_pattern.pack(fill="x", pady=(4, 0))
 
         # Network frame
-        net_frame = tk.LabelFrame(right_col, text=" 2. Wi-Fi & Speed Test ", font=("Segoe UI", 9, "bold"), bg="#0c1226", fg="#94a3b8", padx=8, pady=6)
-        net_frame.pack(fill="x", pady=4)
+        net_frame = tk.LabelFrame(right_col, text=" 2. Wi-Fi & Speed Test ", font=("Segoe UI", 9, "bold"), bg="#0c1226", fg="#94a3b8", padx=8, pady=4)
+        net_frame.pack(fill="x", pady=3)
 
         self.lbl_net_results = tk.Label(net_frame, text="Ping: —   |   Speed: —   |   Wi-Fi: —", font=("Segoe UI", 9, "bold"), fg="#38bdf8", bg="#0c1226")
-        self.lbl_net_results.pack(pady=2)
+        self.lbl_net_results.pack(pady=1)
 
         btn_net = tk.Button(
             net_frame, text="⚡ Run Speed Test Now", font=("Segoe UI", 8),
-            bg="#1e293b", fg="#e2e8f0", relief="flat", pady=3, cursor="hand2",
+            bg="#1e293b", fg="#e2e8f0", relief="flat", pady=2, cursor="hand2",
             command=self._run_net_test_only,
         )
         btn_net.pack(fill="x")
 
         # Notes & Save Frame
         notes_frame = tk.Frame(right_col, bg="#0c1226")
-        notes_frame.pack(fill="x", pady=3)
+        notes_frame.pack(fill="x", pady=2)
         tk.Label(notes_frame, text="Notes (optional):", font=("Segoe UI", 8), fg="#94a3b8", bg="#0c1226").pack(anchor="w")
         self.entry_note = tk.Entry(notes_frame, font=("Segoe UI", 9), bg="#04060f", fg="#ffffff", insertbackground="white")
-        self.entry_note.pack(fill="x", pady=(2, 4))
+        self.entry_note.pack(fill="x", pady=(1, 3))
 
         self.btn_upload = tk.Button(
             right_col, text="💾 Save & Upload to Cloud", font=("Segoe UI", 10, "bold"),
-            bg="#16a34a", fg="#ffffff", activebackground="#15803d", relief="flat", cursor="hand2", pady=6,
+            bg="#16a34a", fg="#ffffff", activebackground="#15803d", relief="flat", cursor="hand2", pady=5,
             command=self._upload_manual,
         )
-        self.btn_upload.pack(fill="x", pady=(2, 6))
+        self.btn_upload.pack(fill="x", pady=(1, 4))
 
-        # Equipment Frame (2 Mac Converters + 4 Power Strips)
+        # Equipment Frame (Materials Room + 5 Members + Smart Targeted Alarms)
         eq_frame = tk.LabelFrame(
-            right_col, text=" 🧰 Backup Gear (2 Mac Converters + 4 Power Strips) ",
-            font=("Segoe UI", 9, "bold"), bg="#0c1226", fg="#38bdf8", padx=8, pady=6,
+            right_col, text=" 🧰 Materials & Gear (Materials Room + 5 Team + Alarms) ",
+            font=("Segoe UI", 9, "bold"), bg="#0c1226", fg="#38bdf8", padx=8, pady=5,
         )
-        eq_frame.pack(fill="both", expand=True, pady=(4, 0))
+        eq_frame.pack(fill="both", expand=True, pady=(3, 0))
+
+        # Smart Gear Request Buttons
+        req_row = tk.Frame(eq_frame, bg="#0c1226")
+        req_row.pack(fill="x", pady=(0, 5))
+        tk.Button(
+            req_row, text="🔔 Need Mac Converter", font=("Segoe UI", 8, "bold"),
+            bg="#4c0519", fg="#fda4af", activebackground="#881337", relief="flat", pady=3, cursor="hand2",
+            command=lambda: self._smart_request_gear("mac"),
+        ).pack(side="left", fill="x", expand=True, padx=(0, 3))
+        tk.Button(
+            req_row, text="🔔 Need Power Strip", font=("Segoe UI", 8, "bold"),
+            bg="#4c0519", fg="#fda4af", activebackground="#881337", relief="flat", pady=3, cursor="hand2",
+            command=lambda: self._smart_request_gear("strip"),
+        ).pack(side="right", fill="x", expand=True, padx=(3, 0))
 
         self.eq_widgets = {}
-        room_vals = ["Available w/ Team"] + [f"Room {r:02d}" for r in range(1, ROOM_COUNT + 1)]
-        holder_vals = [n for _, n in TEAM_MEMBERS]
+        room_vals = ["Available (Not in room)"] + [f"Room {r:02d}" for r in range(1, ROOM_COUNT + 1)]
+        holder_vals = [n for _, n in EQUIPMENT_HOLDERS]
 
-        for eq_id, eq_title in EQUIPMENT_ITEMS:
+        for eq_id, eq_title, _ in EQUIPMENT_ITEMS:
             row = tk.Frame(eq_frame, bg="#0c1226")
-            row.pack(fill="x", pady=2)
-            tk.Label(row, text=eq_title, font=("Segoe UI", 8, "bold"), fg="#e2e8f0", bg="#0c1226", width=16, anchor="w").pack(side="left")
+            row.pack(fill="x", pady=1)
+            tk.Label(row, text=eq_title, font=("Segoe UI", 8, "bold"), fg="#e2e8f0", bg="#0c1226", width=15, anchor="w").pack(side="left")
 
-            h_var = tk.StringVar(value="Khairy")
-            h_cb = ttk.Combobox(row, textvariable=h_var, values=holder_vals, width=9, state="readonly", font=("Segoe UI", 8))
-            h_cb.pack(side="left", padx=3)
+            h_var = tk.StringVar(value="Materials Room")
+            h_cb = ttk.Combobox(row, textvariable=h_var, values=holder_vals, width=13, state="readonly", font=("Segoe UI", 8))
+            h_cb.pack(side="left", padx=2)
             h_cb.bind("<<ComboboxSelected>>", lambda _e, eid=eq_id, v=h_var: self._on_eq_holder_change(eid, v.get()))
 
-            r_var = tk.StringVar(value="Available w/ Team")
-            r_cb = ttk.Combobox(row, textvariable=r_var, values=room_vals, width=15, state="readonly", font=("Segoe UI", 8))
+            r_var = tk.StringVar(value="Available (Not in room)")
+            r_cb = ttk.Combobox(row, textvariable=r_var, values=room_vals, width=16, state="readonly", font=("Segoe UI", 8))
             r_cb.pack(side="right", padx=2)
             r_cb.bind("<<ComboboxSelected>>", lambda _e, eid=eq_id, v=r_var: self._on_eq_room_change(eid, v.get()))
 
             self.eq_widgets[eq_id] = (h_var, r_var)
 
         # Status log bar at bottom
-        self.lbl_log = tk.Label(self, text="Ready. Slide to choose your name, select a room, or tap 'Rapid Check'.", font=("Segoe UI", 9), fg="#94a3b8", bg="#04060f", anchor="w")
+        self.lbl_log = tk.Label(self, text="Ready. Slide to choose your name, select a room, or request materials.", font=("Segoe UI", 9), fg="#94a3b8", bg="#04060f", anchor="w")
         self.lbl_log.pack(fill="x", padx=16, pady=4)
 
         self._select_room(1)
@@ -601,6 +652,7 @@ class TechOpsInspectorApp(tk.Tk):
         for i, b in self.member_btns.items():
             b.configure(bg="#0b3d91" if i == idx else "#121a36")
         self.lbl_log.configure(text=f"Active Team Member: {name}")
+        self._render_live_state()
 
     def _on_status_change(self, _event=None):
         st = self.status_var.get()
@@ -618,12 +670,16 @@ class TechOpsInspectorApp(tk.Tk):
         self.lbl_log.configure(text=f"Updated {mname} status -> {st}")
 
     def _on_eq_holder_change(self, eq_id: str, holder_name: str):
-        holder_id = next((mid for mid, mname in TEAM_MEMBERS if mname == holder_name), "khairy")
+        holder_id = next((hid for hid, hname in EQUIPMENT_HOLDERS if hname == holder_name), "materials_room")
         base_url = self.cfg["firebase_url"].rstrip("/")
+        payload = {"holder": holder_id, "updated_at": {".sv": "timestamp"}}
+        if holder_id == "materials_room":
+            payload["room"] = None
+            payload["lent_by"] = None
         threading.Thread(
             target=lambda: requests.patch(
                 f"{base_url}/inventory/{eq_id}.json",
-                json={"holder": holder_id, "updated_at": {".sv": "timestamp"}},
+                json=payload,
                 timeout=5,
             ),
             daemon=True,
@@ -652,6 +708,120 @@ class TechOpsInspectorApp(tk.Tk):
             daemon=True,
         ).start()
         self.lbl_log.configure(text=f"Updated {eq_id} location -> {room_str}")
+
+    def _smart_request_gear(self, gear_type: str):
+        me_id, me_name = self._get_active_member()
+        label = "Mac Converter" if gear_type == "mac" else "Power Strip"
+        matching_items = [item for item in EQUIPMENT_ITEMS if item[2] == gear_type]
+
+        candidates = []
+        in_mat_room = []
+        with_me = []
+
+        id_to_name = dict(EQUIPMENT_HOLDERS)
+        for eq_id, eq_title, _ in matching_items:
+            raw = self.inventory_cache.get(eq_id) or {}
+            holder_id = raw.get("holder") or DEFAULT_HOLDERS.get(eq_id, "materials_room")
+            if holder_id == "logain":
+                holder_id = "lojine"
+            room_num = raw.get("room")
+            if room_num:
+                continue  # Lent to a workshop room
+            if holder_id == "materials_room":
+                in_mat_room.append(eq_title)
+            elif holder_id == me_id:
+                with_me.append(eq_title)
+            else:
+                candidates.append((holder_id, id_to_name.get(holder_id, holder_id), eq_id, eq_title))
+
+        # Deduplicate by holder_id
+        by_holder = {}
+        for hid, hname, eid, etitle in candidates:
+            if hid not in by_holder:
+                by_holder[hid] = (hid, hname, eid, etitle)
+        unique_holders = list(by_holder.values())
+
+        if not unique_holders:
+            if with_me:
+                messagebox.showinfo("Already With You", f"You ({me_name}) already hold {', '.join(with_me)}!")
+            elif in_mat_room:
+                messagebox.showinfo(
+                    "In Materials Room",
+                    f"No team member is holding a free {label}, but {', '.join(in_mat_room)} is available in the Materials Room 📦.",
+                )
+            else:
+                messagebox.showwarning("All Lent Out", f"All {label}s are currently lent out to workshop rooms!")
+            return
+
+        if len(unique_holders) == 1:
+            hid, hname, eid, etitle = unique_holders[0]
+            self._send_targeted_alarm(hid, hname, eid, etitle)
+            return
+
+        # Multiple team members hold available items -> show chooser dialog
+        dlg = tk.Toplevel(self)
+        dlg.title(f"Choose Who to Ring for {label}")
+        dlg.configure(bg="#0c1226", padx=16, pady=14)
+        dlg.geometry("380x260")
+        dlg.transient(self)
+        dlg.grab_set()
+
+        tk.Label(
+            dlg, text=f"🔔 Multiple team members have a free {label}.\nChoose who you want to ring (only their device will alarm):",
+            font=("Segoe UI", 9, "bold"), fg="#e2e8f0", bg="#0c1226", justify="left",
+        ).pack(anchor="w", pady=(0, 10))
+
+        for hid, hname, eid, etitle in unique_holders:
+            tk.Button(
+                dlg, text=f"🔔 Ring {hname} ({etitle})", font=("Segoe UI", 10, "bold"),
+                bg="#881337", fg="#ffffff", relief="flat", pady=6, cursor="hand2",
+                command=lambda h=hid, hn=hname, i=eid, it=etitle: (dlg.destroy(), self._send_targeted_alarm(h, hn, i, it)),
+            ).pack(fill="x", pady=4)
+
+        tk.Button(
+            dlg, text="Cancel", font=("Segoe UI", 9), bg="#1e293b", fg="#94a3b8",
+            relief="flat", pady=4, command=dlg.destroy,
+        ).pack(fill="x", pady=(8, 0))
+
+    def _send_targeted_alarm(self, target_id: str, target_name: str, item_id: str, item_title: str):
+        me_id, me_name = self._get_active_member()
+        base_url = self.cfg["firebase_url"].rstrip("/")
+        req_key = f"req_{target_id}"
+        payload = {
+            "id": req_key,
+            "target_id": target_id,
+            "target_name": target_name,
+            "requester_id": me_id,
+            "requester_name": me_name,
+            "requester_room": self.selected_room,
+            "item_id": item_id,
+            "item_title": item_title,
+            "status": "RINGING",
+            "created_at": int(time.time() * 1000),
+        }
+        threading.Thread(
+            target=lambda: requests.patch(f"{base_url}/gear_requests/{req_key}.json", json=payload, timeout=5),
+            daemon=True,
+        ).start()
+        self.lbl_log.configure(text=f"🔔 Ringing {target_name} for {item_title} (only {target_name}'s device will sound)...")
+
+    def _ack_alarm(self, req_key: str, transfer: bool, req_data: dict):
+        base_url = self.cfg["firebase_url"].rstrip("/")
+
+        def do_ack():
+            try:
+                if transfer and req_data.get("item_id") and req_data.get("requester_id"):
+                    requests.patch(
+                        f"{base_url}/inventory/{req_data['item_id']}.json",
+                        json={"holder": req_data["requester_id"], "room": None, "lent_by": None, "updated_at": {".sv": "timestamp"}},
+                        timeout=5,
+                    )
+                requests.delete(f"{base_url}/gear_requests/{req_key}.json", timeout=5)
+            except Exception:
+                pass
+            self._fetch_all()
+
+        threading.Thread(target=do_ack, daemon=True).start()
 
     def _set_ds(self, choice):
         self.datashow_choice = choice
@@ -768,7 +938,7 @@ class TechOpsInspectorApp(tk.Tk):
         def loop():
             while True:
                 self._fetch_all()
-                time.sleep(4)
+                time.sleep(3)
 
         threading.Thread(target=loop, daemon=True).start()
 
@@ -781,6 +951,7 @@ class TechOpsInspectorApp(tk.Tk):
                 self.rooms_cache = data.get("rooms") or {}
                 self.inventory_cache = data.get("inventory") or {}
                 self.team_cache = data.get("team_status") or {}
+                self.gear_requests_cache = data.get("gear_requests") or {}
                 self.after(0, self._render_live_state)
         except Exception:
             pass
@@ -804,18 +975,48 @@ class TechOpsInspectorApp(tk.Tk):
             btn.configure(text=f"Room {rn:02d}\n{label}", bg=bg, fg=fg)
 
         # Update equipment widgets
-        id_to_name = dict(TEAM_MEMBERS)
-        for eq_id, _ in EQUIPMENT_ITEMS:
+        id_to_name = dict(EQUIPMENT_HOLDERS)
+        for eq_id, _, _ in EQUIPMENT_ITEMS:
             if eq_id not in self.eq_widgets:
                 continue
             h_var, r_var = self.eq_widgets[eq_id]
             raw = self.inventory_cache.get(eq_id) or {}
-            holder_id = raw.get("holder") or DEFAULT_HOLDERS.get(eq_id, "khairy")
+            holder_id = raw.get("holder") or DEFAULT_HOLDERS.get(eq_id, "materials_room")
             if holder_id == "logain":
                 holder_id = "lojine"
-            h_var.set(id_to_name.get(holder_id, "Khairy"))
+            h_var.set(id_to_name.get(holder_id, "Materials Room"))
             room_num = raw.get("room")
-            r_var.set(f"Room {int(room_num):02d}" if room_num else "Available w/ Team")
+            r_var.set(f"Room {int(room_num):02d}" if room_num else "Available (Not in room)")
+
+        # Check personal incoming gear alarm for active team member
+        me_id, me_name = self._get_active_member()
+        incoming_key = None
+        incoming_req = None
+        for k, req in self.gear_requests_cache.items():
+            if isinstance(req, dict) and req.get("target_id") == me_id and req.get("status") == "RINGING":
+                incoming_key = k
+                incoming_req = req
+                break
+
+        if incoming_req:
+            req_from = incoming_req.get("requester_name", "Teammate")
+            req_item = incoming_req.get("item_title", "Equipment")
+            req_room = incoming_req.get("requester_room")
+            room_txt = f" (Room {int(req_room):02d})" if req_room else ""
+            self.lbl_alarm_text.configure(
+                text=f"🔔 ALARM FOR {me_name.upper()}: {req_from}{room_txt} needs {req_item} right now!"
+            )
+            self.btn_alarm_handover.configure(command=lambda k=incoming_key, d=incoming_req: self._ack_alarm(k, True, d))
+            self.btn_alarm_dismiss.configure(command=lambda k=incoming_key, d=incoming_req: self._ack_alarm(k, False, d))
+            if not self.alarm_frame.winfo_ismapped():
+                self.alarm_frame.pack(fill="x", padx=14, pady=3, before=self.member_scale.master)
+            now = time.time()
+            if winsound and now - self.last_beep_ts > 3.5:
+                self.last_beep_ts = now
+                threading.Thread(target=lambda: (winsound.Beep(980, 180), winsound.Beep(1240, 220)), daemon=True).start()
+        else:
+            if self.alarm_frame.winfo_ismapped():
+                self.alarm_frame.pack_forget()
 
 
 def main():

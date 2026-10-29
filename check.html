@@ -5,39 +5,59 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#04060f">
   <title>Mobile Room Inspector · NASA Space Apps Cairo</title>
-  <link rel="stylesheet" href="theme.css?v=3">
+  <link rel="stylesheet" href="theme.css?v=4">
   <style>
-    .wrap { max-width: 620px; margin: 0 auto; padding: 1rem 1rem 3rem; }
+    .wrap { max-width: 620px; margin: 0 auto; padding: .9rem 1rem 2.5rem; }
 
     .nav-top {
-      display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: .8rem;
     }
     .nav-link {
       color: var(--cyan); text-decoration: none; font-size: 0.85rem; font-weight: 600;
       display: inline-flex; align-items: center; gap: 0.3rem;
     }
 
-    .brand { text-align: center; margin-bottom: 1.1rem; }
-    .brand small { color: var(--muted); letter-spacing: .12em; text-transform: uppercase; font-size: .75rem; }
-    .brand h1 { font-size: 1.55rem; margin-top: .2rem; }
+    .brand { text-align: center; margin-bottom: .9rem; }
+    .brand small { color: var(--muted); letter-spacing: .12em; text-transform: uppercase; font-size: .72rem; }
+    .brand h1 { font-size: 1.45rem; margin-top: .15rem; }
     .brand h1 span { color: var(--cyan); }
+
+    /* Personal Targeted Gear Alarm Banner */
+    .personal-alarm {
+      background: linear-gradient(135deg, #451a03, #78350f);
+      border: 2px solid #facc15; border-radius: 16px; padding: .85rem 1rem;
+      margin-bottom: .85rem; display: flex; flex-direction: column; gap: .6rem;
+      animation: alarmPulse 1s infinite;
+    }
+    @keyframes alarmPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(250, 204, 21, .7); }
+      50%      { box-shadow: 0 0 22px 4px rgba(250, 204, 21, .75); }
+    }
+    .personal-alarm-title { font-size: 1rem; font-weight: 800; color: #fef08a; }
+    .personal-alarm-sub { font-size: .84rem; color: #fde68a; }
+
+    .outgoing-req-bar {
+      background: rgba(56, 189, 248, .12); border: 1px solid var(--cyan); border-radius: 12px;
+      padding: .6rem .8rem; margin-bottom: .8rem; display: flex; justify-content: space-between;
+      align-items: center; gap: .5rem; flex-wrap: wrap; font-size: .84rem; font-weight: 700;
+    }
 
     .card-panel {
       background: var(--panel); border: 1px solid var(--line); border-radius: 16px;
-      padding: 1.05rem; margin-bottom: .95rem;
+      padding: .95rem; margin-bottom: .85rem;
     }
     .section-title {
-      font-size: 0.88rem; font-weight: 700; color: var(--muted); margin-bottom: 0.55rem;
+      font-size: 0.84rem; font-weight: 700; color: var(--muted); margin-bottom: 0.5rem;
       text-transform: uppercase; letter-spacing: 0.05em; display: flex; justify-content: space-between; align-items: center;
     }
 
     /* Team Member Slider */
-    .slider-wrap { display: flex; flex-direction: column; gap: .45rem; margin-bottom: .6rem; }
+    .slider-wrap { display: flex; flex-direction: column; gap: .4rem; margin-bottom: .65rem; }
     input[type=range].team-slider {
       -webkit-appearance: none; appearance: none;
       width: 100%; height: 10px; border-radius: 999px;
       background: linear-gradient(90deg, var(--nasa-blue), var(--cyan));
-      outline: none; cursor: pointer; margin: .25rem 0;
+      outline: none; cursor: pointer; margin: .2rem 0;
     }
     input[type=range].team-slider::-webkit-slider-thumb {
       -webkit-appearance: none; appearance: none;
@@ -51,44 +71,42 @@
       box-shadow: 0 0 12px rgba(56, 189, 248, .85); cursor: pointer;
     }
 
-    .member-pills {
-      display: grid; grid-template-columns: repeat(5, 1fr); gap: .35rem;
-    }
+    .member-pills { display: grid; grid-template-columns: repeat(5, 1fr); gap: .32rem; }
     .mpill {
       appearance: none; border: 1px solid var(--line); background: #080d20; color: var(--muted);
-      padding: .48rem .2rem; border-radius: 10px; font: inherit; font-size: .82rem; font-weight: 700;
-      cursor: pointer; text-align: center; transition: all .14s ease;
+      padding: .45rem .15rem; border-radius: 10px; font: inherit; font-size: .8rem; font-weight: 700;
+      cursor: pointer; text-align: center;
     }
     .mpill.active {
       background: var(--nasa-blue); border-color: var(--cyan); color: #fff;
       box-shadow: 0 0 10px rgba(56, 189, 248, .4);
     }
 
-    /* 4 status choices */
-    .st-row {
-      display: grid; grid-template-columns: repeat(2, 1fr); gap: .4rem; margin-top: .5rem;
+    .quick-bar {
+      display: grid; grid-template-columns: 1fr 1fr; gap: .45rem;
+      border-top: 1px solid var(--line); padding-top: .65rem;
     }
-    .st-chip {
-      appearance: none; border: 1px solid var(--line); background: #070b1a; color: var(--muted);
-      padding: .45rem .5rem; border-radius: 9px; font: inherit; font-size: .8rem; font-weight: 700;
-      cursor: pointer;
+    .btn.drawer-trigger {
+      background: #101938; border-color: #2b3d75; font-size: .82rem; padding: .55rem .5rem;
     }
-    .st-chip.active { background: #14532d; border-color: var(--ready); color: #fff; }
+    .btn.req-trigger {
+      background: #3b1d0a; border-color: #d97706; color: #fde68a; font-size: .8rem; padding: .55rem .5rem;
+    }
 
     /* Form fields */
     input[type=text], select, textarea {
       width: 100%; background: #070b1a; color: var(--text); border: 1px solid var(--line);
-      border-radius: 10px; padding: 0.6rem 0.8rem; font: inherit; font-size: .95rem;
+      border-radius: 10px; padding: 0.55rem 0.75rem; font: inherit; font-size: .92rem;
     }
     input:focus, select:focus, textarea:focus { outline: 2px solid var(--cyan); }
 
     /* Room selector buttons */
     .room-grid {
-      display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-top: 0.4rem;
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.45rem; margin-top: 0.35rem;
     }
     .room-btn {
       appearance: none; border: 1px solid var(--line); background: #0a0f24; color: var(--text);
-      font-weight: 800; font-size: 1.02rem; padding: 0.72rem 0.2rem; border-radius: 12px;
+      font-weight: 800; font-size: 1rem; padding: 0.68rem 0.2rem; border-radius: 12px;
       cursor: pointer; text-align: center; transition: all 0.15s ease;
     }
     .room-btn:active { transform: scale(0.95); }
@@ -102,14 +120,13 @@
     @keyframes sosbtn { 50% { background: rgba(239, 68, 68, 0.3); } }
 
     /* Projector status toggle */
-    .toggle-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+    .toggle-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.55rem; }
     .toggle-btn {
       appearance: none; border: 2px solid var(--line); background: #080d20; color: var(--text);
-      border-radius: 12px; padding: 0.8rem 0.5rem; font-weight: 700; font-size: 0.95rem;
-      cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 0.3rem;
-      transition: all 0.15s ease;
+      border-radius: 12px; padding: 0.75rem 0.5rem; font-weight: 700; font-size: 0.92rem;
+      cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 0.25rem;
     }
-    .toggle-btn .icon { font-size: 1.5rem; }
+    .toggle-btn .icon { font-size: 1.4rem; }
     .toggle-btn.sel-ok {
       background: rgba(34, 197, 94, 0.15); border-color: var(--ready); color: #86efac;
     }
@@ -120,48 +137,88 @@
     /* Network Speed box */
     .net-box {
       background: #070b1a; border: 1px solid var(--line); border-radius: 12px;
-      padding: 0.9rem; text-align: center;
+      padding: 0.85rem; text-align: center;
     }
     .net-stats {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin: 0.8rem 0 0.4rem;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; margin: 0.7rem 0 0.3rem;
     }
-    .stat-metric { background: rgba(255, 255, 255, 0.03); padding: 0.6rem; border-radius: 10px; }
-    .stat-metric .val { font-size: 1.4rem; font-weight: 800; color: var(--cyan); font-variant-numeric: tabular-nums; }
-    .stat-metric .lbl { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; margin-top: 0.2rem; }
+    .stat-metric { background: rgba(255, 255, 255, 0.03); padding: 0.55rem; border-radius: 10px; }
+    .stat-metric .val { font-size: 1.35rem; font-weight: 800; color: var(--cyan); font-variant-numeric: tabular-nums; }
+    .stat-metric .lbl { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; margin-top: 0.15rem; }
 
     .progress-bar {
-      width: 100%; height: 6px; background: #1a223f; border-radius: 999px; overflow: hidden; margin: 0.6rem 0;
+      width: 100%; height: 6px; background: #1a223f; border-radius: 999px; overflow: hidden; margin: 0.55rem 0;
     }
     .progress-bar-fill {
       width: 0%; height: 100%; background: linear-gradient(90deg, var(--nasa-blue), var(--cyan));
       transition: width 0.2s ease;
     }
 
-    /* Equipment quick list on mobile */
-    .eq-mobile-list { display: flex; flex-direction: column; gap: .5rem; }
-    .eq-row {
-      background: #070b1a; border: 1px solid var(--line); border-radius: 11px; padding: .6rem .75rem;
-      display: flex; flex-direction: column; gap: .4rem;
-    }
-    .eq-row.lent { border-color: var(--warning); background: rgba(250, 204, 21, .07); }
-    .eq-row-top { display: flex; justify-content: space-between; align-items: center; gap: .4rem; font-weight: 700; font-size: .88rem; }
-    .eq-row-controls { display: grid; grid-template-columns: 1fr 1fr; gap: .4rem; }
-    .eq-row-controls select { padding: .38rem .5rem; font-size: .8rem; }
-
     /* Submit button */
     .btn-submit {
-      width: 100%; padding: 1rem; font-size: 1.15rem; font-weight: 800; border-radius: 14px;
+      width: 100%; padding: .95rem; font-size: 1.1rem; font-weight: 800; border-radius: 14px;
       background: linear-gradient(135deg, #16a34a, #15803d); border: 1px solid #4ade80;
       color: #fff; cursor: pointer; box-shadow: 0 4px 16px rgba(34, 197, 94, 0.3);
-      transition: all 0.15s ease;
     }
-    .btn-submit:active { transform: scale(0.98); }
     .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
 
     .history-card {
-      background: rgba(255,255,255,0.02); border-radius: 8px; padding: 0.5rem 0.8rem;
-      font-size: 0.85rem; color: var(--muted); margin-top: 0.6rem; display: flex; justify-content: space-between;
+      background: rgba(255,255,255,0.02); border-radius: 8px; padding: 0.45rem 0.75rem;
+      font-size: 0.82rem; color: var(--muted); margin-top: 0.55rem; display: flex; justify-content: space-between;
     }
+
+    /* ---- Slide-Out Sidebars (Drawers) ---- */
+    .drawer-backdrop {
+      position: fixed; inset: 0; background: rgba(0, 0, 0, .68);
+      backdrop-filter: blur(2px); z-index: 80; opacity: 0; pointer-events: none;
+      transition: opacity .22s ease;
+    }
+    .drawer-backdrop.open { opacity: 1; pointer-events: auto; }
+
+    aside.drawer {
+      position: fixed; top: 0; bottom: 0; width: min(92vw, 410px);
+      background: #080d1e; border-right: 1px solid var(--cyan);
+      z-index: 90; display: flex; flex-direction: column;
+      transform: translateX(-104%); transition: transform .25s cubic-bezier(.2,.8,.2,1);
+      box-shadow: 0 0 40px rgba(0, 0, 0, .85);
+    }
+    aside.drawer.right {
+      right: 0; left: auto; border-right: none; border-left: 1px solid var(--cyan);
+      transform: translateX(104%);
+    }
+    aside.drawer.open { transform: translateX(0); }
+    .drawer-head {
+      padding: .9rem 1rem; background: var(--panel); border-bottom: 1px solid var(--line);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .drawer-head h2 { font-size: 1rem; }
+    .drawer-body {
+      padding: .9rem; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: .7rem;
+    }
+
+    .st-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: .35rem; margin-top: .4rem; }
+    .st-chip {
+      appearance: none; border: 1px solid var(--line); background: #070b1a; color: var(--muted);
+      padding: .42rem .4rem; border-radius: 8px; font: inherit; font-size: .78rem; font-weight: 700; cursor: pointer;
+    }
+    .st-chip.active { background: #14532d; border-color: var(--ready); color: #fff; }
+
+    .eq-row {
+      background: #070b1a; border: 1px solid var(--line); border-radius: 11px; padding: .65rem .75rem;
+      display: flex; flex-direction: column; gap: .45rem;
+    }
+    .eq-row.lent { border-color: var(--warning); background: rgba(250, 204, 21, .07); }
+    .eq-row-top { display: flex; justify-content: space-between; align-items: center; gap: .4rem; font-weight: 700; font-size: .86rem; }
+    .eq-row-controls { display: grid; grid-template-columns: 1fr 1fr; gap: .4rem; }
+    .eq-row-controls select { padding: .38rem .5rem; font-size: .78rem; }
+
+    dialog { background: var(--panel); color: var(--text); border: 1px solid var(--cyan); border-radius: 16px; padding: 1.1rem; width: min(92vw, 410px); }
+    dialog::backdrop { background: rgba(0, 0, 0, .7); }
+    .lend-list { display: flex; flex-direction: column; gap: .45rem; margin: .8rem 0; }
+    .row { display: flex; gap: .45rem; flex-wrap: wrap; }
+    .row .btn { flex: 1 1 auto; }
+    .btn.xs { padding: .22rem .5rem; font-size: .74rem; border-radius: 7px; }
+    .btn.sm { padding: .42rem .65rem; font-size: .82rem; }
   </style>
 </head>
 <body>
@@ -178,26 +235,30 @@
     <h1>📱 Mobile <span>Room Inspector</span></h1>
   </div>
 
-  <!-- Inspector Profile (Slider + 5 Team Members + 4 Status Choices) -->
+  <!-- Personal Targeted Gear Alarm Banner -->
+  <div id="personalAlarmBox" hidden></div>
+  <div id="outgoingReqBox" hidden></div>
+
+  <!-- Inspector Profile (Slider + Sidebar Launchers) -->
   <div class="card-panel">
     <div class="section-title">
-      <span>👤 Choose Team Member (Slider)</span>
+      <span>👤 Team Member (Slider)</span>
       <span id="activeNameLabel" style="color:var(--cyan);">Khairy</span>
     </div>
     <div class="slider-wrap">
       <input id="memberSlider" class="team-slider" type="range" min="0" max="4" step="1" value="4">
       <div class="member-pills" id="memberPills"></div>
     </div>
-    <div style="margin-top:.55rem;">
-      <select id="memberSelect"></select>
+
+    <div class="quick-bar">
+      <button type="button" class="btn drawer-trigger" id="openTeamDrawerBtn">👥 Team Status Sidebar</button>
+      <button type="button" class="btn drawer-trigger" id="openEqDrawerBtn">🧰 Materials Sidebar</button>
+      <button type="button" class="btn req-trigger" id="reqMacBtn">🔔 Need Mac Converter</button>
+      <button type="button" class="btn req-trigger" id="reqStripBtn">🔔 Need Power Strip</button>
     </div>
-    <div class="section-title" style="margin-top:.85rem;margin-bottom:.3rem;">
-      <span>Your Live Status (4 Choices)</span>
-    </div>
-    <div class="st-row" id="myStatusBtns"></div>
   </div>
 
-  <!-- Step 1: Room Selector -->
+  <!-- Step 1: Room Selector (Immediately accessible!) -->
   <div class="card-panel">
     <div class="section-title"><span>📍 Select Room (1 to 12)</span></div>
     <div class="room-grid" id="roomGrid"></div>
@@ -247,35 +308,67 @@
   <div class="card-panel">
     <div class="section-title"><span>3. Optional Notes &amp; Save</span></div>
     <textarea id="notes" rows="2" maxlength="200" placeholder="e.g. Needs Type-C dongle, HDMI port slightly loose"></textarea>
-    <div style="margin-top: 1rem;">
+    <div style="margin-top: .85rem;">
       <button id="submitBtn" class="btn-submit" disabled>💾 Save &amp; Mark Room Ready</button>
     </div>
   </div>
-
-  <!-- Backup Equipment Tracker (2 Mac Converters + 4 Power Strips) -->
-  <div class="card-panel">
-    <div class="section-title"><span>🧰 Backup Equipment (2 Mac Converters + 4 Power Strips)</span></div>
-    <div class="eq-mobile-list" id="eqMobileList"></div>
-  </div>
 </div>
+
+<!-- Backdrop & Sidebars -->
+<div id="drawerBackdrop" class="drawer-backdrop"></div>
+
+<aside id="teamDrawer" class="drawer" aria-label="Team Status Sidebar">
+  <div class="drawer-head">
+    <h2>👥 Team Member Status (5)</h2>
+    <button type="button" class="btn sm" id="closeTeamDrawerBtn">✕ Close</button>
+  </div>
+  <div class="drawer-body" id="teamDrawerBody"></div>
+</aside>
+
+<aside id="eqDrawer" class="drawer right" aria-label="Materials Sidebar">
+  <div class="drawer-head">
+    <h2>🧰 Materials &amp; Gear (6)</h2>
+    <button type="button" class="btn sm" id="closeEqDrawerBtn">✕ Close</button>
+  </div>
+  <div class="drawer-body">
+    <div class="row">
+      <button type="button" class="btn sm req-trigger" id="reqMacBtn2">🔔 Need Mac Converter</button>
+      <button type="button" class="btn sm req-trigger" id="reqStripBtn2">🔔 Need Power Strip</button>
+    </div>
+    <div id="eqMobileList" style="display:flex;flex-direction:column;gap:.55rem;"></div>
+  </div>
+</aside>
+
+<!-- Smart Gear Request Chooser Dialog -->
+<dialog id="reqChooserDlg">
+  <h3 id="reqChooserTitle">🔔 Choose Who to Ring</h3>
+  <p id="reqChooserSub" style="color:var(--muted);font-size:.84rem;margin:0;"></p>
+  <div id="reqChooserList" class="lend-list"></div>
+  <div class="row">
+    <button class="btn block" id="reqChooserClose">Cancel</button>
+  </div>
+</dialog>
 
 <div id="toast" class="toast"></div>
 
 <script type="module">
 import {
-  db, CONFIG_OK, ROOM_COUNT, ROOMS_TEAM, MEMBER_STATUSES, EQUIPMENT_ITEMS, DEFAULT_HOLDERS,
-  roomKey, ref, onValue, update, restGet, restPatch, esc, pad2, MISSING_CONFIG_MESSAGE
-} from "./firebase-config.js?v=3";
+  db, CONFIG_OK, ROOM_COUNT, ROOMS_TEAM, EQUIPMENT_HOLDERS, MEMBER_STATUSES, EQUIPMENT_ITEMS, DEFAULT_HOLDERS,
+  roomKey, ref, onValue, update, restGet, restPatch, restDelete, esc, pad2, MISSING_CONFIG_MESSAGE
+} from "./firebase-config.js?v=4";
 
 const $ = (id) => document.getElementById(id);
 
 let selectedRoom = 1;
-let datashowStatus = null; // "OK" or "Issue"
+let datashowStatus = null;
 let pingMs = null;
 let downloadMbps = null;
 let roomsData = {};
 let teamStatus = {};
 let inventory = {};
+let gearRequests = {};
+let knownMyReqs = new Set();
+let audioCtx = null;
 
 function toast(msg) {
   const t = $("toast");
@@ -299,9 +392,19 @@ function getSelectedMember() {
   return findMember(saved);
 }
 
-function memberLabel(idOrName) {
-  const m = findMember(idOrName);
-  return m ? m.name : (idOrName || "Unassigned");
+function holderNameOnly(holderId) {
+  if (!holderId || holderId === "materials_room") return "Materials Room";
+  if (holderId === "logain") holderId = "lojine";
+  const h = EQUIPMENT_HOLDERS.find((x) => x.id === holderId);
+  return h ? h.name : holderId;
+}
+
+function itemState(item) {
+  const raw = inventory[item.id] || {};
+  let holder = raw.holder || DEFAULT_HOLDERS[item.id] || "materials_room";
+  if (holder === "logain") holder = "lojine";
+  const room = raw.room ? Number(raw.room) : null;
+  return { holder, room, lent_by: raw.lent_by || null, updated_at: raw.updated_at || null };
 }
 
 async function writeData(path, payload) {
@@ -313,20 +416,34 @@ async function writeData(path, payload) {
   }
 }
 
+/* ------------------------------------------- Sidebars */
+function openDrawer(which) {
+  $("teamDrawer").classList.toggle("open", which === "team");
+  $("eqDrawer").classList.toggle("open", which === "eq");
+  $("drawerBackdrop").classList.toggle("open", Boolean(which));
+}
+$("openTeamDrawerBtn").addEventListener("click", () => openDrawer("team"));
+$("openEqDrawerBtn").addEventListener("click", () => openDrawer("eq"));
+$("closeTeamDrawerBtn").addEventListener("click", () => openDrawer(null));
+$("closeEqDrawerBtn").addEventListener("click", () => openDrawer(null));
+$("drawerBackdrop").addEventListener("click", () => openDrawer(null));
+
+/* ------------------------------------------- Team Slider & Status Drawer */
 function setMemberByIndex(idx, showToastMsg = true) {
   const i = Math.max(0, Math.min(ROOMS_TEAM.length - 1, Number(idx) || 0));
   const m = ROOMS_TEAM[i];
   localStorage.setItem("techops_name", m.name);
   $("memberSlider").value = String(i);
-  $("memberSelect").value = m.id;
   $("activeNameLabel").textContent = m.name;
   renderMemberPills();
+  renderTeamDrawer();
+  renderMobileEquipment();
+  renderPersonalAlarms();
   validateForm();
   if (showToastMsg) toast(`👤 Selected: ${m.name}`);
 }
 
 function initMemberSelector() {
-  $("memberSelect").innerHTML = ROOMS_TEAM.map((m) => `<option value="${m.id}">${esc(m.name)}</option>`).join("");
   const cur = getSelectedMember();
   const idx = ROOMS_TEAM.findIndex((m) => m.id === cur.id);
   setMemberByIndex(idx >= 0 ? idx : 0, false);
@@ -339,45 +456,52 @@ function renderMemberPills() {
       ${esc(m.name)}
     </button>
   `).join("");
-
-  const curSt = teamStatus[activeM.id]?.status || "STANDBY";
-  $("myStatusBtns").innerHTML = MEMBER_STATUSES.map((s) => `
-    <button type="button" class="st-chip ${s.id === curSt ? "active" : ""}" data-st="${s.id}">
-      ${s.label}
-    </button>
-  `).join("");
 }
 
-$("memberSlider").addEventListener("input", (e) => {
-  setMemberByIndex(Number(e.target.value), true);
-});
+function renderTeamDrawer() {
+  const activeM = getSelectedMember();
+  $("teamDrawerBody").innerHTML = ROOMS_TEAM.map((m) => {
+    const curSt = teamStatus[m.id]?.status || "STANDBY";
+    const curRoom = teamStatus[m.id]?.room ? ` · Room ${pad2(teamStatus[m.id].room)}` : "";
+    const isMe = activeM.id === m.id;
+    return `
+      <div class="eq-row" style="${isMe ? "border-color:var(--cyan)" : ""}">
+        <div class="eq-row-top">
+          <span>👤 ${esc(m.name)} ${isMe ? "(You)" : ""}</span>
+          <span style="color:var(--cyan);font-size:.78rem;">${esc(curSt)}${esc(curRoom)}</span>
+        </div>
+        <div class="st-row">
+          ${MEMBER_STATUSES.map((s) => `
+            <button type="button" class="st-chip ${s.id === curSt ? "active" : ""}" data-m="${m.id}" data-st="${s.id}">
+              ${s.label}
+            </button>
+          `).join("")}
+        </div>
+      </div>`;
+  }).join("");
+}
 
+$("memberSlider").addEventListener("input", (e) => setMemberByIndex(Number(e.target.value), true));
 $("memberPills").addEventListener("click", (e) => {
   const b = e.target.closest("[data-idx]");
-  if (!b) return;
-  setMemberByIndex(Number(b.dataset.idx), true);
+  if (b) setMemberByIndex(Number(b.dataset.idx), true);
 });
 
-$("memberSelect").addEventListener("change", (e) => {
-  const idx = ROOMS_TEAM.findIndex((m) => m.id === e.target.value);
-  if (idx >= 0) setMemberByIndex(idx, true);
-});
-
-$("myStatusBtns").addEventListener("click", async (e) => {
+$("teamDrawerBody").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-st]");
   if (!b) return;
-  const m = getSelectedMember();
+  const mid = b.dataset.m;
   try {
-    await writeData(`team_status/${m.id}`, {
+    await writeData(`team_status/${mid}`, {
       status: b.dataset.st,
-      room: b.dataset.st === "CHECKING" ? selectedRoom : (teamStatus[m.id]?.room || null),
+      room: b.dataset.st === "CHECKING" ? selectedRoom : (teamStatus[mid]?.room || null),
       updated_at: Date.now(),
     });
-    toast(`✔ Status updated: ${b.dataset.st}`);
+    toast(`✔ Updated ${holderNameOnly(mid)} -> ${b.dataset.st}`);
   } catch (err) { toast("Error: " + err.message); }
 });
 
-// Render 12 room buttons
+/* ------------------------------------------- Rooms Grid */
 function renderRooms() {
   let html = "";
   for (let n = 1; n <= ROOM_COUNT; n++) {
@@ -412,26 +536,29 @@ $("roomGrid").addEventListener("click", (e) => {
   validateForm();
 });
 
-// Render Equipment list on mobile
+/* ------------------------------------------- Materials Sidebar & Smart Request */
 function renderMobileEquipment() {
+  const me = getSelectedMember();
   $("eqMobileList").innerHTML = EQUIPMENT_ITEMS.map((it) => {
-    const raw = inventory[it.id] || {};
-    let holder = raw.holder || DEFAULT_HOLDERS[it.id] || "khairy";
-    if (holder === "logain") holder = "lojine";
-    const room = raw.room ? Number(raw.room) : 0;
+    const st = itemState(it);
+    const holder = st.holder;
+    const room = st.room ? Number(st.room) : 0;
+    const heldByOtherPerson = !room && holder !== "materials_room" && holder !== me.id;
 
-    const holderOpts = ROOMS_TEAM.map((m) => `
-      <option value="${m.id}" ${holder === m.id ? "selected" : ""}>👤 Held by: ${esc(m.name)}</option>
+    const holderOpts = EQUIPMENT_HOLDERS.map((h) => `
+      <option value="${h.id}" ${holder === h.id ? "selected" : ""}>${h.icon} ${esc(h.name)}</option>
     `).join("");
 
-    let roomOpts = `<option value="0" ${!room ? "selected" : ""}>🟢 Available with Team</option>`;
+    let roomOpts = `<option value="0" ${!room ? "selected" : ""}>🟢 Not in a Room</option>`;
     for (let r = 1; r <= ROOM_COUNT; r++) {
       roomOpts += `<option value="${r}" ${room === r ? "selected" : ""}>🏛️ Lent to Room ${pad2(r)}</option>`;
     }
 
     const badge = room
-      ? `<span style="color:#fde047;font-size:.78rem;">🏛️ In Room ${pad2(room)}</span>`
-      : `<span style="color:#86efac;font-size:.78rem;">🟢 With ${esc(memberLabel(holder))}</span>`;
+      ? `<span style="color:#fde047;font-size:.76rem;">🏛️ In Room ${pad2(room)}</span>`
+      : holder === "materials_room"
+      ? `<span style="color:#7dd3fc;font-size:.76rem;">📦 Materials Room</span>`
+      : `<span style="color:#86efac;font-size:.76rem;">🟢 With ${esc(holderNameOnly(holder))}</span>`;
 
     return `
       <div class="eq-row ${room ? "lent" : ""}">
@@ -443,20 +570,26 @@ function renderMobileEquipment() {
           <select data-mob-holder="${it.id}">${holderOpts}</select>
           <select data-mob-room="${it.id}">${roomOpts}</select>
         </div>
+        ${heldByOtherPerson ? `<button type="button" class="btn xs warn" data-ring-item="${it.id}" data-target="${holder}">🔔 Ring ${esc(holderNameOnly(holder))} for this</button>` : ""}
       </div>`;
   }).join("");
 }
+
+$("eqMobileList").addEventListener("click", async (e) => {
+  const ringBtn = e.target.closest("[data-ring-item]");
+  if (ringBtn) {
+    const item = EQUIPMENT_ITEMS.find((x) => x.id === ringBtn.dataset.ringItem);
+    if (item) await sendTargetedGearAlarm(item, ringBtn.dataset.target);
+  }
+});
 
 $("eqMobileList").addEventListener("change", async (e) => {
   const hSel = e.target.closest("[data-mob-holder]");
   if (hSel) {
     const eqId = hSel.dataset.mobHolder;
     try {
-      await writeData(`inventory/${eqId}`, {
-        holder: hSel.value,
-        updated_at: Date.now(),
-      });
-      toast(`✔ Assigned to ${memberLabel(hSel.value)}`);
+      await writeData(`inventory/${eqId}`, { holder: hSel.value, updated_at: Date.now() });
+      toast(`✔ Assigned to ${holderNameOnly(hSel.value)}`);
     } catch (err) { toast("Error: " + err.message); }
     return;
   }
@@ -470,10 +603,191 @@ $("eqMobileList").addEventListener("change", async (e) => {
         lent_by: rNum ? getSelectedMember().name : null,
         updated_at: Date.now(),
       });
-      toast(rNum ? `🏛️ Lent to Room ${pad2(rNum)}` : "🟢 Returned to Team");
+      toast(rNum ? `🏛️ Lent to Room ${pad2(rNum)}` : "🟢 Returned from Room");
     } catch (err) { toast("Error: " + err.message); }
   }
 });
+
+async function sendTargetedGearAlarm(item, targetMemberId) {
+  const me = getSelectedMember();
+  if (targetMemberId === me.id) {
+    toast(`You (${me.name}) already hold ${item.title}!`);
+    return;
+  }
+  const targetName = holderNameOnly(targetMemberId);
+  const reqId = `req_${item.id}`;
+  try {
+    await writeData(`gear_requests/${reqId}`, {
+      id: reqId,
+      item_id: item.id,
+      item_title: item.title,
+      item_icon: item.icon,
+      from_id: me.id,
+      from_name: me.name,
+      from_room: selectedRoom,
+      target_id: targetMemberId,
+      target_name: targetName,
+      status: "RINGING",
+      created_at: Date.now(),
+    });
+    toast(`🔔 Sent alarm to ${targetName} for ${item.title}!`);
+  } catch (err) { toast("Failed: " + err.message); }
+}
+
+function triggerSmartGearRequest(type) {
+  const me = getSelectedMember();
+  const typeLabel = type === "mac" ? "Mac Converter" : "Power Strip";
+  const allOfType = EQUIPMENT_ITEMS.filter((it) => it.type === type);
+
+  const availWithOthers = [];
+  const availWithMe = [];
+  const availInMaterialsRoom = [];
+  const lentToRooms = [];
+
+  for (const it of allOfType) {
+    const st = itemState(it);
+    if (st.room) lentToRooms.push({ item: it, room: st.room });
+    else if (st.holder === "materials_room") availInMaterialsRoom.push({ item: it });
+    else if (st.holder === me.id) availWithMe.push({ item: it });
+    else availWithOthers.push({ item: it, holder: st.holder, holderName: holderNameOnly(st.holder) });
+  }
+
+  const uniqueHolders = [...new Set(availWithOthers.map((x) => x.holder))];
+  if (uniqueHolders.length === 1) {
+    sendTargetedGearAlarm(availWithOthers[0].item, availWithOthers[0].holder);
+    return;
+  }
+
+  if (uniqueHolders.length > 1) {
+    $("reqChooserTitle").textContent = `🔔 Request ${typeLabel}`;
+    $("reqChooserSub").textContent = `Multiple team members have an available ${typeLabel}. Choose who to ring:`;
+    $("reqChooserList").innerHTML = availWithOthers.map((entry) => `
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;background:#070b1a;border:1px solid var(--line);padding:.6rem .75rem;border-radius:10px;">
+        <div>
+          <div style="font-weight:800;font-size:.9rem;">👤 ${esc(entry.holderName)}</div>
+          <div style="font-size:.76rem;color:var(--muted);">${entry.item.icon} ${esc(entry.item.title)}</div>
+        </div>
+        <button type="button" class="btn sm warn" data-choose-ring="${entry.item.id}" data-holder="${entry.holder}">
+          🔔 Ring ${esc(entry.holderName)}
+        </button>
+      </div>
+    `).join("");
+    $("reqChooserDlg").showModal();
+    return;
+  }
+
+  if (availWithMe.length > 0) toast(`🎒 You (${me.name}) already hold ${availWithMe[0].item.title}!`);
+  else if (availInMaterialsRoom.length > 0) toast(`📦 ${availInMaterialsRoom.map((x) => x.item.title).join(" & ")} is in the Materials Room.`);
+  else if (lentToRooms.length > 0) toast(`⚠️ All ${typeLabel}s are lent to rooms: ${lentToRooms.map((x) => `Room ${pad2(x.room)}`).join(", ")}`);
+}
+
+$("reqMacBtn").addEventListener("click", () => triggerSmartGearRequest("mac"));
+$("reqStripBtn").addEventListener("click", () => triggerSmartGearRequest("strip"));
+$("reqMacBtn2").addEventListener("click", () => triggerSmartGearRequest("mac"));
+$("reqStripBtn2").addEventListener("click", () => triggerSmartGearRequest("strip"));
+
+$("reqChooserList").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-choose-ring]");
+  if (!b) return;
+  const item = EQUIPMENT_ITEMS.find((x) => x.id === b.dataset.chooseRing);
+  $("reqChooserDlg").close();
+  if (item) await sendTargetedGearAlarm(item, b.dataset.holder);
+});
+$("reqChooserClose").addEventListener("click", () => $("reqChooserDlg").close());
+
+function beepPersonalGearAlarm() {
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    const t0 = audioCtx.currentTime;
+    [880, 1174, 880, 1318].forEach((freq, i) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = "triangle";
+      osc.frequency.value = freq;
+      const s = t0 + i * 0.16;
+      gain.gain.setValueAtTime(0.0001, s);
+      gain.gain.exponentialRampToValueAtTime(0.7, s + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, s + 0.14);
+      osc.connect(gain).connect(audioCtx.destination);
+      osc.start(s);
+      osc.stop(s + 0.15);
+    });
+  } catch { /* ignore */ }
+  if (navigator.vibrate) navigator.vibrate([300, 120, 300, 120, 500]);
+}
+
+function renderPersonalAlarms() {
+  const me = getSelectedMember();
+  const allReqs = Object.values(gearRequests || {}).filter((r) => r && r.id);
+  const myIncoming = allReqs.filter((r) => r.target_id === me.id && (r.status === "RINGING" || r.status === "ACK"));
+  const pBox = $("personalAlarmBox");
+  if (!myIncoming.length) {
+    pBox.hidden = true;
+    pBox.innerHTML = "";
+  } else {
+    pBox.hidden = false;
+    pBox.innerHTML = myIncoming.map((r) => {
+      const roomTxt = r.from_room ? ` (in Room ${pad2(r.from_room)})` : "";
+      const isAck = r.status === "ACK";
+      return `
+        <div class="personal-alarm">
+          <div class="personal-alarm-title">
+            🔔 HEY ${esc(me.name.toUpperCase())}! ${esc(r.from_name.toUpperCase())} NEEDS ${r.item_icon || "🧰"} ${esc(r.item_title)}!
+          </div>
+          <div class="personal-alarm-sub">Requested by <strong>${esc(r.from_name)}</strong>${esc(roomTxt)}</div>
+          <div class="row">
+            ${!isAck ? `<button type="button" class="btn sm primary" data-req-ack="${esc(r.id)}">🏃 On My Way</button>` : ""}
+            <button type="button" class="btn sm good" data-req-handover="${esc(r.id)}" data-item="${esc(r.item_id)}" data-to="${esc(r.from_id)}">✅ Handed Over</button>
+            <button type="button" class="btn sm danger" data-req-dismiss="${esc(r.id)}">✕ Dismiss</button>
+          </div>
+        </div>`;
+    }).join("");
+  }
+
+  const myOutgoing = allReqs.filter((r) => r.from_id === me.id);
+  const oBox = $("outgoingReqBox");
+  if (!myOutgoing.length) {
+    oBox.hidden = true;
+    oBox.innerHTML = "";
+  } else {
+    oBox.hidden = false;
+    oBox.innerHTML = myOutgoing.map((r) => `
+      <div class="outgoing-req-bar">
+        <span>${r.status === "ACK" ? `🏃 ${esc(r.target_name)} is bringing ${esc(r.item_title)}!` : `📡 Ringing ${esc(r.target_name)} for ${esc(r.item_title)}…`}</span>
+        <button type="button" class="btn xs danger" data-req-dismiss="${esc(r.id)}">Cancel</button>
+      </div>
+    `).join("");
+  }
+}
+
+document.addEventListener("click", async (e) => {
+  const ackBtn = e.target.closest("[data-req-ack]");
+  if (ackBtn) {
+    await writeData(`gear_requests/${ackBtn.dataset.reqAck}`, { status: "ACK", ack_at: Date.now() });
+    toast("🏃 Marked On My Way!");
+    return;
+  }
+  const hoBtn = e.target.closest("[data-req-handover]");
+  if (hoBtn) {
+    await writeData(`inventory/${hoBtn.dataset.item}`, { holder: hoBtn.dataset.to, room: null, updated_at: Date.now() });
+    await restDelete(`gear_requests/${hoBtn.dataset.reqHandover}`);
+    await pollRestOnce();
+    toast("✅ Handed over!");
+    return;
+  }
+  const disBtn = e.target.closest("[data-req-dismiss]");
+  if (disBtn) {
+    await restDelete(`gear_requests/${disBtn.dataset.reqDismiss}`);
+    await pollRestOnce();
+  }
+});
+
+setInterval(() => {
+  const me = getSelectedMember();
+  const ringing = Object.values(gearRequests || {}).filter((r) => r && r.target_id === me.id && r.status === "RINGING");
+  if (ringing.length > 0) beepPersonalGearAlarm();
+}, 3800);
 
 // Projector toggle
 $("dsOkBtn").addEventListener("click", () => {
@@ -522,7 +836,7 @@ $("runSpeedBtn").addEventListener("click", async () => {
     downloadMbps = parseFloat(((bitsLoaded / durationSeconds) / 1000000).toFixed(1));
     $("valSpeed").textContent = `${downloadMbps}`;
     $("netStatus").textContent = `✔ Test complete: ${downloadMbps} Mbps (${pingMs} ms)`;
-  } catch (err) {
+  } catch {
     $("netStatus").textContent = "⚠️ Speed test warning (check connection)";
     if (pingMs === null) pingMs = 50;
     if (downloadMbps === null) downloadMbps = 10;
@@ -542,7 +856,6 @@ function validateForm() {
   }
 }
 
-// Submit Check to Firebase
 $("submitBtn").addEventListener("click", async () => {
   const m = getSelectedMember();
   const name = m.name;
@@ -602,6 +915,19 @@ function setOnlineState(on) {
   $("connText").textContent = on ? "Live Cloud" : "Reconnecting…";
 }
 
+function handleIncomingGearRequests(newReqs) {
+  gearRequests = newReqs || {};
+  const me = getSelectedMember();
+  const nowMine = new Set(
+    Object.values(gearRequests)
+      .filter((r) => r && r.target_id === me.id && r.status === "RINGING")
+      .map((r) => `${r.id}_${r.created_at}`)
+  );
+  const freshMine = [...nowMine].filter((k) => !knownMyReqs.has(k));
+  if (freshMine.length > 0) beepPersonalGearAlarm();
+  knownMyReqs = nowMine;
+}
+
 async function pollRestOnce() {
   if (!CONFIG_OK) return;
   try {
@@ -611,46 +937,48 @@ async function pollRestOnce() {
       roomsData = data.rooms || {};
       teamStatus = data.team_status || {};
       inventory = data.inventory || {};
+      handleIncomingGearRequests(data.gear_requests || {});
       renderMemberPills();
+      renderTeamDrawer();
       renderRooms();
       renderMobileEquipment();
+      renderPersonalAlarms();
     }
-  } catch {
-    // Let WebSocket or next poll handle it
-  }
+  } catch { /* ignore */ }
 }
 
 if (!CONFIG_OK) {
   $("configBanner").innerHTML = MISSING_CONFIG_MESSAGE;
   $("configBanner").hidden = false;
 } else {
-  // Immediate REST fetch so mobile devices connect in <300ms
   pollRestOnce();
-  setInterval(pollRestOnce, 4000);
+  setInterval(pollRestOnce, 3500);
 
   onValue(ref(db, ".info/connected"), (snap) => {
     if (snap.val() === true) setOnlineState(true);
   });
-
   onValue(ref(db, "rooms"), (snap) => {
     setOnlineState(true);
     roomsData = snap.val() || {};
     renderRooms();
   });
-
   onValue(ref(db, "team_status"), (snap) => {
     teamStatus = snap.val() || {};
-    renderMemberPills();
+    renderTeamDrawer();
   });
-
   onValue(ref(db, "inventory"), (snap) => {
     inventory = snap.val() || {};
     renderMobileEquipment();
+  });
+  onValue(ref(db, "gear_requests"), (snap) => {
+    handleIncomingGearRequests(snap.val() || {});
+    renderPersonalAlarms();
   });
 }
 
 initMemberSelector();
 renderRooms();
+renderTeamDrawer();
 renderMobileEquipment();
 validateForm();
 </script>
